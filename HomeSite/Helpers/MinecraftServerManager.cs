@@ -19,7 +19,7 @@ namespace HomeSite.Helpers
         }
         private const string logPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
         private const string tempLogPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
-        private RCON rcon;
+        private RCON? rcon;
         public Process? ServerConsoleProcess { get; private set; }
         public Process? ServerProcess { get; private set; }
         private MinecraftServerManager() { }
@@ -42,6 +42,7 @@ namespace HomeSite.Helpers
                     await Task.Delay(1000);
                 }
                 ServerConsoleProcess = null;
+                rcon = null;
                 cts.Cancel();
             }
             catch(Exception ex)
@@ -86,6 +87,7 @@ namespace HomeSite.Helpers
 
             Thread t = new Thread(() => ReadLogInTime(cts.Token));
             t.Start();
+            Task.Run(CheckStartedServer);
 
             //Task.Run(() =>
             //{
@@ -102,18 +104,25 @@ namespace HomeSite.Helpers
             await Task.CompletedTask;
         }
 
+        private async void CheckStartedServer()
+        {
+            await Task.Delay(7000);
+            if (ServerProcess == null)
+            {
+                var processes = Process.GetProcessesByName("Java(TM) Platform SE binary");
+                while (processes.Length < 1)
+                {
+                    await Task.Delay(1000);
+                    processes = Process.GetProcessesByName("Java(TM) Platform SE binary");
+                }
+                rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+            }
+        }
+
         public async void OutputDataReceived(string? msg)
         {
             if (!string.IsNullOrEmpty(msg))
             {
-                if (ServerProcess == null)
-                {
-                    if (msg.Contains("Starting minecraft server version"))
-                    {
-                        //rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
-                        //ServerProcess = Process.GetProcessesByName("Minecraft server")[0];
-                    }
-                }
                 var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                 await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
                 consoleLogs += "\n" + msg;
@@ -137,9 +146,10 @@ namespace HomeSite.Helpers
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
+                File.WriteAllText(tempLogPath,"");
                 consoleLogs = "Логи появяться здесь...";
 
-                Timer timer = new Timer(_ =>
+                Timer timer = new(_ =>
                 {
                     try
                     {
@@ -172,7 +182,7 @@ namespace HomeSite.Helpers
                         }
                         else
                         {
-                            Thread.Sleep(100); // Пауза, если новых строк нет
+                            await Task.Delay(100); // Пауза, если новых строк нет
                         }
                         if(token.IsCancellationRequested)
                         {
