@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace HomeSite.Helpers
@@ -87,7 +88,7 @@ namespace HomeSite.Helpers
 
             Thread t = new Thread(() => ReadLogInTime(cts.Token));
             t.Start();
-            Task.Run(CheckStartedServer);
+            ////////Task.Run(CheckStartedServer);-------------------------
 
             //Task.Run(() =>
             //{
@@ -123,6 +124,13 @@ namespace HomeSite.Helpers
         {
             if (!string.IsNullOrEmpty(msg))
             {
+                if(ServerProcess == null)
+                {
+                    if(msg.Contains("Thread RCON Listener started"))
+                    {
+                        rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                    }
+                }
                 var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                 await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
                 consoleLogs += "\n" + msg;
@@ -147,10 +155,10 @@ namespace HomeSite.Helpers
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
-                File.WriteAllText(tempLogPath,"");
-                
-                consoleLogs = "Логи появяться здесь...";
+                await Task.Delay(2000);
+                File.WriteAllText(tempLogPath, string.Empty);
 
+                consoleLogs = "Логи появяться здесь...";
                 Timer timer = new(_ =>
                 {
                     try
@@ -166,7 +174,6 @@ namespace HomeSite.Helpers
                         Console.WriteLine("Ошибка копирования файла: " + ex.Message);
                     }
                 }, null, 0, 1000); // Обновление копии каждую секунду
-
                 using (var fileStream = new FileStream(tempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(fileStream, Encoding.UTF8))
                 {
