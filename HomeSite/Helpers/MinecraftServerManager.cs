@@ -25,7 +25,7 @@ namespace HomeSite.Helpers
         private MinecraftServerManager() { }
         public string ConsoleLogs { get { return consoleLogs; } }
         private CancellationTokenSource cts = new();
-        private string consoleLogs = "Логи сервера появятся здесь...";
+        public string consoleLogs = "Логи сервера появятся здесь...";
 
         public static MinecraftServerManager GetInstance()
         {
@@ -126,6 +126,7 @@ namespace HomeSite.Helpers
                 var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                 await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
                 consoleLogs += "\n" + msg;
+                return;
             }
         }
 
@@ -147,6 +148,7 @@ namespace HomeSite.Helpers
                     return;
                 }
                 File.WriteAllText(tempLogPath,"");
+                
                 consoleLogs = "Логи появяться здесь...";
 
                 Timer timer = new(_ =>

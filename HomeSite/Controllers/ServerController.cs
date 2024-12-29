@@ -9,7 +9,8 @@ namespace HomeSite.Controllers
     {
         public IActionResult Index()
         {
-            return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = MinecraftServerManager.GetInstance().ConsoleLogs});
+            string logis = MinecraftServerManager.GetInstance().consoleLogs;
+            return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
     }
 }
