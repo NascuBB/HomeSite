@@ -23,11 +23,15 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost("stop")]
-        public IActionResult StopServer()
+        public async Task<IActionResult> StopServer([FromBody] string pass)
         {
             try
             {
-                MinecraftServerManager.GetInstance().StopServer();
+                if(pass != "Jonkler1111")
+                {
+                    return Ok("пароль не верный");
+                }
+                await MinecraftServerManager.GetInstance().StopServer();
                 return Ok("Выключение.");
             }
             catch (Exception ex)
@@ -37,12 +41,12 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost("command")]
-        public IActionResult SendCommand([FromBody] string command)
+        public async Task<IActionResult> SendCommand([FromBody] string command)
         {
             try
             {
-                MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
-                return Ok("Команда отправлена.");
+                string res = await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
+                return Ok(res);
             }
             catch (Exception ex)
             {

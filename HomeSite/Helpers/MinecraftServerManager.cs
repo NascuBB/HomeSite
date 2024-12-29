@@ -12,10 +12,26 @@ namespace HomeSite.Helpers
     {
         private static MinecraftServerManager? _instance;
         //public bool IsRunning { get { return ServerConsoleProcess != null; } }
-        public bool IsRunning { 
+        public bool IsRunning 
+        { 
             get
             {
-                return ServerConsoleProcess != null;
+                if(ServerConsoleProcess == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    if(ServerConsoleProcess.HasExited == false)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        ServerConsoleProcess = null;
+                        return false;
+                    }
+                }
             }
         }
         private const string logPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
@@ -138,12 +154,12 @@ namespace HomeSite.Helpers
             }
         }
 
-        public async void SendCommand(string command)
+        public async Task<string> SendCommand(string command)
         {
-            if (string.IsNullOrEmpty(command)) { return; }
-            if (rcon == null) { return; }
+            if (string.IsNullOrEmpty(command) || command.Contains("stop")) { return "ага, фигушки"; }
+            if (rcon == null) { return "сервер еще запускается"; }
 
-            await rcon.SendCommandAsync(command);
+            return await rcon.SendCommandAsync(command);
         }
 
         private async void ReadLogInTime(CancellationToken token)
@@ -156,9 +172,6 @@ namespace HomeSite.Helpers
                     return;
                 }
                 await Task.Delay(2000);
-                File.WriteAllText(tempLogPath, string.Empty);
-
-                consoleLogs = "Логи появяться здесь...";
                 Timer timer = new(_ =>
                 {
                     try
@@ -174,6 +187,9 @@ namespace HomeSite.Helpers
                         Console.WriteLine("Ошибка копирования файла: " + ex.Message);
                     }
                 }, null, 0, 1000); // Обновление копии каждую секунду
+                File.WriteAllText(tempLogPath, string.Empty);
+
+                consoleLogs = "Логи появяться здесь...";
                 using (var fileStream = new FileStream(tempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(fileStream, Encoding.UTF8))
                 {

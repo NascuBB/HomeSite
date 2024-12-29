@@ -3,7 +3,7 @@
 }
 
 const startBtn = document.getElementById("start-server");
-const stopBtn = document.getElementById("stop-server");
+const stopBtn = document.getElementById("stopServer");
 
 if (startBtn != null) {
     startBtn.addEventListener("click", async () => {
@@ -25,12 +25,19 @@ if (startBtn != null) {
 
 if (stopBtn != null) {
     stopBtn.addEventListener("click", async () => {
-        const response = await fetch("/api/Server/stop", {
-            method: "POST",
+        const pass = document.getElementById('passInput').value;
+        if (!pass) return alert('Введите пароль');
+        const response = await fetch('/api/server/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pass),
         });
         const result = await response.text();
         if (result == "Выключение.") {
-
+            document.getElementById('text-bottom').textContent = result;
+        }
+        else {
+            return alert(result);
         }
     });
 
@@ -49,7 +56,8 @@ if (stopBtn != null) {
     document.getElementById('sendCommand').addEventListener('click', async () => {
         const command = document.getElementById('commandInput').value;
         if (!command) return alert('Введите команду');
-
+        if (command == "stop") return alert('Ага, че умный дофига?');
+        document.getElementById('commandInput').value = "";
         try {
             const response = await fetch('/api/server/command', {
                 method: 'POST',

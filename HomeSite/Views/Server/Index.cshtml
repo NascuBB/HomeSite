@@ -45,7 +45,11 @@
                     <span id="ram-usage">Использование:  еще нет%</span>
                 </div>
             </section>
-            <button class="btn btn-danger" id="stop-server"> Выключить</button>
+            <div class="pass-entry-holder input-group mb-3">
+                <input id="passInput" type="text" class="form-control" placeholder="пароль" />
+                <button class="btn btn-danger" id="stopServer">Выключить</button>
+            </div>
+            
         </section>
     }
     else
@@ -60,4 +64,4 @@
     }
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-<script src="~/js/serverIndex.js?v=6"></script>
+<script src="~/js/serverIndex.js?v=8"></script>

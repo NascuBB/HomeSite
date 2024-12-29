@@ -71,6 +71,13 @@
     min-width: 290px;
 }
 
+
+.pass-entry-holder {
+    width: 300px;
+    height: 30px;
+    margin-top: 1px;
+}
+
 .btn-green {
     background-color: #00E500;
 }
