@@ -3,6 +3,7 @@
 }
 
 .loader {
+    margin-top: -10px;
     align-self: center;
     border: 5px solid #00000000; /* Light grey */
     border-top: 5px solid #00FF00; /* Blue */
@@ -22,6 +23,33 @@
     }
 }
 
+.checkmark {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    -ms-transform: rotate(45deg); /* IE 9 */
+    -webkit-transform: rotate(45deg); /* Chrome, Safari, Opera */
+    transform: rotate(45deg);
+}
+
+.checkmark_stem {
+    position: absolute;
+    width: 5px;
+    height: 25px;
+    background-color: #0F0;
+    left: 5px;
+    top: 0px;
+}
+
+.checkmark_kick {
+    position: absolute;
+    width: 10px;
+    height: 6px;
+    background-color: #0F0;
+    left: -5px;
+    top: 19px;
+}
+
 .hideFZ {
     transition: 0.3s;
     opacity: 0;
@@ -30,6 +58,7 @@
 .showFZ{
     transition: 0.3s;
     opacity: 1;
+    display: flex;
 }
 
 .holder {
@@ -144,14 +173,14 @@
         transition: 0.3s;*/
     }
 
-.gpu {
-    color: #fbf1ec;
-    background-color: #fb5607;
+.players {
+    color: #ffedf4;
+    background-color: #ff006e;
     transition: 0.3s;
 }
 
-    .gpu:hover {
-        background-color: #d94a06;
-/*        width: 210px;
+    .players:hover {
+        background-color: #d0005a;
+        /*width: 210px;
         transition: 0.3s;*/
     }

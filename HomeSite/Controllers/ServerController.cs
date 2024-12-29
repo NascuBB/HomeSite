@@ -7,10 +7,49 @@ namespace HomeSite.Controllers
 {
     public class ServerController : Controller
     {
+        public static SendType Sendtype { get; set; }
         public IActionResult Index()
         {
-            string logis = MinecraftServerManager.GetInstance().consoleLogs;
+            string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
             return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
+
+        [HttpGet("/sse")]
+        public async Task GetServerStats()
+        {
+            Response.ContentType = "text/event-stream";
+            while (true)
+            {
+                switch (Sendtype)
+                {
+                    case SendType.Server:
+                        await Response.WriteAsync($"data: {{" +
+                            $"\"Type\": Server," +
+                            $"\"State\": {MinecraftServerManager.GetInstance().ServerState}," +
+                            $"}}\n\n");
+                        await Response.Body.FlushAsync();
+                        Sendtype = SendType.Info;
+                    break;
+                    case SendType.Info:
+                        await Response.WriteAsync($"data: {{" +
+                            $"\"Type\": Info," +
+                            $"\"Players\": {MinecraftServer.GetInstance()!.Players}," +
+                            $" \"MemoryUsage\": {(int)MinecraftServer.GetInstance()!.RamUsage}" +
+                            $"}}\n\n");
+                        await Response.Body.FlushAsync();
+                    break;
+                    case SendType.Skip:
+                    break;
+                }
+                await Task.Delay(5000);
+            }
+        }
+    }
+
+    public enum SendType
+    {
+        Info,
+        Server,
+        Skip
     }
 }

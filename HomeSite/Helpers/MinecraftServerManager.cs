@@ -1,4 +1,6 @@
 ﻿using CoreRCON;
+using HomeSite.Controllers;
+using HomeSite.Models;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Diagnostics;
@@ -34,15 +36,27 @@ namespace HomeSite.Helpers
                 }
             }
         }
+        public ServerState ServerState { get; set; }
         private const string logPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
         private const string tempLogPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
         private RCON? rcon;
         public Process? ServerConsoleProcess { get; private set; }
         public Process? ServerProcess { get; private set; }
-        private MinecraftServerManager() { }
+        private MinecraftServerManager()
+        {
+            var processes = Process.GetProcessesByName("cmd");
+            if(processes.Length > 1)
+            {
+                ServerConsoleProcess = processes[0];
+                Thread t = new Thread(() => ReadLogInTime(cts.Token));
+                t.Start();
+                Task.Run(CheckStartedServer);
+            }
+
+        }
         public string ConsoleLogs { get { return consoleLogs; } }
         private CancellationTokenSource cts = new();
-        public string consoleLogs = "Логи сервера появятся здесь...";
+        private string consoleLogs = "Логи сервера появятся здесь...";
 
         public static MinecraftServerManager GetInstance()
         {
@@ -71,6 +85,7 @@ namespace HomeSite.Helpers
         {
             try 
             {
+                ServerState = ServerState.starting;
                 if(cts.IsCancellationRequested)
                 {
                     cts = new CancellationTokenSource();
@@ -106,7 +121,7 @@ namespace HomeSite.Helpers
 
                 Thread t = new Thread(() => ReadLogInTime(cts.Token));
                 t.Start();
-                ////////Task.Run(CheckStartedServer);-------------------------
+                Task.Run(CheckStartedServer);
 
                 //Task.Run(() =>
                 //{
@@ -133,13 +148,17 @@ namespace HomeSite.Helpers
             await Task.Delay(7000);
             if (ServerProcess == null)
             {
-                var processes = Process.GetProcessesByName("Java(TM) Platform SE binary");
+                var processes = Process.GetProcessesByName("java");
                 while (processes.Length < 1)
                 {
                     await Task.Delay(1000);
-                    processes = Process.GetProcessesByName("Java(TM) Platform SE binary");
+                    processes = Process.GetProcessesByName("java");
                 }
+                ServerProcess = processes[1];
+                ServerState = ServerState.started;
                 rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                ServerController.Sendtype = SendType.Server;
+                MinecraftServer.CreateInstance(ServerProcess);
             }
         }
 
@@ -149,13 +168,14 @@ namespace HomeSite.Helpers
             {
                 if (!string.IsNullOrEmpty(msg))
                 {
-                    if (ServerProcess == null)
-                    {
-                        if (msg.Contains("Thread RCON Listener started"))
-                        {
-                            rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
-                        }
-                    }
+                    //if (ServerProcess == null)
+                    //{
+                    //    if (msg.Contains("Thread RCON Listener started"))
+                    //    {
+                    //        rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                    //        ServerState = ServerState.started;
+                    //    }
+                    //}
                     var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                     await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
                     consoleLogs += "\n" + msg;
@@ -178,10 +198,8 @@ namespace HomeSite.Helpers
 
         private async void ReadLogInTime(CancellationToken token)
         {
-            
             try
             {
-                
                 if (!File.Exists(logPath))
                 {
                     Console.WriteLine("Файл логов не найден.");
@@ -246,7 +264,46 @@ namespace HomeSite.Helpers
         }
     }
 
+    public class MinecraftServer
+    {
+        private static MinecraftServer? _instance;
+        private Process ServerProcess { get; }
+        private CancellationTokenSource cts;
+        public int Players { get; }
+        public float RamUsage { get; }
+        private int players = 0;
+        private float ramUsage = 0;
+        private MinecraftServer(Process serverProcess)
+        {
+            ServerProcess = serverProcess;
+            cts = new CancellationTokenSource();
+            Task.Run(() => StartClock(cts.Token));
+        }
 
+        public static void CreateInstance(Process serverProcess)
+        {
+            if (_instance != null) return;
+            _instance = new (serverProcess);
+        }
+
+        public static MinecraftServer? GetInstance()
+        {
+            return _instance;
+        }
+
+        public void StopClock()
+        {
+            cts.Cancel();
+        }
+
+        private async Task StartClock(CancellationToken token)
+        {
+            while(!token.IsCancellationRequested)
+            {
+                await Task.Delay(5000, token);
+            }
+        }
+    }
 
     public class MinecraftLogHub : Hub
     {

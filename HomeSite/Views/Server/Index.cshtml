@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="~/css/serverIndex.css" />
 <div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
     <div class="text-muted">
-        <h1 class="text-white">Сервер</h1>
+        <h1 class="text-white display-4">Сервер</h1>
     </div>
     <p></p>
     @if(Model.IsRunning)
@@ -22,23 +22,35 @@
                 </div>
             </div>
             <div class="d-flex align-content-center justify-content-center flex-row gap-3">
+                <p id="text-bottom">Сервер запускается</p>
                 @switch(Model.ServerState)
                 {
                     case ServerState.starting:
-                        <p id="text-bottom">Сервер запускается</p>
-                        <div id="loading" class="loader"></div>
+                        <div id="loading" class="loader showFZ"></div>
+                        <span id="check" class="checkmark hideFZ">
+                            <div class="checkmark_stem"></div>
+                            <div class="checkmark_kick"></div>
+                        </span>
+                        break;
+
+                    case ServerState.started:
+                        <div id="loading" class="loader hideFZ"></div>
+                        <span id="check" class="checkmark showFZ">
+                            <div class="checkmark_stem"></div>
+                            <div class="checkmark_kick"></div>
+                        </span>
                         break;
                 }
             </div>
             <section class="holder">
-                <label class="grow1 cpu">
-                    <h1>CPU</h1>
-                    <p id="cpu-usage">Использование: еще нет%</p>
+                <label class="grow1 players">
+                    <h1>ИГРОКИ</h1>
+                    <p id="players-online">Онлайн: еще нет</p>
                 </label>
-                <div class="grow1 gpu">
+@*                 <div class="grow1 gpu">
                     <h1>GPU</h1>
                     <p id="gpu-usage">Использование:  еще нет%</p>
-                </div>
+                </div> *@
                 <div class="grow1 ram">
                     <h1>RAM</h1>
                     <span id="ram-free">Свободно: хз MB</span>

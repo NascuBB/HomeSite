@@ -24,6 +24,29 @@ if (startBtn != null) {
 }
 
 if (stopBtn != null) {
+
+    const eventSource = new EventSource('/sse');
+
+    eventSource.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.Type == "Info") {
+            document.getElementById('cpu-usage').textContent = `Использование: ${data.CpuUsage}%`;
+            document.getElementById('ram-free').textContent = `Свободно: ${data.MemoryUsage} MB`;
+            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(100 - ((data.MemoryUsage / 15800) * 100)).toFixed(2)}%`;
+            document.getElementById('gpu-usage').textContent = `Использование: ${data.GpuUsage}%`;
+        }
+        else if (data.Type == "Server") {
+            document.getElementById('text-bottom').textContent = 'Сервер запущен';
+            document.getElementById('loading').className = 'hideFZ loader';
+            document.getElementById('check').className = 'showFZ checkmark';
+        }
+    };
+
+    eventSource.onerror = function (error) {
+        console.error('SSE Error:', error);
+    };
+
     stopBtn.addEventListener("click", async () => {
         const pass = document.getElementById('passInput').value;
         if (!pass) return alert('Введите пароль');
