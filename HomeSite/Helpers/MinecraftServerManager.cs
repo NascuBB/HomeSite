@@ -93,7 +93,7 @@ namespace HomeSite.Helpers
             };
 
             //process.OutputDataReceived += Process_OutputDataReceived;
-
+            File.WriteAllText(logPath, string.Empty);
             ServerConsoleProcess = process;
             process.Start();
 
