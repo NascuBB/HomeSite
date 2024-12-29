@@ -53,12 +53,12 @@ namespace HomeSite.Helpers
         {
             try
             {
-                SendCommand("stop");
-                while(!ServerConsoleProcess.HasExited)
-                {
-                    await Task.Delay(1000);
-                }
-                ServerConsoleProcess = null;
+                await SendCommand("stop");
+                //while(!ServerConsoleProcess.HasExited)
+                //{
+                //    await Task.Delay(1000);
+                //}
+                //ServerConsoleProcess = null;
                 rcon = null;
                 cts.Cancel();
             }
@@ -69,56 +69,63 @@ namespace HomeSite.Helpers
         }
         public async Task LaunchServer()
         {
-            if(cts.IsCancellationRequested)
+            try 
             {
-                cts = new CancellationTokenSource();
-            }
-            if(ServerConsoleProcess != null)
-            {
-                throw new Exception("Сервер уже запущен");
-            }
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
+                if(cts.IsCancellationRequested)
                 {
-                    FileName = @"C:\Users\nonam\AppData\Roaming\.minecraft\run.bat",
-                    //Arguments = "-Xmx1024M -Xms1024M -jar forge-server.jar nogui",
-                    WorkingDirectory = @"C:\Users\nonam\AppData\Roaming\.minecraft",
-                    RedirectStandardOutput = false,
-                    RedirectStandardError = false,
-                    UseShellExecute = true,
-                    CreateNoWindow = false,
-                },
-                EnableRaisingEvents = true
-            };
+                    cts = new CancellationTokenSource();
+                }
+                if(ServerConsoleProcess != null)
+                {
+                    throw new Exception("Сервер уже запущен");
+                }
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = @"C:\Users\nonam\AppData\Roaming\.minecraft\run.bat",
+                        //Arguments = "-Xmx1024M -Xms1024M -jar forge-server.jar nogui",
+                        WorkingDirectory = @"C:\Users\nonam\AppData\Roaming\.minecraft",
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
+                        UseShellExecute = true,
+                        CreateNoWindow = false,
+                    },
+                    EnableRaisingEvents = true
+                };
 
-            //process.OutputDataReceived += Process_OutputDataReceived;
-            File.WriteAllText(logPath, string.Empty);
-            ServerConsoleProcess = process;
-            process.Start();
+                //process.OutputDataReceived += Process_OutputDataReceived;
+                File.WriteAllText(logPath, string.Empty);
+                ServerConsoleProcess = process;
+                process.Start();
 
-            //Task.Run(() =>
-            //{
-            //    HookConsoleLog.Iniciate(process.Id);
-            //});
+                //Task.Run(() =>
+                //{
+                //    HookConsoleLog.Iniciate(process.Id);
+                //});
 
-            Thread t = new Thread(() => ReadLogInTime(cts.Token));
-            t.Start();
-            ////////Task.Run(CheckStartedServer);-------------------------
+                Thread t = new Thread(() => ReadLogInTime(cts.Token));
+                t.Start();
+                ////////Task.Run(CheckStartedServer);-------------------------
 
-            //Task.Run(() =>
-            //{
-            //    while (!process.HasExited)
-            //    {
-            //        var output = process.StandardOutput.ReadLine();
-            //        if (!string.IsNullOrEmpty(output))
-            //        {
-            //            //Console.WriteLine("Синхронный вывод: " + output);
-            //            OutputDataReceived(output);
-            //        }
-            //    }
-            //});
-            await Task.CompletedTask;
+                //Task.Run(() =>
+                //{
+                //    while (!process.HasExited)
+                //    {
+                //        var output = process.StandardOutput.ReadLine();
+                //        if (!string.IsNullOrEmpty(output))
+                //        {
+                //            //Console.WriteLine("Синхронный вывод: " + output);
+                //            OutputDataReceived(output);
+                //        }
+                //    }
+                //});
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private async void CheckStartedServer()
@@ -138,19 +145,26 @@ namespace HomeSite.Helpers
 
         public async void OutputDataReceived(string? msg)
         {
-            if (!string.IsNullOrEmpty(msg))
+            try
             {
-                if(ServerProcess == null)
+                if (!string.IsNullOrEmpty(msg))
                 {
-                    if(msg.Contains("Thread RCON Listener started"))
+                    if (ServerProcess == null)
                     {
-                        rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                        if (msg.Contains("Thread RCON Listener started"))
+                        {
+                            rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                        }
                     }
+                    var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
+                    await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
+                    consoleLogs += "\n" + msg;
+                    return;
                 }
-                var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
-                await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
-                consoleLogs += "\n" + msg;
-                return;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
         }
 
@@ -164,35 +178,23 @@ namespace HomeSite.Helpers
 
         private async void ReadLogInTime(CancellationToken token)
         {
+            
             try
             {
+                
                 if (!File.Exists(logPath))
                 {
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
                 await Task.Delay(2000);
-                Timer timer = new(_ =>
-                {
-                    try
-                    {
-                        if(token.IsCancellationRequested)
-                        {
-                            return;
-                        }
-                        File.Copy(logPath, tempLogPath, true); // Копирование файла
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Ошибка копирования файла: " + ex.Message);
-                    }
-                }, null, 0, 1000); // Обновление копии каждую секунду
                 File.WriteAllText(tempLogPath, string.Empty);
-
                 consoleLogs = "Логи появяться здесь...";
+                CloneCycle(token);
                 using (var fileStream = new FileStream(tempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(fileStream, Encoding.UTF8))
                 {
+                    //Catched:
                     Console.WriteLine("Чтение копии логов...");
 
                     // Переместить указатель на конец файла
@@ -219,6 +221,27 @@ namespace HomeSite.Helpers
             catch(Exception ex)
             {
                 Console.WriteLine($"{ex.Message}");
+                //goto Catched;
+            }
+        }
+
+        private async Task CloneCycle(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    File.Copy(logPath, tempLogPath, true); // Копирование файла
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Ошибка копирования файла: " + ex.Message);
+                }
+                await Task.Delay(1000, token);
             }
         }
     }

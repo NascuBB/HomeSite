@@ -29,7 +29,7 @@ try
         // Настройка HTTPS
         options.Listen(System.Net.IPAddress.Parse("192.168.31.204"), 443, listenOptions =>
         {
-            listenOptions.UseHttps("certificate.pfx", "gamemode1");
+            listenOptions.UseHttps(@"C:\Users\nonam\source\publish\certificate.pfx", "gamemode1");
         });
     });
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);
