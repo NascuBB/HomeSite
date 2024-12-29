@@ -1,0 +1,150 @@
+﻿body {
+    transition: 0.3s;
+}
+
+.loader {
+    align-self: center;
+    border: 5px solid #00000000; /* Light grey */
+    border-top: 5px solid #00FF00; /* Blue */
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    animation: spin 0.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.hideFZ {
+    transition: 0.3s;
+    opacity: 0;
+    display: none;
+}
+.showFZ{
+    transition: 0.3s;
+    opacity: 1;
+}
+
+.holder {
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 100%;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    transition: 0.3s;
+}
+
+
+.log-holder {
+    width: 90%;
+    min-width: 300px;
+    height: 600px;
+    border-radius: 10px;
+    border: medium solid #00FF00;
+}
+.log-header{
+    height: 7%;
+    background-color: #00FF0020
+}
+.log-win {
+    padding: 5px;
+    align-content: start;
+    align-items: start;
+    text-align: start;
+    height: 86.3%;
+    overflow: scroll;
+}
+.log-entry-holder {
+    height: 30px;
+    margin-top: 1px;
+    width: 99.9%;
+    min-width: 290px;
+}
+
+.btn-green {
+    background-color: #00E500;
+}
+
+    .btn-green:hover {
+        background-color: #00C000;
+    }
+
+    .btn-green:focus, .btn-green:active:focus {
+        background-color: #00FF00;
+        box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00FF00;
+    }
+
+
+
+.grow1 {
+    flex-direction: column;
+    /*width: 200px;*/
+    height: 110px;
+    max-height: 150px;
+    display: flex;
+    flex-grow: 1;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+    .grow1 > h1 {
+        font-size: 2.5em;
+    }
+
+.cpu {
+    color: #eaf2ff;
+    background-color: #3a86ff;
+    transition: 0.3s;
+}
+
+    .cpu:hover {
+        background-color: #3570ef;
+/*        width: 210px;
+        transition: 0.3s;*/
+    }
+
+.ram {
+    color: #e8e6ec;
+    background-color: #8338ec;
+    transition: 0.3s;
+}
+
+    .ram:hover {
+        background-color: #6b2dc0;
+/*        width: 210px;
+        transition: 0.3s;*/
+    }
+
+.temp {
+    color: #ffedf4;
+    background-color: #ff006e;
+    transition: 0.3s;
+}
+
+    .temp:hover {
+        background-color: #cb0057;
+/*        width: 210px;
+        transition: 0.3s;*/
+    }
+
+.gpu {
+    color: #fbf1ec;
+    background-color: #fb5607;
+    transition: 0.3s;
+}
+
+    .gpu:hover {
+        background-color: #d94a06;
+/*        width: 210px;
+        transition: 0.3s;*/
+    }

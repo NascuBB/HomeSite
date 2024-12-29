@@ -1,0 +1,122 @@
+﻿body
+{
+
+}
+
+.layout
+{
+    width: 100%;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.grow1 {
+    flex-direction: column;
+    width: 200px;
+    height: 110px;
+    max-height: 150px;
+    display: flex;
+    flex-grow: 1;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+.grow1 > h1{
+    font-size: 2.5em;
+}
+.cpu {
+    color: #eaf2ff;
+    background-color: #3a86ff;
+}
+    .cpu:hover {
+        background-color: #3570ef;
+        width: 230px;
+        transition: 0.3s;
+    }
+
+#cpuInput {
+    display: none;
+}
+
+    #cpuInput:checked + .cpu {
+        padding-left: 10px;
+        transition:0.3s;
+        height: 500px;
+        text-align:start;
+    }
+
+.ram {
+    color: #e8e6ec;
+    background-color: #8338ec;
+}
+    .ram:hover {
+        background-color: #6b2dc0;
+        width: 230px;
+        transition: 0.3s;
+    }
+
+.temp {
+    color: #ffedf4;
+    background-color: #ff006e;
+}
+    .temp:hover {
+        background-color: #cb0057;
+        width: 230px;
+        transition: 0.3s;
+    }
+
+.gpu {
+    color: #fbf1ec;
+    background-color: #fb5607;
+}
+    .gpu:hover {
+        background-color: #d94a06;
+        width: 230px;
+        transition: 0.3s;
+    }
+
+.hideFZ{
+    transition: 0.3s;
+    opacity: 0;
+}
+
+
+/*
+#btnControl {
+    display: none;
+}
+
+.btn {
+    width: 60px;
+    height: 20px;
+    background: silver;
+    border-radius: 5px;
+    padding: 1px 3px;
+    box-shadow: 1px 1px 1px #000;
+    display: block;
+    text-align: center;
+    background-image: linear-gradient(to bottom, #f4f5f5, #dfdddd);
+    font-family: arial;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+    .btn:hover {
+        background-image: linear-gradient(to bottom, #c3e3fa, #a5defb);
+    }
+
+
+    .btn:active {
+        margin-left: 1px 1px 0;
+        box-shadow: -1px -1px 1px #000;
+        outline: 1px solid black;
+        background-image: linear-gradient(to top, #f4f5f5, #dfdddd);
+    }
+
+#btnControl:checked + label {
+    width: 70px;
+    height: 74px;
+    line-height: 74px;
+}*/

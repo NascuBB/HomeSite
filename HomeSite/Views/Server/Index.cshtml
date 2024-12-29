@@ -1,0 +1,63 @@
+﻿@model ServerViewModel
+@{
+    ViewData["Title"] = "Minecraft server";
+}
+<link rel="stylesheet" href="~/css/serverIndex.css" />
+<div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
+    <div class="text-muted">
+        <h1 class="text-white">Сервер</h1>
+    </div>
+    <p></p>
+    @if(Model.IsRunning)
+    {
+        <section class="holder">
+            <div class="log-holder">
+                <div class="log-header"><h4 style="padding-top: 7px">Консоль</h4></div>
+                <div id="logs" class="log-win">
+                    <em style="white-space: pre-line">@Model.logs</em>
+                </div>
+                <div class="log-entry-holder input-group mb-3">
+                    <input id="commandInput" type="text" class="form-control" placeholder="console..." />
+                    <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
+                </div>
+            </div>
+            <div class="d-flex align-content-center justify-content-center flex-row gap-3">
+                @switch(Model.ServerState)
+                {
+                    case ServerState.starting:
+                        <p id="text-bottom">Сервер запускается</p>
+                        <div id="loading" class="loader"></div>
+                        break;
+                }
+            </div>
+            <section class="holder">
+                <label class="grow1 cpu">
+                    <h1>CPU</h1>
+                    <p id="cpu-usage">Использование: еще нет%</p>
+                </label>
+                <div class="grow1 gpu">
+                    <h1>GPU</h1>
+                    <p id="gpu-usage">Использование:  еще нет%</p>
+                </div>
+                <div class="grow1 ram">
+                    <h1>RAM</h1>
+                    <span id="ram-free">Свободно: хз MB</span>
+                    <span id="ram-usage">Использование:  еще нет%</span>
+                </div>
+            </section>
+            <button class="btn btn-danger" id="stop-server"> Выключить</button>
+        </section>
+    }
+    else
+    {
+        <div class="d-flex align-content-center justify-content-center flex-column">
+            <p id="text-top">
+                Сервер не запущен.
+            </p>
+            <button class="btn btn-success" id="start-server">Staaaaaaaaaaaart</button>
+            <div id="loading" class="loader hideFZ"></div>
+        </div>
+    }
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script src="~/js/serverIndex.js?v=5"></script>

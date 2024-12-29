@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Main Page";
+}
+<link rel="stylesheet" href="~/css/index.css"/>
+<script src="~/js/index.js?v=3"></script>
+<div class="text-center">
+    <h1 class="display-4">Велкам</h1>
+    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+    <section class="layout">
+        <label class="grow1 cpu">
+            <h1>CPU</h1>
+            <p id="cpu-usage">Использование: 10%</p>
+        </label>
+        <div class="grow1 gpu">
+            <h1>GPU</h1>
+            <p id="gpu-usage">Использование: 5%</p>
+        </div>
+        <div class="grow1 ram">
+            <h1>RAM</h1>
+            <span id="ram-free">Свободно: 2888 MB</span>
+            <span id="ram-usage">Использование: 81%</span>
+        </div>
+@*         <div class="grow1 temp">
+            <h1>Temp</h1>
+            <p>avg: 60</p>
+        </div> *@
+    </section>
+    <p class="display-5" id="firstZero">(первое всегда 0)</p>
+</div>
