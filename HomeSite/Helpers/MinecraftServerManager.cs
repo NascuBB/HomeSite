@@ -24,6 +24,7 @@ namespace HomeSite.Helpers
         public Process? ServerProcess { get; private set; }
         private MinecraftServerManager() { }
         public string ConsoleLogs { get { return consoleLogs; } }
+        private CancellationTokenSource cts = new();
         private string consoleLogs = "Логи сервера появятся здесь...";
 
         public static MinecraftServerManager GetInstance()
@@ -35,7 +36,13 @@ namespace HomeSite.Helpers
         {
             try
             {
-                MinecraftServerManager.GetInstance().SendCommand("stop");
+                SendCommand("stop");
+                while(!ServerConsoleProcess.HasExited)
+                {
+                    await Task.Delay(1000);
+                }
+                ServerConsoleProcess = null;
+                cts.Cancel();
             }
             catch(Exception ex)
             {
@@ -44,6 +51,10 @@ namespace HomeSite.Helpers
         }
         public async Task LaunchServer()
         {
+            if(cts.IsCancellationRequested)
+            {
+                cts = new CancellationTokenSource();
+            }
             if(ServerConsoleProcess != null)
             {
                 throw new Exception("Сервер уже запущен");
@@ -73,7 +84,7 @@ namespace HomeSite.Helpers
             //    HookConsoleLog.Iniciate(process.Id);
             //});
 
-            Thread t = new Thread(() => ReadLogInTime());
+            Thread t = new Thread(() => ReadLogInTime(cts.Token));
             t.Start();
 
             //Task.Run(() =>
@@ -117,7 +128,7 @@ namespace HomeSite.Helpers
             await rcon.SendCommandAsync(command);
         }
 
-        private async void ReadLogInTime()
+        private async void ReadLogInTime(CancellationToken token)
         {
             try
             {
@@ -126,17 +137,16 @@ namespace HomeSite.Helpers
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
-
-                if(File.Exists(tempLogPath))
-                {
-                    File.WriteAllText(tempLogPath, "");
-                }
                 consoleLogs = "Логи появяться здесь...";
 
                 Timer timer = new Timer(_ =>
                 {
                     try
                     {
+                        if(token.IsCancellationRequested)
+                        {
+                            return;
+                        }
                         File.Copy(logPath, tempLogPath, true); // Копирование файла
                     }
                     catch (Exception ex)
@@ -163,6 +173,10 @@ namespace HomeSite.Helpers
                         else
                         {
                             Thread.Sleep(100); // Пауза, если новых строк нет
+                        }
+                        if(token.IsCancellationRequested)
+                        {
+                            break;
                         }
                     }
                 }

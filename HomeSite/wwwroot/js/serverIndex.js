@@ -51,7 +51,7 @@ if (stopBtn != null) {
         if (!command) return alert('Введите команду');
 
         try {
-            const response = await fetch('/api/MinecraftLogs/command', {
+            const response = await fetch('/api/server/command', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(command),
