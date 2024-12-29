@@ -99,8 +99,8 @@ namespace HomeSite.Helpers
                 {
                     if (msg.Contains("Starting minecraft server version"))
                     {
-                        rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
-                        ServerProcess = Process.GetProcessesByName("Minecraft server")[0];
+                        //rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
+                        //ServerProcess = Process.GetProcessesByName("Minecraft server")[0];
                     }
                 }
                 var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
@@ -126,6 +126,12 @@ namespace HomeSite.Helpers
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
+
+                if(File.Exists(tempLogPath))
+                {
+                    File.WriteAllText(tempLogPath, "");
+                }
+                consoleLogs = "Логи появяться здесь...";
 
                 Timer timer = new Timer(_ =>
                 {
