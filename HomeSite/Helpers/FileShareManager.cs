@@ -47,7 +47,7 @@ namespace HomeSite.Helpers
                 {
                     await file.CopyToAsync(stream);
                 }
-                SharedFiles.Add(new ShareFileInfo { Description = "", ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
+                SharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
                 return filename;
 
@@ -64,6 +64,7 @@ namespace HomeSite.Helpers
     public class ShareFileInfo
     {
         public string Filename { get; set; }
+        public string OriginalFilename { get; set; }
         public DateTime ExpireTime { get; set; }
         public string Description { get; set; }
         //public bool Public { get; set; }

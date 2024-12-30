@@ -1,10 +1,20 @@
 ﻿
 
 <h3 class="text-white display-4 text-center">Обменник</h3>
-<div class="d-flex flex-wrap align-items-start text-center gap-2">
+<div class="m-4 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-5 ">
 
-	<div class="d-flex flex-column align-content-start align-items-start">
+	<div class="d-flex flex-column align-self-center align-content-start align-items-start gap-3">
 		<span>Получить архив с модами этого сервера:</span>
 		<a asp-controller="Home" asp-action="Index" class="btn btn-green align-self-center">Скачать</a>
+	</div>
+	<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
+		<div>
+			<span>Загрузить файл на сервер</span>
+			<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Есть ограничения по длительности хранения файла. Они будут лежать на сервере всего 3 дня, после чего будут удалены">🛈</button>
+		</div>
+		<div class="input-group">
+			<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
+			<button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
+		</div>
 	</div>
 </div>
