@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace HomeSite.Helpers
 {
@@ -315,13 +316,24 @@ namespace HomeSite.Helpers
         {
             while(!token.IsCancellationRequested)
             {
-                ServerProcess.Refresh();
-                ramUsage = (ServerProcess.WorkingSet64/1024/1024) - 78;
-                #if !DEBUG
-                string plRaw = await MinecraftServerManager.GetInstance().SendCommand("list");
-                players = int.Parse(plRaw.Split("")[1]);
-                #endif
-                await Task.Delay(5000, token);
+                try
+                {
+
+                    ServerProcess.Refresh();
+                    ramUsage = (ServerProcess.WorkingSet64 / 1024 / 1024) - 78;
+#if !DEBUG
+                    string plRaw = await MinecraftServerManager.GetInstance().SendCommand("list");
+                    int.TryParse(new string(plRaw
+                     .SkipWhile(x => !char.IsDigit(x))
+                     .TakeWhile(x => char.IsDigit(x))
+                     .ToArray()), out players);
+#endif
+                    await Task.Delay(5000, token);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
     }
