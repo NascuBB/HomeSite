@@ -8,6 +8,7 @@ namespace HomeSite.Controllers
     public class ServerController : Controller
     {
         public static SendType Sendtype { get; set; } = SendType.Skip;
+        private int adaptivePing = 1000;
         public IActionResult Index()
         {
             string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
@@ -31,6 +32,7 @@ namespace HomeSite.Controllers
                         Sendtype = SendType.Info;
                     break;
                     case SendType.Info:
+                        adaptivePing = 5000;
                         await Response.WriteAsync($"data: {{" +
                             $"\"Type\": \"Info\"," +
                             $"\"Players\": {MinecraftServer.GetInstance()!.Players}," +
@@ -41,7 +43,7 @@ namespace HomeSite.Controllers
                     case SendType.Skip:
                     break;
                 }
-                await Task.Delay(5000);
+                await Task.Delay(adaptivePing);
             }
         }
     }
