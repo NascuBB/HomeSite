@@ -32,14 +32,14 @@ if (stopBtn != null) {
             const data = JSON.parse(event.data);
 
             if (data.Type == "Info") {
-                if (loaderC.classList.contains('hideFZ')) {
-                    document.getElementById('text-bottom').textContent = 'Сервер запущен';
-                    loaderC.className = 'hideFZ loader';
-                    document.getElementById('check').className = 'showFZ checkmark';
-                }
+                //if (loaderC.classList.contains('hideFZ')) {
+                //    document.getElementById('text-bottom').textContent = 'Сервер запущен';
+                //    loaderC.className = 'hideFZ loader';
+                //    document.getElementById('check').className = 'showFZ checkmark';
+                //}
                 document.getElementById('players-online').textContent = `Онлайн: ${data.Players}`;
-                document.getElementById('ram-free').textContent = `Свободно: ${data.MemoryUsage} MB`;
-                document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(100 - ((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
+                document.getElementById('ram-free').textContent = `Занято: ${data.MemoryUsage} MB`;
+                document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
             }
             else if (data.Type == "Server") {
                 

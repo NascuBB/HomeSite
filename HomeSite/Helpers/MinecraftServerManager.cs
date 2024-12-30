@@ -69,7 +69,9 @@ namespace HomeSite.Helpers
         {
             try
             {
-                await SendCommand("stop");
+                if (rcon == null) { return; }
+
+                await rcon.SendCommandAsync("stop");
                 //while(!ServerConsoleProcess.HasExited)
                 //{
                 //    await Task.Delay(1000);
@@ -156,7 +158,10 @@ namespace HomeSite.Helpers
                     await Task.Delay(1000);
                     processes = Process.GetProcessesByName("java");
                 }
-                ServerProcess = processes[1];
+                if(processes.Length == 1)
+                    ServerProcess = processes[0];
+                else
+                    ServerProcess = processes[1];
                 ServerState = ServerState.started;
                 rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
                 ServerController.Sendtype = SendType.Server;
@@ -177,8 +182,11 @@ namespace HomeSite.Helpers
                             CheckStartedServer();
                         }
                     }
-                    var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
-                    await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
+                    if(!msg.Contains("ERROR"))
+                    {
+                        var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
+                        await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
+                    }
                     consoleLogs += "\n" + msg;
                     return;
                 }
@@ -191,8 +199,8 @@ namespace HomeSite.Helpers
 
         public async Task<string> SendCommand(string command)
         {
-            if (string.IsNullOrEmpty(command) || command.Contains("stop")) { return "ага, фигушки"; }
             if (rcon == null) { return "сервер еще запускается"; }
+            if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
 
             return await rcon.SendCommandAsync(command);
         }
@@ -270,8 +278,8 @@ namespace HomeSite.Helpers
         private static MinecraftServer? _instance;
         private Process ServerProcess { get; }
         private CancellationTokenSource cts;
-        public int Players { get; }
-        public float RamUsage { get; }
+        public int Players { get => players; }
+        public float RamUsage { get => ramUsage; }
         private int players = 0;
         private float ramUsage = 0;
         private MinecraftServer(Process serverProcess)
@@ -279,6 +287,12 @@ namespace HomeSite.Helpers
             ServerProcess = serverProcess;
             cts = new CancellationTokenSource();
             Task.Run(() => StartClock(cts.Token));
+        }
+
+        ~MinecraftServer()
+        {
+            StopClock();
+            _instance = null;
         }
 
         public static void CreateInstance(Process serverProcess)
@@ -301,6 +315,12 @@ namespace HomeSite.Helpers
         {
             while(!token.IsCancellationRequested)
             {
+                ServerProcess.Refresh();
+                ramUsage = (ServerProcess.WorkingSet64/1024/1024) - 78;
+                #if !DEBUG
+                string plRaw = await MinecraftServerManager.GetInstance().SendCommand("list");
+                players = int.Parse(plRaw.Split("")[1]);
+                #endif
                 await Task.Delay(5000, token);
             }
         }
