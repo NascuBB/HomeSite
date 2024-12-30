@@ -66,7 +66,7 @@ try
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
-    //app.MapControllers();
+    app.MapControllers();
 
     Helper.SetThisApp(app);
 

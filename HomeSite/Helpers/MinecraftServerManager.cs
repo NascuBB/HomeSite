@@ -31,6 +31,7 @@ namespace HomeSite.Helpers
                     else
                     {
                         ServerConsoleProcess = null;
+                        ServerController.Sendtype = SendType.Skip;
                         return false;
                     }
                 }
@@ -51,6 +52,7 @@ namespace HomeSite.Helpers
                 Thread t = new Thread(() => ReadLogInTime(cts.Token));
                 t.Start();
                 Task.Run(CheckStartedServer);
+                ServerController.Sendtype = SendType.Skip;
             }
 
         }
@@ -121,7 +123,7 @@ namespace HomeSite.Helpers
 
                 Thread t = new Thread(() => ReadLogInTime(cts.Token));
                 t.Start();
-                Task.Run(CheckStartedServer);
+                //Task.Run(CheckStartedServer);
 
                 //Task.Run(() =>
                 //{
@@ -145,7 +147,7 @@ namespace HomeSite.Helpers
 
         private async void CheckStartedServer()
         {
-            await Task.Delay(7000);
+            //await Task.Delay(7000);
             if (ServerProcess == null)
             {
                 var processes = Process.GetProcessesByName("java");
@@ -168,14 +170,13 @@ namespace HomeSite.Helpers
             {
                 if (!string.IsNullOrEmpty(msg))
                 {
-                    //if (ServerProcess == null)
-                    //{
-                    //    if (msg.Contains("Thread RCON Listener started"))
-                    //    {
-                    //        rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
-                    //        ServerState = ServerState.started;
-                    //    }
-                    //}
+                    if (ServerProcess == null)
+                    {
+                        if (msg.Contains("Thread RCON Listener started"))
+                        {
+                            CheckStartedServer();
+                        }
+                    }
                     var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                     await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
                     consoleLogs += "\n" + msg;

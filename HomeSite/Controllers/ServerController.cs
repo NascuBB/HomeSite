@@ -7,14 +7,14 @@ namespace HomeSite.Controllers
 {
     public class ServerController : Controller
     {
-        public static SendType Sendtype { get; set; }
+        public static SendType Sendtype { get; set; } = SendType.Skip;
         public IActionResult Index()
         {
             string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
             return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
 
-        [HttpGet("/sse")]
+        [HttpGet("/Server/sti")]
         public async Task GetServerStats()
         {
             Response.ContentType = "text/event-stream";
@@ -24,15 +24,15 @@ namespace HomeSite.Controllers
                 {
                     case SendType.Server:
                         await Response.WriteAsync($"data: {{" +
-                            $"\"Type\": Server," +
-                            $"\"State\": {MinecraftServerManager.GetInstance().ServerState}," +
+                            $"\"Type\": \"Server\"," +
+                            $"\"State\": \"{MinecraftServerManager.GetInstance().ServerState}\"" +
                             $"}}\n\n");
                         await Response.Body.FlushAsync();
                         Sendtype = SendType.Info;
                     break;
                     case SendType.Info:
                         await Response.WriteAsync($"data: {{" +
-                            $"\"Type\": Info," +
+                            $"\"Type\": \"Info\"," +
                             $"\"Players\": {MinecraftServer.GetInstance()!.Players}," +
                             $" \"MemoryUsage\": {(int)MinecraftServer.GetInstance()!.RamUsage}" +
                             $"}}\n\n");
