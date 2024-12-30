@@ -12,6 +12,19 @@ html {
     box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #258cfb;
 }
 
+.btn-green {
+    background-color: #00E500;
+}
+
+    .btn-green:hover {
+        background-color: #00C000;
+    }
+
+    .btn-green:focus, .btn-green:active:focus {
+        background-color: #00E500;
+        box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00FF00;
+    }
+
 html {
   position: relative;
   min-height: 100%;

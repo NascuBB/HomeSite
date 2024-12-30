@@ -108,19 +108,6 @@
     margin-top: 1px;
 }
 
-.btn-green {
-    background-color: #00E500;
-}
-
-    .btn-green:hover {
-        background-color: #00C000;
-    }
-
-    .btn-green:focus, .btn-green:active:focus {
-        background-color: #00FF00;
-        box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00FF00;
-    }
-
 
 
 .grow1 {
