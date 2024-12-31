@@ -28,9 +28,12 @@ namespace HomeSite.Controllers
 
         [HttpGet]
         [Route("downloadfile")]
-        public async Task<IActionResult> DownloadFile(string filename)
+        public async Task<IActionResult> DownloadFile(string id)
         {
-            var filepath = Path.Combine(FileShareManager.folder, filename);
+            ShareFileInfo? sharedFile = FileShareManager.SharedFiles!.Find(x => x.Filename.Split('.')[0] == id);
+            if (sharedFile == null) return NotFound();
+
+            string filepath = Path.Combine(FileShareManager.folder, sharedFile.Filename);
 
             var provider = new FileExtensionContentTypeProvider();
             if (!provider.TryGetContentType(filepath, out var contenttype))
@@ -39,7 +42,7 @@ namespace HomeSite.Controllers
             }
 
             var bytes = await System.IO.File.ReadAllBytesAsync(filepath);
-            return File(bytes, contenttype, Path.GetFileName(filepath));
+            return File(bytes, contenttype, sharedFile.OriginalFilename);
         }
     }
 }

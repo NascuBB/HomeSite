@@ -1,0 +1,15 @@
+﻿body {
+    transition: 0.3s;
+}
+
+.hideFZ {
+    transition: 0.3s;
+    opacity: 0;
+    display: none;
+}
+
+.showFZ {
+    transition: 0.3s;
+    opacity: 1;
+    display: flex;
+}

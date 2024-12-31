@@ -40,8 +40,9 @@ namespace HomeSite.Helpers
             string filename = "";
             try
             {
+                string id = DateTime.Now.Ticks.ToString();
                 var extension = "." + file.FileName.Split('.')[file.FileName.Split('.').Length - 1];
-                filename = DateTime.Now.Ticks.ToString() + extension;
+                filename = id + extension;
 
                 var exactpath = Path.Combine(folder, filename);
                 using (var stream = new FileStream(exactpath, FileMode.Create))
@@ -50,7 +51,7 @@ namespace HomeSite.Helpers
                 }
                 sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));
-                return filename;
+                return id;
 
             }
             catch (Exception ex)

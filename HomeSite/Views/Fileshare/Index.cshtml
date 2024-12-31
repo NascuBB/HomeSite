@@ -1,5 +1,5 @@
 ﻿
-
+<link rel="stylesheet" href="~/css/fileshare.css" />
 <h3 class="text-white display-4 text-center">Обменник</h3>
 <div class="m-4 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-5 ">
 
@@ -7,15 +7,32 @@
 		<span>Получить архив с модами этого сервера:</span>
 		<a asp-controller="Home" asp-action="Index" class="btn btn-green align-self-center">Скачать</a>
 	</div>
-	<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
-		<div>
-			<span>Загрузить файл на сервер</span>
-			<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Есть ограничения по длительности хранения файла. Они будут лежать на сервере всего 3 дня, после чего будут удалены">🛈</button>
+	<div class="gap-5 d-flex flex-column">
+		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
+			<div>
+				<span>Загрузить файл на сервер</span>
+				<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Есть ограничения по длительности хранения файла. Они будут лежать на сервере всего 3 дня, после чего будут удалены">🛈</button>
+			</div>
+			<div class="input-group">
+				<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
+				<button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
+			</div>
+			<span>По успешной загрузке тут появится ID файла. <u class="text-danger">Его нужно запомнить</u></span>
+			<div class="input-group">
+				<span class="input-group-text" type="button">ID: </span>
+				<span class="form-control" id="fileIdResult"></span>
+				<button class="btn btn-green text-white btn-outline-secondary" type="button" id="copyIdButton">Копировать</button>
+			</div>
 		</div>
-		<div class="input-group">
-			<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
-			<button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
+		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
+			<span>Скачать файл с сервера</span>
+			<div class="input-group mb-3">
+				<input type="text" class="form-control" placeholder="ID файла" id="fileIdInput" aria-label="ID файла" aria-describedby="button-addon2">
+				<button class="btn btn-green text-white btn-outline-secondary" type="button" id="getFileButton">Запросить</button>
+			</div>
+			<span style="margin-top: -20px;">После успешного запроса файла он автоматически скачается</span>
+			<span style="margin-top: -5px;" id="errorGetSpan" class="text-danger align-self-center hideFZ">Файл не найден.</span>
 		</div>
 	</div>
 </div>
-<script src="~/js/fileshare.js"></script>
+<script src="~/js/fileshare.js?v=6"></script>
