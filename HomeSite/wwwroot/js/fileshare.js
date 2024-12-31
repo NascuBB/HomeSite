@@ -4,7 +4,12 @@
 
 document.getElementById('fileSendBtn').addEventListener('click', async () => {
     var input = document.querySelector('input[type="file"]')
-
+    const errorSpan = document.getElementById('errorUplSpan');
+    if (input.files.length == 0) {
+        errorSpan.textContent = 'Файл не выбран';
+        errorSpan.className = 'text-danger align-self-center showFZ';
+        return;
+    }
     var data = new FormData()
     data.append('file', input.files[0])
     data.append('user', 'hubot')
@@ -13,6 +18,12 @@ document.getElementById('fileSendBtn').addEventListener('click', async () => {
         method: 'POST',
         body: data
     });
+    errorSpan.className = 'text-danger align-self-center hideFZ';
+    if (response.status != 200) {
+        errorSpan.textContent = 'Ошибка загрузки. Возможно файл слишком большой';
+        errorSpan.className = 'text-danger align-self-center showFZ';
+        return;
+    }
     const result = await response.text();
     document.getElementById('fileIdResult').textContent = result;
 });

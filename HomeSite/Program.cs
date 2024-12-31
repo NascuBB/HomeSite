@@ -1,4 +1,5 @@
 using HomeSite.Helpers;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using System.Security.Cryptography.X509Certificates;
 
@@ -9,14 +10,19 @@ try
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
+	Task.Run(FileShareManager.PrepareFileShare);
 #pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
-    FileShareManager.PrepareFileShare();
-    var builder = WebApplication.CreateBuilder(args);
+
+	var builder = WebApplication.CreateBuilder(args);
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
 
     builder.Services.AddSignalR();
+    builder.Services.Configure<FormOptions>(options =>
+    {
+        options.MultipartBodyLengthLimit = 209715200; // if don't set default value is: 128 MB
+    });
 
 #if DEBUG
     Console.WriteLine("Mode=Debug");
@@ -26,7 +32,7 @@ try
     {
         // Настройка HTTP (необязательно)
         options.Listen(System.Net.IPAddress.Parse("192.168.31.204"),80); // HTTP
-
+        //options.Limits.MaxRequestBodySize = 209715200;
         // Настройка HTTPS
         options.Listen(System.Net.IPAddress.Parse("192.168.31.204"), 443, listenOptions =>
         {
@@ -39,7 +45,7 @@ try
 
 
 
-    var app = builder.Build();
+	var app = builder.Build();
 
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
@@ -61,7 +67,6 @@ try
     app.UseRouting();
 
     app.UseAuthorization();
-
 
 
     app.MapControllerRoute(

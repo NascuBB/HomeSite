@@ -1,4 +1,6 @@
-﻿
+﻿@{
+	ViewData["Title"] = "File share";
+}
 <link rel="stylesheet" href="~/css/fileshare.css" />
 <h3 class="text-white display-4 text-center">Обменник</h3>
 <div class="m-4 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-5 ">
@@ -11,7 +13,7 @@
 		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
 			<div>
 				<span>Загрузить файл на сервер</span>
-				<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Есть ограничения по длительности хранения файла. Они будут лежать на сервере всего 3 дня, после чего будут удалены">🛈</button>
+				<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Максимальный размер файла 200мб, он будет лежать на сервере всего 3 дня включительно, после чего будет удален">🛈</button>
 			</div>
 			<div class="input-group">
 				<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
@@ -23,6 +25,7 @@
 				<span class="form-control" id="fileIdResult"></span>
 				<button class="btn btn-green text-white btn-outline-secondary" type="button" id="copyIdButton">Копировать</button>
 			</div>
+			<span style="margin-top: -5px;" id="errorUplSpan" class="text-danger align-self-center hideFZ">Ошибка</span>
 		</div>
 		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
 			<span>Скачать файл с сервера</span>
@@ -35,4 +38,4 @@
 		</div>
 	</div>
 </div>
-<script src="~/js/fileshare.js?v=6"></script>
+<script src="~/js/fileShare.js?v=4"></script>
