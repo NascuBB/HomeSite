@@ -2,6 +2,10 @@
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+document.getElementById('getModsBtn').addEventListener('click', async () => {
+    window.location.href = '/shared/downloadfile?id=mods';
+});
+
 document.getElementById('fileSendBtn').addEventListener('click', async () => {
     var input = document.querySelector('input[type="file"]')
     const errorSpan = document.getElementById('errorUplSpan');
