@@ -4,7 +4,8 @@ namespace HomeSite.Helpers
 {
     public static class FileShareManager
     {
-        public static List<ShareFileInfo>? SharedFiles { get; set; } = null;
+        public static List<ShareFileInfo>? SharedFiles { get => sharedFiles; }
+        private static List<ShareFileInfo>? sharedFiles = null;
         public static string folder = Path.Combine(Directory.GetCurrentDirectory(), "Share");
         static string sharesFilePath = Path.Combine(folder, "shares.json");
         public static void PrepareFileShare()
@@ -15,19 +16,19 @@ namespace HomeSite.Helpers
             }
             if(!File.Exists(sharesFilePath))
             {
-                SharedFiles = new();
+                sharedFiles = new();
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
             }
             else
             {
-                SharedFiles = JsonConvert.DeserializeObject<List<ShareFileInfo>>(File.ReadAllText(sharesFilePath));
-                if(SharedFiles == null) SharedFiles = new();
-                foreach(ShareFileInfo sharedFile in SharedFiles)
+                sharedFiles = JsonConvert.DeserializeObject<List<ShareFileInfo>>(File.ReadAllText(sharesFilePath));
+                if(SharedFiles == null) sharedFiles = new();
+                foreach(ShareFileInfo sharedFile in sharedFiles.ToList())
                 {
                     if(sharedFile.ExpireTime < DateTime.Today)
                     {
-                        SharedFiles.Remove(sharedFile);
-                        File.Delete(sharedFile.Filename);
+                        File.Delete(Path.Combine(folder,sharedFile.Filename));
+                        sharedFiles.Remove(sharedFile);
                     }
                 }
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
