@@ -48,8 +48,8 @@ namespace HomeSite.Helpers
                 {
                     await file.CopyToAsync(stream);
                 }
-                SharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
-                File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
+                sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
+                File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));
                 return filename;
 
             }
