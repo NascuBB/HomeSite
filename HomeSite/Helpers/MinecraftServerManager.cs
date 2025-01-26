@@ -19,22 +19,13 @@ namespace HomeSite.Helpers
         { 
             get
             {
-                if(ServerConsoleProcess == null)
+                if(!CheckStarted())
                 {
                     return false;
                 }
                 else
                 {
-                    if(ServerConsoleProcess.HasExited == false)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        ServerConsoleProcess = null;
-                        ServerController.Sendtype = SendType.Skip;
-                        return false;
-                    }
+                    return true;
                 }
             }
         }
@@ -46,16 +37,7 @@ namespace HomeSite.Helpers
         public Process? ServerProcess { get; private set; }
         private MinecraftServerManager()
         {
-            var processes = Process.GetProcessesByName("cmd");
-            if(processes.Length > 1)
-            {
-                ServerConsoleProcess = processes[0];
-                Thread t = new Thread(() => ReadLogInTime(cts.Token));
-                t.Start();
-                Task.Run(CheckStartedServer);
-                ServerController.Sendtype = SendType.Skip;
-            }
-
+            
         }
         public string ConsoleLogs { get { return consoleLogs; } }
         private CancellationTokenSource cts = new();
@@ -85,6 +67,31 @@ namespace HomeSite.Helpers
             {
                 Console.WriteLine(ex.ToString());
             }
+        }
+
+        private bool CheckStarted()
+        {
+            if(ServerConsoleProcess != null)
+            {
+                if(ServerConsoleProcess.HasExited)
+                {
+                    ServerConsoleProcess = null;
+                    ServerController.Sendtype = SendType.Skip;
+                    return false;
+                }
+                return true;
+            }
+            var processes = Process.GetProcessesByName("cmd");
+            if (processes.Length > 1)
+            {
+                ServerConsoleProcess = processes[0];
+                Thread t = new Thread(() => ReadLogInTime(cts.Token));
+                t.Start();
+                Task.Run(CheckStartedServer);
+                ServerController.Sendtype = SendType.Skip;
+                return true;
+            }
+            return false;
         }
         public async Task LaunchServer()
         {

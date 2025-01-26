@@ -1,7 +1,7 @@
 ﻿@{
 	ViewData["Title"] = "File share";
 }
-<link rel="stylesheet" href="~/css/fileshare.css" />
+<link rel="stylesheet" href="~/css/fileshare.css?v=2" />
 <h3 class="text-white display-4 text-center">Обменник</h3>
 <div class="m-4 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-5 ">
 
@@ -11,9 +11,10 @@
 	</div>
 	<div class="gap-5 d-flex flex-column">
 		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
-			<div>
+			<div class="d-flex flex-row align-items-center">
 				<span>Загрузить файл на сервер</span>
 				<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Максимальный размер файла 200мб, он будет лежать на сервере всего 3 дня включительно, после чего будет удален">🛈</button>
+				<div id="loading" class="loader"></div>
 			</div>
 			<div class="input-group">
 				<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
