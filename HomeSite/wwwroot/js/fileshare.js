@@ -17,7 +17,8 @@ document.getElementById('fileSendBtn').addEventListener('click', async () => {
     var data = new FormData()
     data.append('file', input.files[0])
     data.append('user', 'hubot')
-
+    let loaderC = document.getElementById('loading');
+    loaderC.className = 'showFZ loader';
     const response = await fetch('/shared/uploadfile', {
         method: 'POST',
         body: data
@@ -26,8 +27,10 @@ document.getElementById('fileSendBtn').addEventListener('click', async () => {
     if (response.status != 200) {
         errorSpan.textContent = 'Ошибка загрузки. Возможно файл слишком большой';
         errorSpan.className = 'text-danger align-self-center showFZ';
+        loaderC.className = 'hideFZ loader';
         return;
     }
+    loaderC.className = 'hideFZ loader';
     const result = await response.text();
     document.getElementById('fileIdResult').textContent = result;
 });
