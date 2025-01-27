@@ -1,6 +1,8 @@
+using HomeSite.Entities;
 using HomeSite.Helpers;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography.X509Certificates;
 
 try
@@ -17,6 +19,8 @@ try
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
+
+    builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
     builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>
