@@ -1,14 +1,30 @@
 ﻿using HomeSite.Entities;
 using HomeSite.Helpers;
 using HomeSite.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HomeSite.Controllers
 {
 	public class AccountController : Controller
 	{
+		private readonly UserDBContext _usersContext;
+
+        public AccountController(UserDBContext usersContext)
+		{
+			_usersContext = usersContext;
+		}
 		public IActionResult Index()
 		{
+			if(HttpContext.User == null)
+			{
+				return RedirectToAction("Login");
+			}
+			ViewBag.Name = HttpContext.User.Identity.Name;
 			return View();
 		}
 
@@ -23,9 +39,65 @@ namespace HomeSite.Controllers
 			if(ModelState.IsValid)
 			{
 				Random rnd = new Random();
-				UserAccount newAccount = new UserAccount { Email = model.Email, Id = rnd.Next(1000,9999), Password = model.Password, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
+				UserAccount newAccount = new UserAccount {Username = model.Username, Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
+				_usersContext.Add(newAccount);
+				_usersContext.SaveChanges();
+
+				try
+				{
+					ModelState.Clear();
+					ViewBag.Message = $"Регистрация успешна {model.Username}";
+					return View();
+				}
+				catch (DbUpdateException e)
+				{
+					ModelState.AddModelError("", "почта или имя пользователя уже заняты");
+				}
 			}
 			return View(model);
+		}
+
+		public IActionResult Login()
+		{
+			return View();
+		}
+
+
+		[HttpPost]
+		public IActionResult Login(LoginViewModel model)
+		{
+			if (ModelState.IsValid)
+			{
+				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.Username == model.EmailOrUsername || x.Email == model.EmailOrUsername));
+				if (user == null)
+				{
+					ModelState.AddModelError("", "Логин или почта неверные");
+					return View(model);
+				}
+				if(!SecurePasswordHasher.Verify(model.Password, user.PasswordHash))
+				{
+					ModelState.AddModelError("", "Пароль неверный");
+					return View(model);
+				}
+				List<Claim> claims = new List<Claim>
+				{
+					new Claim(ClaimTypes.Name, user.Username),
+					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Role, "User")
+				};
+
+				ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+				HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), new AuthenticationProperties { });
+
+				return RedirectToAction("Index");
+			}
+			return View(model);
+		}
+
+		public IActionResult Logout()
+		{
+			HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+			return RedirectToAction("Index", "Home");
 		}
 	}
 }

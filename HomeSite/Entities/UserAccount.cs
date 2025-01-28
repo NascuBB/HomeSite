@@ -12,8 +12,6 @@ namespace HomeSite.Entities
 		[MaxLength(20)]
         public string Username { get; set; }
 		[MaxLength(20)]
-		public string Password { get; set; }
-		[MaxLength(20)]
 		[DataType(DataType.EmailAddress)]
 		public string Email { get; set; }
         public string PasswordHash { get; set; }
