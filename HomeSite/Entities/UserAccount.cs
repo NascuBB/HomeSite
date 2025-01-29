@@ -11,9 +11,10 @@ namespace HomeSite.Entities
         public int Id { get; set; }
 		[MaxLength(20)]
         public string Username { get; set; }
-		[MaxLength(20)]
+		[MaxLength(100)]
 		[DataType(DataType.EmailAddress)]
 		public string Email { get; set; }
+		public string ServerID { get; set; }
         public string PasswordHash { get; set; }
     }
 }

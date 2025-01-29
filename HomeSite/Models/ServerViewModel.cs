@@ -1,16 +1,18 @@
-﻿namespace HomeSite.Models
+﻿using HomeSite.Entities;
+
+namespace HomeSite.Models
 {
     public class ServerViewModel
     {
-        public bool IsRunning { get; set; }
-        public ServerState ServerState { get; set; }
-        public string logs { get; set; }
-        
+        public ServerCreation ServerCreation { get; set; }
+        public MinecraftServerWrap? OwnServer { get; set; }
+        public List<MinecraftServerWrap>? AllowedServers { get; set; }
     }
 
-    public enum ServerState
+    public enum ServerCreation
     {
-        starting,
-        started
+        notCreated,
+        AddingMods,
+        Created
     }
 }

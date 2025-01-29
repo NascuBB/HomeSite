@@ -1,0 +1,81 @@
+﻿@model ServerIdViewModel
+@{
+    ViewData["Title"] = "Minecraft server";
+}
+
+<div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
+    @* <h1 class="text-white align-self-start text-start display-5 text-muted">Сервер</h1> *@
+    <h1 class="text-white display-5">@Model.ServerDesc.Name</h1>
+
+    <p></p>
+
+    @if (Model.IsRunning)
+    {
+        <section class="holder">
+            <div class="log-holder">
+                <div class="log-header"><h4 style="padding-top: 7px">Консоль</h4></div>
+                <div id="logs" class="log-win">
+                    <em style="white-space: pre-line">@Model.logs</em>
+                </div>
+                <div class="log-entry-holder input-group mb-3">
+                    <input id="commandInput" type="text" class="form-control" placeholder="console..." />
+                    <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
+                </div>
+            </div>
+            <div class="d-flex align-content-center justify-content-center flex-row gap-3">
+                @switch (Model.ServerState)
+                {
+                    case ServerState.starting:
+                        <p id="text-bottom">Сервер запускается</p>
+                        <div id="loading" class="loader showFZ"></div>
+                        <span id="check" class="checkmark hideFZ">
+                            <div class="checkmark_stem"></div>
+                            <div class="checkmark_kick"></div>
+                        </span>
+                        break;
+
+                    case ServerState.started:
+                        <p id="text-bottom">Сервер запущен</p>
+                        <div id="loading" class="loader hideFZ"></div>
+                        <span id="check" class="checkmark showFZ">
+                            <div class="checkmark_stem"></div>
+                            <div class="checkmark_kick"></div>
+                        </span>
+                        break;
+                }
+            </div>
+            <section class="holder">
+                <label class="grow1 players">
+                    <h1>ИГРОКИ</h1>
+                    <p id="players-online">Онлайн: еще нет</p>
+                </label>
+                @*                 <div class="grow1 gpu">
+            <h1>GPU</h1>
+            <p id="gpu-usage">Использование:  еще нет%</p>
+            </div> *@
+                <div class="grow1 ram">
+                    <h1>RAM</h1>
+                    <span id="ram-free">Свободно: хз MB</span>
+                    <span id="ram-usage">Использование:  еще нет%</span>
+                </div>
+            </section>
+            <div class="pass-entry-holder input-group mb-3">
+                <input id="passInput" type="text" class="form-control" placeholder="пароль" />
+                <button class="btn btn-danger" id="stopServer">Выключить</button>
+            </div>
+
+        </section>
+    }
+    else
+    {
+        <div class="d-flex align-content-center justify-content-center flex-column">
+            <p id="text-top">
+                Сервер не запущен.
+            </p>
+            <button class="btn btn-green" id="start-server">Staaaaaaaaaaaart</button>
+            <div id="loading" class="loader hideFZ"></div>
+        </div>
+    }
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script src="~/js/serverIndex.js?v=9"></script>

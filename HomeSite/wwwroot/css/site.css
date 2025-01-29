@@ -38,9 +38,17 @@ html {
         box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00FF00;
     }
 
+.bg-green {
+    background-color: #00FF00;
+}
+
+.text-green {
+    color: #00FF00;
+}
+
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {

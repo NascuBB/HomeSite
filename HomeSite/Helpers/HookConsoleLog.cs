@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using HomeSite.Managers;
 
 namespace HomeSite.Helpers
 {
@@ -30,30 +31,30 @@ namespace HomeSite.Helpers
         private const int PROCESS_VM_READ = 0x0010;
         private const uint WM_GETTEXT = 0x000D;
 
-        public static void Iniciate(int processId)
-        {
+        //public static void Iniciate(int processId)
+        //{
 
-            // Попробуем найти окно по ID процесса
-            IntPtr hConsoleWindow = GetConsoleWindowByProcessId(processId);
-            if (hConsoleWindow == IntPtr.Zero)
-            {
-                //Console.WriteLine("Не удалось найти консольное окно для указанного процесса.");
-                return;
-            }
+        //    // Попробуем найти окно по ID процесса
+        //    IntPtr hConsoleWindow = GetConsoleWindowByProcessId(processId);
+        //    if (hConsoleWindow == IntPtr.Zero)
+        //    {
+        //        //Console.WriteLine("Не удалось найти консольное окно для указанного процесса.");
+        //        return;
+        //    }
 
-            while (true)
-            {
-                // Чтение содержимого консоли
-                string consoleOutput = ReadConsoleOutput(hConsoleWindow);
-                if (!string.IsNullOrEmpty(consoleOutput))
-                {
-                    //Console.WriteLine("[Console Output]: " + consoleOutput);
-                    // Здесь можно отправить данные на сайт, например через WebSocket или HTTP-запрос
-                    MinecraftServerManager.GetInstance().OutputDataReceived(consoleOutput);
-                }
-                Thread.Sleep(500); // Задержка между чтениями
-            }
-        }
+        //    while (true)
+        //    {
+        //        // Чтение содержимого консоли
+        //        string consoleOutput = ReadConsoleOutput(hConsoleWindow);
+        //        if (!string.IsNullOrEmpty(consoleOutput))
+        //        {
+        //            //Console.WriteLine("[Console Output]: " + consoleOutput);
+        //            // Здесь можно отправить данные на сайт, например через WebSocket или HTTP-запрос
+        //            OutputDataReceived(consoleOutput);
+        //        }
+        //        Thread.Sleep(500); // Задержка между чтениями
+        //    }
+        //}
 
         private static IntPtr GetConsoleWindowByProcessId(int processId)
         {

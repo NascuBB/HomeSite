@@ -20,7 +20,7 @@ namespace HomeSite.Controllers
 		}
 		public IActionResult Index()
 		{
-			if(HttpContext.User == null)
+			if(HttpContext.User.Identity.Name == null)
 			{
 				return RedirectToAction("Login");
 			}
@@ -39,7 +39,7 @@ namespace HomeSite.Controllers
 			if(ModelState.IsValid)
 			{
 				Random rnd = new Random();
-				UserAccount newAccount = new UserAccount {Username = model.Username, Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
+				UserAccount newAccount = new UserAccount {Username = model.Username, ServerID = "no", Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
 				_usersContext.Add(newAccount);
 				_usersContext.SaveChanges();
 
@@ -47,7 +47,7 @@ namespace HomeSite.Controllers
 				{
 					ModelState.Clear();
 					ViewBag.Message = $"Регистрация успешна {model.Username}";
-					return View();
+					return RedirectToAction("Login");
 				}
 				catch (DbUpdateException e)
 				{
@@ -87,9 +87,12 @@ namespace HomeSite.Controllers
 				};
 
 				ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-				HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), new AuthenticationProperties { });
-
-				return RedirectToAction("Index");
+                //if(model.RememberMe)
+                //                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), new AuthenticationProperties {IsPersistent = model.RememberMe});
+                //            else
+                //                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), new AuthenticationProperties { IsPersistent = model.RememberMe });
+                return RedirectToAction("Index");
 			}
 			return View(model);
 		}

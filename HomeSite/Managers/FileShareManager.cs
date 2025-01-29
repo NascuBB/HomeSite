@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace HomeSite.Helpers
+namespace HomeSite.Managers
 {
     public static class FileShareManager
     {
@@ -10,11 +10,11 @@ namespace HomeSite.Helpers
         static string sharesFilePath = Path.Combine(folder, "shares.json");
         public static void PrepareFileShare()
         {
-            if(!Path.Exists(folder))
+            if (!Path.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
             }
-            if(!File.Exists(sharesFilePath))
+            if (!File.Exists(sharesFilePath))
             {
                 sharedFiles = new();
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
@@ -22,12 +22,12 @@ namespace HomeSite.Helpers
             else
             {
                 sharedFiles = JsonConvert.DeserializeObject<List<ShareFileInfo>>(File.ReadAllText(sharesFilePath));
-                if(SharedFiles == null) sharedFiles = new();
-                foreach(ShareFileInfo sharedFile in sharedFiles.ToList())
+                if (SharedFiles == null) sharedFiles = new();
+                foreach (ShareFileInfo sharedFile in sharedFiles.ToList())
                 {
-                    if(sharedFile.ExpireTime < DateTime.Today)
+                    if (sharedFile.ExpireTime < DateTime.Today)
                     {
-                        File.Delete(Path.Combine(folder,sharedFile.Filename));
+                        File.Delete(Path.Combine(folder, sharedFile.Filename));
                         sharedFiles.Remove(sharedFile);
                     }
                 }
@@ -49,7 +49,7 @@ namespace HomeSite.Helpers
                 {
                     await file.CopyToAsync(stream);
                 }
-                sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename});
+                sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename });
                 File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));
                 return id;
 

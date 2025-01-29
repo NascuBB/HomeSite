@@ -1,4 +1,4 @@
-﻿using HomeSite.Helpers;
+﻿using HomeSite.Managers;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -13,7 +13,7 @@ namespace HomeSite.Controllers
         {
             try
             {
-                MinecraftServerManager.GetInstance().LaunchServer();
+                //MinecraftServerManager.GetInstance().LaunchServer();
                 return Ok("Сервер запускается.");
             }
             catch (Exception ex)
@@ -31,7 +31,7 @@ namespace HomeSite.Controllers
                 {
                     return Ok("пароль не верный");
                 }
-                await MinecraftServerManager.GetInstance().StopServer();
+                //await MinecraftServerManager.GetInstance().StopServer();
                 return Ok("Выключение.");
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace HomeSite.Controllers
         {
             try
             {
-                string res = await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
+                string res = "Ok";//await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
                 return Ok(res);
             }
             catch (Exception ex)

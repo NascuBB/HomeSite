@@ -1,5 +1,6 @@
 ﻿using CoreRCON;
 using HomeSite.Controllers;
+using HomeSite.Helpers;
 using HomeSite.Models;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -9,17 +10,73 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace HomeSite.Helpers
+namespace HomeSite.Managers
 {
     public class MinecraftServerManager
     {
         private static MinecraftServerManager? _instance;
         //public bool IsRunning { get { return ServerConsoleProcess != null; } }
-        public bool IsRunning 
-        { 
+
+
+        private MinecraftServerManager()
+        {
+
+        }
+        
+        private CancellationTokenSource cts = new();
+
+
+        public static MinecraftServerManager GetInstance()
+        {
+            _instance ??= new();
+            return _instance;
+        }
+
+
+        //private bool CheckStarted()
+        //{
+        //    if (ServerConsoleProcess != null)
+        //    {
+        //        if (ServerConsoleProcess.HasExited)
+        //        {
+        //            ServerConsoleProcess = null;
+        //            ServerController.Sendtype = SendType.Skip;
+        //            return false;
+        //        }
+        //        return true;
+        //    }
+        //    var processes = Process.GetProcessesByName("cmd");
+        //    if (processes.Length > 1)
+        //    {
+        //        ServerConsoleProcess = processes[0];
+        //        Thread t = new Thread(() => ReadLogInTime(cts.Token));
+        //        t.Start();
+        //        Task.Run(CheckStartedServer);
+        //        ServerController.Sendtype = SendType.Skip;
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+
+
+
+
+
+
+
+        
+
+
+    }
+
+    public class MinecraftServer : IMinecraftServer
+    {
+        public bool IsRunning
+        {
             get
             {
-                if(!CheckStarted())
+                if (ServerConsoleProcess == null)
                 {
                     return false;
                 }
@@ -29,80 +86,47 @@ namespace HomeSite.Helpers
                 }
             }
         }
-        public ServerState ServerState { get; set; }
-        private const string logPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
-        private const string tempLogPath = @"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
-        private RCON? rcon;
-        public Process? ServerConsoleProcess { get; private set; }
-        public Process? ServerProcess { get; private set; }
-        private MinecraftServerManager()
-        {
-            
-        }
         public string ConsoleLogs { get { return consoleLogs; } }
-        private CancellationTokenSource cts = new();
-        private string consoleLogs = "Логи сервера появятся здесь...";
+        public Process? ServerConsoleProcess { get; private set; }
+        public int Players { get => players; }
+        public float RamUsage { get => ramUsage; }
+        public ServerState ServerState { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string LogPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string TempLogPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string OwnerUsername { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public static MinecraftServerManager GetInstance()
+        private RCON? rcon;
+        private Process ServerProcess { get; set; }
+        public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string Description { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        private CancellationTokenSource cts;
+        private string consoleLogs = "Логи сервера появятся здесь...";
+        private int players = 0;
+        private float ramUsage = 0;
+        private MinecraftServer(Process serverProcess)
         {
-            _instance ??= new();
-            return _instance;
+            ServerProcess = serverProcess;
+            cts = new CancellationTokenSource();
+            Task.Run(() => StartClock(cts.Token));
         }
-        public async Task StopServer()
+
+        ~MinecraftServer()
+        {
+            StopClock();
+        }
+
+        public async Task LaunchServer()
         {
             try
             {
-                if (rcon == null) { return; }
-
-                await rcon.SendCommandAsync("stop");
-                //while(!ServerConsoleProcess.HasExited)
-                //{
-                //    await Task.Delay(1000);
-                //}
-                //ServerConsoleProcess = null;
-                rcon = null;
-                cts.Cancel();
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-        }
-
-        private bool CheckStarted()
-        {
-            if(ServerConsoleProcess != null)
-            {
-                if(ServerConsoleProcess.HasExited)
-                {
-                    ServerConsoleProcess = null;
-                    ServerController.Sendtype = SendType.Skip;
-                    return false;
-                }
-                return true;
-            }
-            var processes = Process.GetProcessesByName("cmd");
-            if (processes.Length > 1)
-            {
-                ServerConsoleProcess = processes[0];
-                Thread t = new Thread(() => ReadLogInTime(cts.Token));
-                t.Start();
-                Task.Run(CheckStartedServer);
-                ServerController.Sendtype = SendType.Skip;
-                return true;
-            }
-            return false;
-        }
-        public async Task LaunchServer()
-        {
-            try 
-            {
-                ServerState = ServerState.starting;
-                if(cts.IsCancellationRequested)
+                //ServerState = ServerState.starting;
+                if (cts.IsCancellationRequested)
                 {
                     cts = new CancellationTokenSource();
                 }
-                if(ServerConsoleProcess != null)
+                if (ServerConsoleProcess != null)
                 {
                     throw new Exception("Сервер уже запущен");
                 }
@@ -122,7 +146,7 @@ namespace HomeSite.Helpers
                 };
 
                 //process.OutputDataReceived += Process_OutputDataReceived;
-                File.WriteAllText(logPath, string.Empty);
+                File.WriteAllText(LogPath, string.Empty);
                 ServerConsoleProcess = process;
                 process.Start();
 
@@ -166,14 +190,14 @@ namespace HomeSite.Helpers
                     await Task.Delay(1000);
                     processes = Process.GetProcessesByName("java");
                 }
-                if(processes.Length == 1)
+                if (processes.Length == 1)
                     ServerProcess = processes[0];
                 else
                     ServerProcess = processes[1];
                 ServerState = ServerState.started;
                 rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
                 ServerController.Sendtype = SendType.Server;
-                MinecraftServer.CreateInstance(ServerProcess);
+           
             }
         }
 
@@ -190,7 +214,7 @@ namespace HomeSite.Helpers
                             CheckStartedServer();
                         }
                     }
-                    if(!msg.Contains("ERROR"))
+                    if (!msg.Contains("ERROR"))
                     {
                         var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
                         await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
@@ -199,34 +223,47 @@ namespace HomeSite.Helpers
                     return;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
         }
 
-        public async Task<string> SendCommand(string command)
+        public async Task StopServer()
         {
-            if (rcon == null) { return "сервер еще запускается"; }
-            if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
+            try
+            {
+                if (rcon == null) { return; }
 
-            return await rcon.SendCommandAsync(command);
+                await rcon.SendCommandAsync("stop");
+                //while(!ServerConsoleProcess.HasExited)
+                //{
+                //    await Task.Delay(1000);
+                //}
+                //ServerConsoleProcess = null;
+                rcon = null;
+                cts.Cancel();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private async void ReadLogInTime(CancellationToken token)
         {
             try
             {
-                if (!File.Exists(logPath))
+                if (!File.Exists(LogPath))
                 {
                     Console.WriteLine("Файл логов не найден.");
                     return;
                 }
                 await Task.Delay(2000);
-                File.WriteAllText(tempLogPath, string.Empty);
+                File.WriteAllText(TempLogPath, string.Empty);
                 consoleLogs = "Логи появяться здесь...";
                 CloneCycle(token);
-                using (var fileStream = new FileStream(tempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var fileStream = new FileStream(TempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(fileStream, Encoding.UTF8))
                 {
                     //Catched:
@@ -246,14 +283,14 @@ namespace HomeSite.Helpers
                         {
                             await Task.Delay(100); // Пауза, если новых строк нет
                         }
-                        if(token.IsCancellationRequested)
+                        if (token.IsCancellationRequested)
                         {
                             break;
                         }
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"{ex.Message}");
                 //goto Catched;
@@ -270,7 +307,7 @@ namespace HomeSite.Helpers
                     {
                         return;
                     }
-                    File.Copy(logPath, tempLogPath, true); // Копирование файла
+                    File.Copy(LogPath, TempLogPath, true); // Копирование файла
                 }
                 catch (Exception ex)
                 {
@@ -279,39 +316,13 @@ namespace HomeSite.Helpers
                 await Task.Delay(1000, token);
             }
         }
-    }
 
-    public class MinecraftServer
-    {
-        private static MinecraftServer? _instance;
-        private Process ServerProcess { get; }
-        private CancellationTokenSource cts;
-        public int Players { get => players; }
-        public float RamUsage { get => ramUsage; }
-        private int players = 0;
-        private float ramUsage = 0;
-        private MinecraftServer(Process serverProcess)
+        public async Task<string> SendCommand(string command)
         {
-            ServerProcess = serverProcess;
-            cts = new CancellationTokenSource();
-            Task.Run(() => StartClock(cts.Token));
-        }
+            if (rcon == null) { return "сервер еще запускается"; }
+            if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
 
-        ~MinecraftServer()
-        {
-            StopClock();
-            _instance = null;
-        }
-
-        public static void CreateInstance(Process serverProcess)
-        {
-            if (_instance != null) return;
-            _instance = new (serverProcess);
-        }
-
-        public static MinecraftServer? GetInstance()
-        {
-            return _instance;
+            return await rcon.SendCommandAsync(command);
         }
 
         public void StopClock()
@@ -321,13 +332,13 @@ namespace HomeSite.Helpers
 
         private async Task StartClock(CancellationToken token)
         {
-            while(!token.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
 
                     ServerProcess.Refresh();
-                    ramUsage = (ServerProcess.WorkingSet64 / 1024 / 1024) - 78;
+                    ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 - 78;
 #if !DEBUG
                     string plRaw = await MinecraftServerManager.GetInstance().SendCommand("list");
                     int.TryParse(new string(plRaw
@@ -339,7 +350,8 @@ namespace HomeSite.Helpers
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    if(ex is not OperationCanceledException)
+                        Console.WriteLine(ex.ToString());
                 }
             }
         }
@@ -351,5 +363,16 @@ namespace HomeSite.Helpers
         {
             await Clients.All.SendAsync("ReceiveLog", message);
         }
+    }
+
+    interface IMinecraftServer
+    {
+        public string Id { get; set; }
+        public string LogPath { get; set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
+        public string TempLogPath { get; set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
+        public string OwnerUsername { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+
     }
 }

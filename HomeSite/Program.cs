@@ -1,5 +1,6 @@
 using HomeSite.Entities;
 using HomeSite.Helpers;
+using HomeSite.Managers;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Https;

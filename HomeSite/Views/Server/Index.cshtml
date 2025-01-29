@@ -1,4 +1,5 @@
-﻿@model ServerViewModel
+﻿@using HomeSite.Entities
+@model ServerViewModel
 @{
     ViewData["Title"] = "Minecraft server";
 }
@@ -7,74 +8,68 @@
     <div class="text-muted">
         <h1 class="text-white display-4">Сервер</h1>
     </div>
-    <p></p>
-    @if(Model.IsRunning)
-    {
-        <section class="holder">
-            <div class="log-holder">
-                <div class="log-header"><h4 style="padding-top: 7px">Консоль</h4></div>
-                <div id="logs" class="log-win">
-                    <em style="white-space: pre-line">@Model.logs</em>
-                </div>
-                <div class="log-entry-holder input-group mb-3">
-                    <input id="commandInput" type="text" class="form-control" placeholder="console..." />
-                    <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
-                </div>
-            </div>
-            <div class="d-flex align-content-center justify-content-center flex-row gap-3">
-                @switch(Model.ServerState)
-                {
-                    case ServerState.starting:
-                        <p id="text-bottom">Сервер запускается</p>
-                        <div id="loading" class="loader showFZ"></div>
-                        <span id="check" class="checkmark hideFZ">
-                            <div class="checkmark_stem"></div>
-                            <div class="checkmark_kick"></div>
-                        </span>
-                        break;
 
-                    case ServerState.started:
-                        <p id="text-bottom">Сервер запущен</p>
-                        <div id="loading" class="loader hideFZ"></div>
-                        <span id="check" class="checkmark showFZ">
-                            <div class="checkmark_stem"></div>
-                            <div class="checkmark_kick"></div>
-                        </span>
-                        break;
-                }
-            </div>
-            <section class="holder">
-                <label class="grow1 players">
-                    <h1>ИГРОКИ</h1>
-                    <p id="players-online">Онлайн: еще нет</p>
-                </label>
-@*                 <div class="grow1 gpu">
-                    <h1>GPU</h1>
-                    <p id="gpu-usage">Использование:  еще нет%</p>
-                </div> *@
-                <div class="grow1 ram">
-                    <h1>RAM</h1>
-                    <span id="ram-free">Свободно: хз MB</span>
-                    <span id="ram-usage">Использование:  еще нет%</span>
-                </div>
-            </section>
-            <div class="pass-entry-holder input-group mb-3">
-                <input id="passInput" type="text" class="form-control" placeholder="пароль" />
-                <button class="btn btn-danger" id="stopServer">Выключить</button>
-            </div>
-            
-        </section>
-    }
-    else
+    <p></p>
+    @if (Model.ServerCreation == ServerCreation.notCreated)
     {
         <div class="d-flex align-content-center justify-content-center flex-column">
             <p id="text-top">
-                Сервер не запущен.
+                Похоже у тебя еще нет сервера
             </p>
-            <button class="btn btn-green" id="start-server">Staaaaaaaaaaaart</button>
+            <button class="btn btn-green" id="start-server">Создать сервер</button>
             <div id="loading" class="loader hideFZ"></div>
         </div>
     }
+    else if(Model.ServerCreation == ServerCreation.AddingMods)
+    {
+        <div class="d-flex align-content-center justify-content-center flex-column">
+            <p id="text-top">
+                Похоже у тебя еще нет сервера
+            </p>
+            <button class="btn btn-green" id="start-server">Создать сервер</button>
+            <div id="loading" class="loader hideFZ"></div>
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            <a class="list-group-item d-flex list-group-item-action justify-content-between align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@Model.OwnServer.Id">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">@Model.OwnServer!.Name</div>
+                    @Model.OwnServer!.Description
+                </div>
+                <span class="badge bg-danger text-danger rounded-pill">-</span>
+            </a>
+        </div>
+    }
+    <span class="text-muted display-6">Разрешенные сервера</span>
+    @if(Model.AllowedServers == null)
+    {
+        <p id="text-top">
+            Разрешенных серверов нет :(
+        </p>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach(MinecraftServerWrap server in Model.AllowedServers)
+            {
+                <a class="list-group-item d-flex justify-content-between list-group-item-action align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@server.Id">
+                    <div class="ms-2 me-auto">
+                        <div class="text-center fw-bold">@server.Name</div>
+                        <span class="text-center">@server.Description</span>
+                    </div>
+                    @if(server.IsRunning)
+                    {
+                        <span class="badge bg-green text-green rounded-pill">-</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger text-danger rounded-pill">-</span>
+                    }
+
+                </a>
+            }
+        </div>
+    }
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-<script src="~/js/serverIndex.js?v=9"></script>
