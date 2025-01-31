@@ -8,6 +8,7 @@ document.getElementById('getModsBtn').addEventListener('click', async () => {
 
 var sendBtn = document.getElementById('fileSendBtn');
 
+
 if (sendBtn != null) {
     sendBtn.addEventListener('click', async () => {
         var input = document.querySelector('input[type="file"]')

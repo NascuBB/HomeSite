@@ -2,15 +2,15 @@
 using HomeSite.Managers;
 using HomeSite.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace HomeSite.Controllers
 {
     public class ServerController : Controller
     {
-        public static SendType Sendtype { get; set; } = SendType.Skip;
-        private int adaptivePing = 1000;
         private readonly UserDBContext _usersContext;
+        private static readonly ConcurrentDictionary<string, List<HttpResponse>> _subscribers = new();
 
         public ServerController(UserDBContext userDBContext)
         {
@@ -19,23 +19,24 @@ namespace HomeSite.Controllers
 
         public IActionResult Index()
         {
-            if (HttpContext.User.Identity.Name == null)
+            string? username = HttpContext.User.Identity.Name;
+            if (username == null)
             {
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            //if(_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerID == "no")
-            //{
-            //    return View(new ServerViewModel { ServerCreation = ServerCreation.notCreated});
-            //}
-            //string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
-            return View(new ServerViewModel { AllowedServers = new List<MinecraftServerWrap>
+            UserAccount user = _usersContext.UserAccounts.FirstOrDefault(x => x.Username == username)!;
+            if (user.ServerID == "no")
             {
-                new MinecraftServerWrap { IsRunning = true, Description = "Desc 11", Id="asdfghj", Name = "Friend's server"},
-                new MinecraftServerWrap { IsRunning = false, Description = "zhopa sdfdgffg sdfdfgdfhdghfgh оооочень длинное описание", Id="poiuytrewq", Name = "ЖОООПАААААААААААААА"},
-                new MinecraftServerWrap { IsRunning = false, Description = "heheheha lmao lol", Id="zxcvbnm", Name = "Popapisa"},
-                
-            }, OwnServer = new MinecraftServerWrap {Description = "Ponos1k server of just1x", Name = "My server", Id = "qwertyuio"}, ServerCreation = ServerCreation.Created });
+                return View(new ServerViewModel { ServerCreation = ServerCreation.notCreated, AllowedServers = null });
+            }
+            var specs = MinecraftServerManager.GetServerSpecs(user.ServerID);
+            if (MinecraftServerManager.inCreation.ContainsKey(user.ServerID))
+            {
+                return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, IsRunning = false, Name = specs.Name}, ServerCreation = ServerCreation.AddingMods });
+            }
+            //string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
+            return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, IsRunning = MinecraftServerManager.serversOnline.Any(x => x.Id == user.ServerID), Name = specs.Name }, ServerCreation = ServerCreation.Created });
             //return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
 
@@ -47,7 +48,8 @@ namespace HomeSite.Controllers
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            return View(new ServerIdViewModel { IsRunning = false, logs = "", ServerDesc = new MinecraftServerWrap { Name = "My server", Description = "Ta pohui", Id="qwertyuio"}, ServerState = ServerState.starting });
+            MinecraftServer thisServer = MinecraftServerManager.serversOnline.First(x => x.Id == Id);
+            return View(new ServerIdViewModel { IsRunning = thisServer.IsRunning, logs = thisServer.ConsoleLogs, ServerDesc = new MinecraftServerWrap { Name = thisServer.Name, Description = thisServer.Description, Id = thisServer.Id}, ServerState = thisServer.ServerState });
         }
 
         public IActionResult See()
@@ -56,34 +58,78 @@ namespace HomeSite.Controllers
         }
 
         [HttpGet("/Server/See/{Id}/sti")]
-        public async Task GetServerStats(string Id)
+        public IActionResult GetServerStats(string Id)
+        {
+            MinecraftServer server = MinecraftServerManager.serversOnline.First(x => x.Id == Id);
+            Response.ContentType = "text/event-stream";
+            switch (server.ServerState)
+            {
+                //case ServerState.starting:
+                //    await Response.WriteAsync($"data: {{" +
+                //        $"\"Type\": \"Server\"," +
+                //        $"\"State\": \"{ServerState.starting}\"" +
+                //        $"}}\n\n");
+                //    await Response.Body.FlushAsync();
+                //    //Sendtype = SendType.Info;
+                //    break;
+                case ServerState.started:
+                    return Ok(new
+                    {
+                        Type = "Info",
+                        Players = server.Players,
+                        MemoryUsage = server.RamUsage
+                    });
+                    //await Response.WriteAsync($"data: {{" +
+                    //    $"\"Type\": \"Info\"," +
+                    //    $"\"Players\": {server.Players}," +
+                    //    $" \"MemoryUsage\": {server.RamUsage}" +
+                    //    $"}}\n\n");
+                    //await Response.Body.FlushAsync();
+                case ServerState.starting:
+                    return Ok();
+
+                default:
+                    return Ok();
+            }
+        }
+
+        [HttpGet("/Server/See/{Id}/sti/subscribe")]
+        public async Task SubscribeToServerStart(string Id)
         {
             Response.ContentType = "text/event-stream";
-            while (true)
+            Response.Headers["Cache-Control"] = "no-cache";
+
+            if (!_subscribers.ContainsKey(Id))
             {
-                switch (Sendtype)
+                _subscribers[Id] = new List<HttpResponse>();
+            }
+
+            _subscribers[Id].Add(Response);
+
+            await Response.Body.FlushAsync();
+
+            await Task.Delay(60000); // Ожидание максимум 1 минуту, потом клиент должен переподключиться
+
+            _subscribers[Id].Remove(Response);
+        }
+
+        public static async Task NotifyServerStarted(string serverId)
+        {
+            if (_subscribers.TryGetValue(serverId, out var subscribers))
+            {
+                foreach (var response in subscribers)
                 {
-                    case SendType.Server:
-                        await Response.WriteAsync($"data: {{" +
-                            $"\"Type\": \"Server\"," +
-                            $"\"State\": \"{ServerState.starting}\"" +
-                            $"}}\n\n");
-                        await Response.Body.FlushAsync();
-                        Sendtype = SendType.Info;
-                    break;
-                    case SendType.Info:
-                        adaptivePing = 5000;
-                        await Response.WriteAsync($"data: {{" +
-                            $"\"Type\": \"Info\"," +
-                            $"\"Players\": 0," +
-                            $" \"MemoryUsage\": 228" +
-                            $"}}\n\n");
-                        await Response.Body.FlushAsync();
-                    break;
-                    case SendType.Skip:
-                    break;
+                    try
+                    {
+                        await response.WriteAsync("data: {\"Type\": \"ServerStarted\"}\n\n");
+                        await response.Body.FlushAsync();
+                    }
+                    catch
+                    {
+                        // Если клиент отключился, просто игнорируем
+                    }
                 }
-                await Task.Delay(adaptivePing);
+                _subscribers.Remove(serverId, out _);
             }
         }
     }

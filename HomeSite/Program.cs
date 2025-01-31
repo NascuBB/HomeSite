@@ -26,6 +26,9 @@ try
 
     builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+    builder.Services.AddSingleton<LogConnectionManager>();
+    builder.Services.AddSingleton<MinecraftServerManager>();
+
     builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>
     {
@@ -68,7 +71,7 @@ try
     app.UseHsts();
 #endif
 
-    app.MapHub<MinecraftLogHub>("/minecraftHub");
+    //app.MapHub<MinecraftLogHub>("/minecraftHub");
 
     app.UseStaticFiles();
 

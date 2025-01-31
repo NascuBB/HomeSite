@@ -5,15 +5,21 @@ using System.Diagnostics;
 namespace HomeSite.Controllers
 {
     [ApiController]
-    [Route("api/server")]
+    [Route("Server/See/{Id}/api")]
     public class ServerApiController : ControllerBase
     {
+        private readonly MinecraftServerManager _minecraftServerManager;
+        public ServerApiController(MinecraftServerManager manager)
+        {
+            _minecraftServerManager = manager;
+        }
+
         [HttpPost("start")]
-        public IActionResult StartServer()
+        public IActionResult StartServer(string Id)
         {
             try
             {
-                //MinecraftServerManager.GetInstance().LaunchServer();
+                _minecraftServerManager.LaunchServer(Id);
                 return Ok("Сервер запускается.");
             }
             catch (Exception ex)
@@ -23,7 +29,7 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost("stop")]
-        public async Task<IActionResult> StopServer([FromBody] string pass)
+        public async Task<IActionResult> StopServer([FromBody] string pass, string Id)
         {
             try
             {
@@ -41,11 +47,12 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost("command")]
-        public async Task<IActionResult> SendCommand([FromBody] string command)
+        public async Task<IActionResult> SendCommand([FromBody] string command, string Id)
         {
             try
             {
-                string res = "Ok";//await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
+                string res = await MinecraftServerManager.serversOnline.First(x => x.Id == Id).SendCommandAsync(command);
+                //string res = "Ok";//await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
                 return Ok(res);
             }
             catch (Exception ex)

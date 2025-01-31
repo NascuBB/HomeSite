@@ -16,6 +16,10 @@ namespace HomeSite.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
 		public async Task<IActionResult> UploadFile(IFormFile file, CancellationToken cancellationtoken)
         {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return BadRequest("Not logged in");
+            }
             try
             {
                 var result = await FileShareManager.WriteFile(file);

@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Minecraft server";
 }
-
+<link rel="stylesheet" href="~/css/server.css" />
 <div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
     @* <h1 class="text-white align-self-start text-start display-5 text-muted">Сервер</h1> *@
     <h1 class="text-white display-5">@Model.ServerDesc.Name</h1>
@@ -78,4 +78,4 @@
     }
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-<script src="~/js/serverIndex.js?v=9"></script>
+<script src="~/js/server.js"></script>

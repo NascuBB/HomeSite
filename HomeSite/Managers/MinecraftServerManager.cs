@@ -9,28 +9,70 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore.Query.Internal;
+using HomeSite.Migrations;
 
 namespace HomeSite.Managers
 {
     public class MinecraftServerManager
     {
-        private static MinecraftServerManager? _instance;
+        private readonly LogConnectionManager _logConnectionManager;
+        private static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
+        private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
+        public static List<MinecraftServer> serversOnline = new List<MinecraftServer>();
+        public static Dictionary<string, bool> inCreation = new Dictionary<string, bool>();
+        private static Dictionary<string, MinecraftServerSpecifications> serverMainSpecs = new Dictionary<string, MinecraftServerSpecifications>();
         //public bool IsRunning { get { return ServerConsoleProcess != null; } }
 
 
-        private MinecraftServerManager()
+        public MinecraftServerManager(LogConnectionManager logConnectionManager)
         {
-
+            _logConnectionManager = logConnectionManager;
+            Task.Run(async () => { serverMainSpecs = await GetServersSpecs(); });
         }
-        
-        private CancellationTokenSource cts = new();
 
-
-        public static MinecraftServerManager GetInstance()
+        private static async Task<Dictionary<string, MinecraftServerSpecifications>> GetServersSpecs()
         {
-            _instance ??= new();
-            return _instance;
+            try
+            {
+                if (!Path.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+                if (!File.Exists(serversjsPath))
+                {
+                    return new Dictionary<string, MinecraftServerSpecifications>();
+                }
+                return JsonConvert.DeserializeObject<Dictionary<string, MinecraftServerSpecifications>>(await File.ReadAllTextAsync(serversjsPath)) ?? new Dictionary<string, MinecraftServerSpecifications>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return new Dictionary<string, MinecraftServerSpecifications>();
+            }
         }
+
+        private static async void SaveServersSpecs()
+        {
+            string servers = JsonConvert.SerializeObject(serverMainSpecs);
+            await File.WriteAllTextAsync(serversjsPath,servers);
+        }
+
+        public static MinecraftServerSpecifications GetServerSpecs(string id)
+        {
+            return serverMainSpecs[id];
+        }
+
+        public void LaunchServer(string Id)
+        {
+            MinecraftServer minecraftServer = new MinecraftServer(Id, _logConnectionManager);
+            serversOnline.Add(minecraftServer);
+            minecraftServer.StartServer();
+        }
+
+
 
 
         //private bool CheckStarted()
@@ -65,18 +107,24 @@ namespace HomeSite.Managers
 
 
 
-        
+
+
 
 
     }
 
-    public class MinecraftServer : IMinecraftServer
+    public class MinecraftServer : IDisposable
     {
+        public ServerState ServerState { get; private set; }
+        public string Description { get; private set; }
+        public string Name { get; private set; }
+        public string OwnerUsername { get; private set; }
+
         public bool IsRunning
         {
             get
             {
-                if (ServerConsoleProcess == null)
+                if (ServerConsoleProcess == null && ServerConsoleProcess.HasExited)
                 {
                     return false;
                 }
@@ -86,46 +134,61 @@ namespace HomeSite.Managers
                 }
             }
         }
-        public string ConsoleLogs { get { return consoleLogs; } }
-        public Process? ServerConsoleProcess { get; private set; }
+        public string ConsoleLogs { get => consoleLogs; }
         public int Players { get => players; }
         public float RamUsage { get => ramUsage; }
-        public ServerState ServerState { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string LogPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string TempLogPath { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string OwnerUsername { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        private RCON? rcon;
-        private Process ServerProcess { get; set; }
-        public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string Description { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        private Process? ServerProcess { get; set; }
+        private Process? ServerConsoleProcess { get; set; }
 
-        private CancellationTokenSource cts;
         private string consoleLogs = "Логи сервера появятся здесь...";
         private int players = 0;
         private float ramUsage = 0;
-        private MinecraftServer(Process serverProcess)
+        private RCON? rcon = null;
+
+        private readonly LogConnectionManager _logConnectionManager;
+        private readonly CancellationTokenSource cts;
+
+        public string Id { get; }
+        public string Version { get; }
+        public string ServerPath { get; }
+        public string LogPath { get; }
+        public string TempLogPath { get; }
+        public int PublicPort { get; }
+        public int RCONPort { get; }
+
+        public MinecraftServer(string id, LogConnectionManager manager)
         {
-            ServerProcess = serverProcess;
+            _logConnectionManager = manager;
             cts = new CancellationTokenSource();
-            Task.Run(() => StartClock(cts.Token));
+            Id = id;
+
+            MinecraftServerSpecifications specs = MinecraftServerManager.GetServerSpecs(id);
+            Name = specs.Name;
+            Description = specs.Description;
+            Version = specs.Version;
+            PublicPort = specs.PublicPort;
+            RCONPort = specs.RCONPort;
+            OwnerUsername = specs.OwnerName;
+
+            ServerState = ServerState.starting;
+            ServerPath = Path.Combine(Directory.GetCurrentDirectory(), "servers", Id);
+            LogPath = Path.Combine(ServerPath, "logs", "latest.log");
+            TempLogPath = Path.Combine(ServerPath, "logs", "temp.log");
+
         }
 
-        ~MinecraftServer()
-        {
-            StopClock();
-        }
+        //~MinecraftServer()
+        //{
+        //    cts!.Cancel();
+        //}
 
-        public async Task LaunchServer()
+
+        public async Task StartServer()
         {
             try
             {
                 //ServerState = ServerState.starting;
-                if (cts.IsCancellationRequested)
-                {
-                    cts = new CancellationTokenSource();
-                }
                 if (ServerConsoleProcess != null)
                 {
                     throw new Exception("Сервер уже запущен");
@@ -134,9 +197,9 @@ namespace HomeSite.Managers
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = @"C:\Users\nonam\AppData\Roaming\.minecraft\run.bat",
+                        FileName = Path.Combine(ServerPath, "run.bat"),
                         //Arguments = "-Xmx1024M -Xms1024M -jar forge-server.jar nogui",
-                        WorkingDirectory = @"C:\Users\nonam\AppData\Roaming\.minecraft",
+                        WorkingDirectory = ServerPath,
                         RedirectStandardOutput = false,
                         RedirectStandardError = false,
                         UseShellExecute = true,
@@ -154,8 +217,8 @@ namespace HomeSite.Managers
                 //{
                 //    HookConsoleLog.Iniciate(process.Id);
                 //});
-
-                Thread t = new Thread(() => ReadLogInTime(cts.Token));
+                await Task.Delay(500);
+                Thread t = new Thread(async () => await MonitorLogAsync(Id, LogPath, cts.Token));
                 t.Start();
                 //Task.Run(CheckStartedServer);
 
@@ -179,55 +242,87 @@ namespace HomeSite.Managers
             }
         }
 
+        async Task MonitorLogAsync(string Id, string logPath, CancellationToken token)
+        {
+            if (!File.Exists(logPath))
+            {
+                Console.WriteLine($"Файл логов не найден: {logPath}");
+                return;
+            }
+
+            Console.WriteLine($"Следим за логами: {logPath}");
+
+            using FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using StreamReader reader = new StreamReader(fs, Encoding.UTF8);
+
+            reader.BaseStream.Seek(0, SeekOrigin.End); // Пропускаем старые строки
+
+            while (!token.IsCancellationRequested)
+            {
+                string? line = await reader.ReadLineAsync();
+                if (line != null)
+                {
+                    if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
+                    {
+                        Task.Run(CheckStartedServer);
+                    }
+                    await _logConnectionManager.BroadcastLogAsync(Id, line);
+                }
+                else
+                {
+                    await Task.Delay(100, token); // Ждём, если новых строк нет
+                }
+            }
+        }
+
         private async void CheckStartedServer()
         {
             //await Task.Delay(7000);
             if (ServerProcess == null)
             {
                 var processes = Process.GetProcessesByName("java");
-                while (processes.Length < 1)
+                while (processes.Length < MinecraftServerManager.serversOnline.Count)
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(100);
                     processes = Process.GetProcessesByName("java");
                 }
-                if (processes.Length == 1)
-                    ServerProcess = processes[0];
-                else
-                    ServerProcess = processes[1];
+                if (processes.Length == MinecraftServerManager.serversOnline.Count)
+                    ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
                 ServerState = ServerState.started;
-                rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), 25575), "gamemode1");
-                ServerController.Sendtype = SendType.Server;
-           
+                rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), RCONPort), "gamemode1");
+                Task.Run(() => StartClock(cts.Token));
+                //ServerController.Sendtype = SendType.Server;
+
             }
         }
 
-        public async void OutputDataReceived(string? msg)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(msg))
-                {
-                    if (ServerProcess == null)
-                    {
-                        if (msg.Contains("Thread RCON Listener started"))
-                        {
-                            CheckStartedServer();
-                        }
-                    }
-                    if (!msg.Contains("ERROR"))
-                    {
-                        var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
-                        await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
-                    }
-                    consoleLogs += "\n" + msg;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-        }
+        //        public async void OutputDataReceived(string? msg)
+        //        {
+        //            try
+        //            {
+        //                if (!string.IsNullOrEmpty(msg))
+        //                {
+        //                    if (ServerProcess == null)
+        //                    {
+        //                        if (msg.Contains("Thread RCON Listener started"))
+        //                        {
+        //                            CheckStartedServer();
+        //                        }
+        //                    }
+        //                    if (!msg.Contains("ERROR"))
+        //                    {
+        //                        var hubContext = Helper.thisApp.Services.GetRequiredService<IHubContext<MinecraftLogHub>>();
+        //                        await hubContext.Clients.All.SendAsync("ReceiveLog", msg);
+        //                    }
+        //                    consoleLogs += "\n" + msg;
+        //                    return;
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Console.WriteLine(ex.ToString());
+        //            }
+        //        }
 
         public async Task StopServer()
         {
@@ -243,6 +338,7 @@ namespace HomeSite.Managers
                 //ServerConsoleProcess = null;
                 rcon = null;
                 cts.Cancel();
+                cts.Dispose();
             }
             catch (Exception ex)
             {
@@ -250,74 +346,74 @@ namespace HomeSite.Managers
             }
         }
 
-        private async void ReadLogInTime(CancellationToken token)
-        {
-            try
-            {
-                if (!File.Exists(LogPath))
-                {
-                    Console.WriteLine("Файл логов не найден.");
-                    return;
-                }
-                await Task.Delay(2000);
-                File.WriteAllText(TempLogPath, string.Empty);
-                consoleLogs = "Логи появяться здесь...";
-                CloneCycle(token);
-                using (var fileStream = new FileStream(TempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
-                {
-                    //Catched:
-                    Console.WriteLine("Чтение копии логов...");
+        //        private async void ReadLogInTime(CancellationToken token)
+        //        {
+        //            try
+        //            {
+        //                if (!File.Exists(LogPath))
+        //                {
+        //                    Console.WriteLine("Файл логов не найден.");
+        //                    return;
+        //                }
+        //                await Task.Delay(2000);
+        //                File.WriteAllText(TempLogPath, string.Empty);
+        //                consoleLogs = "Логи появяться здесь...";
+        //                CloneCycle(token);
+        //                using (var fileStream = new FileStream(TempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        //                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
+        //                {
+        //                    //Catched:
+        //                    Console.WriteLine("Чтение копии логов...");
 
-                    // Переместить указатель на конец файла
-                    fileStream.Seek(0, SeekOrigin.End);
+        //                    // Переместить указатель на конец файла
+        //                    fileStream.Seek(0, SeekOrigin.End);
 
-                    while (true)
-                    {
-                        string? line = reader.ReadLine();
-                        if (!string.IsNullOrEmpty(line))
-                        {
-                            OutputDataReceived(line);
-                        }
-                        else
-                        {
-                            await Task.Delay(100); // Пауза, если новых строк нет
-                        }
-                        if (token.IsCancellationRequested)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"{ex.Message}");
-                //goto Catched;
-            }
-        }
+        //                    while (true)
+        //                    {
+        //                        string? line = reader.ReadLine();
+        //                        if (!string.IsNullOrEmpty(line))
+        //                        {
+        //                            OutputDataReceived(line);
+        //                        }
+        //                        else
+        //                        {
+        //                            await Task.Delay(100); // Пауза, если новых строк нет
+        //                        }
+        //                        if (token.IsCancellationRequested)
+        //                        {
+        //                            break;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Console.WriteLine($"{ex.Message}");
+        //                //goto Catched;
+        //            }
+        //        }
 
-        private async Task CloneCycle(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    if (token.IsCancellationRequested)
-                    {
-                        return;
-                    }
-                    File.Copy(LogPath, TempLogPath, true); // Копирование файла
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Ошибка копирования файла: " + ex.Message);
-                }
-                await Task.Delay(1000, token);
-            }
-        }
+        //        private async Task CloneCycle(CancellationToken token)
+        //        {
+        //            while (!token.IsCancellationRequested)
+        //            {
+        //                try
+        //                {
+        //                    if (token.IsCancellationRequested)
+        //                    {
+        //                        return;
+        //                    }
+        //                    File.Copy(LogPath, TempLogPath, true); // Копирование файла
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    Console.WriteLine("Ошибка копирования файла: " + ex.Message);
+        //                }
+        //                await Task.Delay(1000, token);
+        //            }
+        //        }
 
-        public async Task<string> SendCommand(string command)
+        public async Task<string> SendCommandAsync(string command)
         {
             if (rcon == null) { return "сервер еще запускается"; }
             if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
@@ -325,9 +421,12 @@ namespace HomeSite.Managers
             return await rcon.SendCommandAsync(command);
         }
 
-        public void StopClock()
+        public void Dispose()
         {
-            cts.Cancel();
+            // Dispose of unmanaged resources.
+            //Dispose(true);
+            // Suppress finalization.
+            GC.SuppressFinalize(this);
         }
 
         private async Task StartClock(CancellationToken token)
@@ -337,24 +436,56 @@ namespace HomeSite.Managers
                 try
                 {
 
-                    ServerProcess.Refresh();
+                    ServerProcess!.Refresh();
                     ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 - 78;
 #if !DEBUG
-                    string plRaw = await MinecraftServerManager.GetInstance().SendCommand("list");
-                    int.TryParse(new string(plRaw
-                     .SkipWhile(x => !char.IsDigit(x))
-                     .TakeWhile(x => char.IsDigit(x))
-                     .ToArray()), out players);
+                            string plRaw = await SendCommandAsync("list");
+                            int.TryParse(new string(plRaw
+                             .SkipWhile(x => !char.IsDigit(x))
+                             .TakeWhile(x => char.IsDigit(x))
+                             .ToArray()), out players);
 #endif
                     await Task.Delay(5000, token);
                 }
                 catch (Exception ex)
                 {
-                    if(ex is not OperationCanceledException)
+                    if (ex is not OperationCanceledException)
                         Console.WriteLine(ex.ToString());
                 }
             }
         }
+    }
+
+
+    public class MinecraftServerBuilder
+    {
+        internal string Id { get; private set; }
+        internal string Name { get; private set; }
+        internal string? Description { get; private set; }
+        public MinecraftServerBuilder AddId(string id)
+        {
+            Id = id;
+            return this;
+        }
+        public MinecraftServerBuilder AddName(string name)
+        {
+            Name = name;
+            return this;
+        }
+        public MinecraftServerBuilder AddDescription(string desc)
+        {
+            Description = desc;
+            return this;
+        }
+        //public MinecraftServerBuilder AddOwnerUsername(string username)
+        //{
+        //    _server.OwnerUsername = username;
+        //    return this;
+        //}
+        //public MinecraftServer Build()
+        //{
+        //    return new MinecraftServer(this);
+        //}
     }
 
     public class MinecraftLogHub : Hub
@@ -368,9 +499,9 @@ namespace HomeSite.Managers
     interface IMinecraftServer
     {
         public string Id { get; set; }
-        public string LogPath { get; set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
-        public string TempLogPath { get; set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
-        public string OwnerUsername { get; set; }
+        // public string LogPath { get; private set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\latest.log";
+        // public string TempLogPath { get; private set; } //@"C:\Users\nonam\AppData\Roaming\.minecraft\logs\temp.log";
+        //public string OwnerUsername { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
 

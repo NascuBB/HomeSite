@@ -30,13 +30,21 @@ namespace HomeSite.Controllers
 
 		public IActionResult Register()
 		{
-			return View();
+            if (HttpContext.User.Identity.Name != null)
+            {
+                return RedirectToAction("Index");
+            }
+            return View();
 		}
 
 		[HttpPost]
 		public IActionResult Register(RegisterViewModel model)
 		{
-			if(ModelState.IsValid)
+            if (HttpContext.User.Identity.Name != null)
+            {
+                return RedirectToAction("Index");
+            }
+            if (ModelState.IsValid)
 			{
 				Random rnd = new Random();
 				UserAccount newAccount = new UserAccount {Username = model.Username, ServerID = "no", Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
@@ -59,14 +67,22 @@ namespace HomeSite.Controllers
 
 		public IActionResult Login()
 		{
-			return View();
+            if (HttpContext.User.Identity.Name != null)
+            {
+                return RedirectToAction("Index");
+            }
+            return View();
 		}
 
 
 		[HttpPost]
 		public IActionResult Login(LoginViewModel model)
 		{
-			if (ModelState.IsValid)
+            if (HttpContext.User.Identity.Name != null)
+            {
+                return RedirectToAction("Index");
+            }
+            if (ModelState.IsValid)
 			{
 				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.Username == model.EmailOrUsername || x.Email == model.EmailOrUsername));
 				if (user == null)
