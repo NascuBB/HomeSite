@@ -40,6 +40,41 @@ namespace HomeSite.Controllers
             //return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
 
+        public IActionResult create()
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
+                return RedirectToAction("Login", "Account");
+            }
+            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerID != "no")
+            {
+                return RedirectToAction("Index");
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult create(CreateServerViewModel model)
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
+                return RedirectToAction("Login", "Account");
+            }
+            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerID != "no")
+            {
+                return RedirectToAction("Index");
+            }
+            if (ModelState.IsValid)
+            {
+                // create server
+                return RedirectToAction("Index");
+            }
+            return View(model);
+        }
+
+
         [Route("/Server/See/{Id}")]
         public IActionResult See(string Id)
         {

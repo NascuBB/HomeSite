@@ -21,6 +21,7 @@ namespace HomeSite.Managers
         private readonly LogConnectionManager _logConnectionManager;
         private static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
         private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
+        private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
         public static List<MinecraftServer> serversOnline = new List<MinecraftServer>();
         public static Dictionary<string, bool> inCreation = new Dictionary<string, bool>();
         private static Dictionary<string, MinecraftServerSpecifications> serverMainSpecs = new Dictionary<string, MinecraftServerSpecifications>();
@@ -150,7 +151,7 @@ namespace HomeSite.Managers
         private readonly CancellationTokenSource cts;
 
         public string Id { get; }
-        public string Version { get; }
+        public MinecraftVersion Version { get; }
         public string ServerPath { get; }
         public string LogPath { get; }
         public string TempLogPath { get; }
@@ -291,6 +292,7 @@ namespace HomeSite.Managers
                 ServerState = ServerState.started;
                 rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), RCONPort), "gamemode1");
                 Task.Run(() => StartClock(cts.Token));
+                await ServerController.NotifyServerStarted(Id);
                 //ServerController.Sendtype = SendType.Server;
 
             }
@@ -494,6 +496,13 @@ namespace HomeSite.Managers
         {
             await Clients.All.SendAsync("ReceiveLog", message);
         }
+    }
+
+    public enum MinecraftVersion
+    {
+        _1_12_2,
+        _1_16_2,
+        _1_19_2
     }
 
     interface IMinecraftServer
