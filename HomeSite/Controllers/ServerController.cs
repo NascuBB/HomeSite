@@ -68,10 +68,17 @@ namespace HomeSite.Controllers
             }
             if (ModelState.IsValid)
             {
-                // create server
-                return RedirectToAction("Index");
+                string id = MinecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name,model.Version, model.Description ?? "A Minecraft server").Result;
+                _usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerID = id;
+                _usersContext.SaveChanges();
+                return RedirectToAction("configure");
             }
             return View(model);
+        }
+
+        public IActionResult configure()
+        {
+            return View();
         }
 
 
@@ -83,8 +90,16 @@ namespace HomeSite.Controllers
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            MinecraftServer thisServer = MinecraftServerManager.serversOnline.First(x => x.Id == Id);
-            return View(new ServerIdViewModel { IsRunning = thisServer.IsRunning, logs = thisServer.ConsoleLogs, ServerDesc = new MinecraftServerWrap { Name = thisServer.Name, Description = thisServer.Description, Id = thisServer.Id}, ServerState = thisServer.ServerState });
+            MinecraftServer? thisServer = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
+            if (thisServer == null)
+            {
+                MinecraftServerSpecifications specs = MinecraftServerManager.GetServerSpecs(Id);
+                return View(new ServerIdViewModel { IsRunning = false, logs = null, ServerDesc = new MinecraftServerWrap { Description = specs.Description, Name = specs.Name, Id = Id, IsRunning = false}, ServerState = ServerState.starting});
+            }
+            else
+            {
+                return View(new ServerIdViewModel { IsRunning = thisServer.IsRunning, logs = thisServer.ConsoleLogs, ServerDesc = new MinecraftServerWrap { Name = thisServer.Name, Description = thisServer.Description, Id = thisServer.Id }, ServerState = thisServer.ServerState });
+            }       
         }
 
         public IActionResult See()

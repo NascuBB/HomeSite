@@ -27,7 +27,7 @@ try
     builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
     builder.Services.AddSingleton<LogConnectionManager>();
-    builder.Services.AddSingleton<MinecraftServerManager>();
+    builder.Services.AddSingleton(new MinecraftServerManager(new LogConnectionManager()));
 
     builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>

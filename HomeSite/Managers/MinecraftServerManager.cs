@@ -19,19 +19,100 @@ namespace HomeSite.Managers
     public class MinecraftServerManager
     {
         private readonly LogConnectionManager _logConnectionManager;
+
+        private static readonly string versionsFolder = Path.Combine(Directory.GetCurrentDirectory(), "versions");
         private static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
         private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
         private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
+
         public static List<MinecraftServer> serversOnline = new List<MinecraftServer>();
-        public static Dictionary<string, bool> inCreation = new Dictionary<string, bool>();
+        public static Dictionary<string, ServerCreation> inCreation = new Dictionary<string, ServerCreation>();
+
         private static Dictionary<string, MinecraftServerSpecifications> serverMainSpecs = new Dictionary<string, MinecraftServerSpecifications>();
+        private static Dictionary<int, int> availablePorts = new Dictionary<int, int>{
+            { 25550, 5000 }, { 25551, 5001 }, { 25552, 5002 }, { 25553, 5003 }, { 25554, 5004 },
+            { 25555, 5005 }, { 25556, 5006 }, { 25557, 5007 }, { 25558, 5008 }, { 25559, 5009 },
+            { 25560, 5010 }, { 25561, 5011 }, { 25562, 5012 }, { 25563, 5013 }, { 25564, 5014 },
+            { 25565, 5015 }, { 25566, 5016 }, { 25567, 5017 }, { 25568, 5018 }, { 25569, 5019 },
+            { 25570, 5020 }
+        };
         //public bool IsRunning { get { return ServerConsoleProcess != null; } }
 
 
         public MinecraftServerManager(LogConnectionManager logConnectionManager)
         {
             _logConnectionManager = logConnectionManager;
-            Task.Run(async () => { serverMainSpecs = await GetServersSpecs(); });
+            Task.Run(async () => { 
+                serverMainSpecs = await GetServersSpecs();
+                await UpdateAvailablePorts();
+            });
+            Task.Run(async () => { inCreation = await GetServersInCreation(); });
+            if(!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+                File.Create(serversjsPath);
+                File.Create(creatingsPath);
+            }
+        }
+
+        static async Task UpdateAvailablePorts()
+        {
+            foreach(var serverSpec in serverMainSpecs)
+            {
+                if(availablePorts.ContainsKey(serverSpec.Value.PublicPort))
+                {
+                    availablePorts.Remove(serverSpec.Value.PublicPort);
+                }
+            }
+        }
+
+        private static string GetVersion(MinecraftVersion version)
+        {
+            switch(version)
+            {
+                case MinecraftVersion._1_12_2: return "_1_12_2";
+                case MinecraftVersion._1_16_2: return "_1_16_2";
+                case MinecraftVersion._1_19_2: return "_1_19_2";
+                default: return "";
+            }
+        }
+
+        /// <summary>
+        /// creates server folder and returns id of new created server
+        /// </summary>
+        /// <param name="name">name of server</param>
+        /// <param name="ownerName">username of owner</param>
+        /// <param name="version">version of server</param>
+        /// <param name="description">description to server</param>
+        /// <returns></returns>
+        public static async Task<string> CreateServer(string name, string ownerName, MinecraftVersion version, string description = "welcome to my server")
+        {
+            string genId = Guid.NewGuid().ToString();
+            inCreation.Add(genId, ServerCreation.AddingMods);
+            await SaveServersInCreation();
+            Random r = new();
+            int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
+            int rconP = availablePorts[port];
+            availablePorts.Remove(port);
+            MinecraftServerSpecifications serverSpecs = new MinecraftServerSpecifications
+            {
+                Description = description,
+                Name = name,
+                OwnerName = ownerName,
+                Version = version,
+                PublicPort = port,
+                RCONPort = rconP
+            };
+            serverMainSpecs.Add(genId, serverSpecs);
+            await SaveServersSpecs();
+            Helper.Copy(Path.Combine(versionsFolder, GetVersion(version)), Path.Combine(folder, genId));
+            File.WriteAllText(Path.Combine(folder, genId, "server.properties"), Helper.DefaultServerProperties(port, rconP));
+            return genId;
+        }
+
+        public static async Task CompleteCreation(string Id)
+        {
+            inCreation.Remove(Id);
         }
 
         private static async Task<Dictionary<string, MinecraftServerSpecifications>> GetServersSpecs()
@@ -55,10 +136,47 @@ namespace HomeSite.Managers
             }
         }
 
-        private static async void SaveServersSpecs()
+        public static async Task<ServerCreation> GetServerCreation(string Id)
         {
-            string servers = JsonConvert.SerializeObject(serverMainSpecs);
+            if(!inCreation.ContainsKey(Id))
+            {
+                return ServerCreation.Created;
+            }
+            return inCreation[Id];
+
+        }
+
+        private static async Task SaveServersSpecs()
+        {
+            string servers = JsonConvert.SerializeObject(serverMainSpecs, Formatting.Indented);
             await File.WriteAllTextAsync(serversjsPath,servers);
+        }
+
+        private static async Task<Dictionary<string, ServerCreation>> GetServersInCreation()
+        {
+            try
+            {
+                if (!Path.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+                if (!File.Exists(creatingsPath))
+                {
+                    return new Dictionary<string, ServerCreation>();
+                }
+                return JsonConvert.DeserializeObject<Dictionary<string, ServerCreation>>(await File.ReadAllTextAsync(creatingsPath)) ?? new Dictionary<string, ServerCreation>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return new Dictionary<string, ServerCreation>();
+            }
+        }
+
+        private static async Task SaveServersInCreation()
+        {
+            string servers = JsonConvert.SerializeObject(inCreation, Formatting.Indented);
+            await File.WriteAllTextAsync(creatingsPath, servers);
         }
 
         public static MinecraftServerSpecifications GetServerSpecs(string id)
@@ -157,6 +275,7 @@ namespace HomeSite.Managers
         public string TempLogPath { get; }
         public int PublicPort { get; }
         public int RCONPort { get; }
+        public ServerCreation ServerCreation { get; }
 
         public MinecraftServer(string id, LogConnectionManager manager)
         {
@@ -218,7 +337,7 @@ namespace HomeSite.Managers
                 //{
                 //    HookConsoleLog.Iniciate(process.Id);
                 //});
-                await Task.Delay(500);
+                await Task.Delay(2000);
                 Thread t = new Thread(async () => await MonitorLogAsync(Id, LogPath, cts.Token));
                 t.Start();
                 //Task.Run(CheckStartedServer);
@@ -267,6 +386,7 @@ namespace HomeSite.Managers
                     {
                         Task.Run(CheckStartedServer);
                     }
+                    Console.WriteLine(line);
                     await _logConnectionManager.BroadcastLogAsync(Id, line);
                 }
                 else
@@ -490,12 +610,20 @@ namespace HomeSite.Managers
         //}
     }
 
-    public class MinecraftLogHub : Hub
+    //public class MinecraftLogHub : Hub
+    //{
+    //    public async Task SendLog(string message)
+    //    {
+    //        await Clients.All.SendAsync("ReceiveLog", message);
+    //    }
+    //}
+
+    public enum Difficulty
     {
-        public async Task SendLog(string message)
-        {
-            await Clients.All.SendAsync("ReceiveLog", message);
-        }
+        peaceful,
+        easy,
+        normal,
+        hard
     }
 
     public enum MinecraftVersion

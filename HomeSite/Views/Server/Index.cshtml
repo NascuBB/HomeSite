@@ -21,12 +21,14 @@
     }
     else if(Model.ServerCreation == ServerCreation.AddingMods)
     {
-        <div class="d-flex align-content-center justify-content-center flex-column">
-            <p id="text-top">
-                Похоже у тебя еще нет сервера
-            </p>
-            <button class="btn btn-green" id="start-server">Создать сервер</button>
-            <div id="loading" class="loader hideFZ"></div>
+        <div class="list-group" style="min-width: 250px;">
+            <a class="list-group-item d-flex list-group-item-action justify-content-between align-items-start" asp-controller="Server" asp-action="configure" asp-route-id="@Model.OwnServer.Id">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">@Model.OwnServer!.Name</div>
+                    @Model.OwnServer!.Description
+                </div>
+                <span class="badge bg-warning text-warning rounded-pill">-</span>
+            </a>
         </div>
     }
     else
