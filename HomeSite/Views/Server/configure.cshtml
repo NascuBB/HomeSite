@@ -1,6 +1,236 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model ConfigureServerViewModel
 @{
+    ViewData["Title"] = "Configure server";
 }
-конфиуре сервер лмао
+<link rel="stylesheet" href="~/css/serverconf.css" />
+<div class=" d-flex justify-content-center ">
+    <h1 class="text-white display-5">Настройки</h1>
+</div>
+<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2 a-div container-md mx-auto">
+    <div class="d-flex flex-row align-items-center">
+        <span>Загрузить моды на сервер</span>
+        <button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Максимальный размер архива 1гб. Архив должен быть в формате либо .zip либо .rar">🛈</button>
+        <div id="loading" class="loader hideFZ"></div>
+    </div>
+    <div class="input-group">
+        <input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload" accept=".zip">
+        <button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
+    </div>
+    @* <span id="completeSpan" class="text-success hideFZ">Моды успешно загружены</span> *@
+@*     <div class="input-group">
+        <span class="input-group-text" type="button">ID: </span>
+        <span class="form-control" id="fileIdResult"></span>
+        <button class="btn btn-green text-white btn-outline-secondary" type="button" id="copyIdButton">Копировать</button>
+    </div> *@
+    <span style="margin-top: -5px;" id="errorUplSpan" class="text-danger align-self-center hideFZ">Ошибка</span>
+</div>
+<div class="m-2 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly">
+
+    <div class="gap-2 d-flex flex-column mb-2 a-div-sm">
+        <div class="d-flex flex-row w-100 justify-content-between">
+            <div class="input-group w-50">
+                <button class="btn btn-green text-white" type="button" id="spawnButton">Сохранить</button>
+                <input id="spawnInput" type="number" class="form-control" placeholder="" min="0" max="16" required value="@Model.SpawnProtection" aria-label="Spawn protection" aria-describedby="spawnButton">
+            </div>
+            <label class="me-3 ms-3 align-middle mt-1">Защита спауна</label>
+            <div id="loadingSpawn" class="form-check-label loader hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.Flight)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="FlightSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="FlightSwitch">
+            }
+            <label class="form-check-label me-1" for="FlightSwitch">Полёт</label>
+            <div id="loadingFlight" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.ForceGM)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="ForceGMSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="ForceGMSwitch">
+            }
+            <label class="form-check-label me-1" for="ForceGMSwitch">Принудительный режим игры</label>
+            <div id="loadingForceGM" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.Nether)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="NetherSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="NetherSwitch">
+            }
+            <label class="form-check-label me-1" for="NetherSwitch">Незер</label>
+            <div id="loadingNether" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (!Model.OnlineMode)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="OnlineSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="OnlineSwitch">
+            }
+            <label class="form-check-label me-1" for="OnlineSwitch">Пиратский</label>
+            <div id="loadingOnline" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between">
+            <div class="input-group w-50">
+                <select class="form-select" id="gameModeSelect" aria-label="Gamemode">
+                    @switch(Model.GameMode)
+                    {
+                        case HomeSite.Managers.GameMode.spectrator:
+                            <option value="survival">Выживание</option>
+                            <option value="creative">Креатив</option>
+                            <option value="adventure">Приключение</option>
+                            <option value="spectrator" selected>Наблюдатель</option>
+                            break;
+                        case HomeSite.Managers.GameMode.survival:
+                            <option value="survival" selected>Выживание</option>
+                            <option value="creative">Креатив</option>
+                            <option value="adventure">Приключение</option>
+                            <option value="spectrator">Наблюдатель</option>
+                            break;
+                        case HomeSite.Managers.GameMode.creative:
+                            <option value="survival">Выживание</option>
+							<option value="creative" selected>Креатив</option>
+                            <option value="adventure">Приключение</option>
+                            <option value="spectrator">Наблюдатель</option>
+                            break;
+                        case HomeSite.Managers.GameMode.adventure:
+                            <option value="survival">Выживание</option>
+                            <option value="creative">Креатив</option>
+							<option value="adventure" selected>Приключение</option>
+                            <option value="spectrator">Наблюдатель</option>
+                            break;
+                    }
+                </select>
+            </div>
+            <label class="me-3 ms-3 align-middle mt-1">Режим игры</label>
+            <div id="loadingGameMode" class="form-check-label loader hideFZ"></div>
+        </div>
+    </div>
+    <div class="gap-2 d-flex flex-column mb-2 text-end a-div-sm">
+        <div class="d-flex flex-row w-100 justify-content-between">
+            <div class="input-group w-50">
+                <button class="btn btn-green text-white" type="button" id="playersButton">Сохранить</button>
+                <input id="playersInput" type="number" class="form-control" placeholder="" min="0" max="50" required value="@Model.MaxPlayers" aria-label="Players limit" aria-describedby="playersButton">
+            </div>
+            <label class="me-3 ms-3 align-middle mt-1">Макс. игроков</label>
+            <div id="loadingPlayers" class="form-check-label loader hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.Pvp)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="PvpSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="PvpSwitch">
+            }
+            <label class="form-check-label me-1" for="PvpSwitch">PvP</label>
+            <div id="loadingPvp" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.SpawnMonsters)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="SpawnMonstersSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="SpawnMonstersSwitch">
+            }
+            <label class="form-check-label me-1" for="SpawnMonstersSwitch">Монстры</label>
+            <div id="loadingSpawnMonsters" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.Whitelist)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="WhiteListSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="WhiteListSwitch">
+            }
+            <label class="form-check-label me-1" for="WhiteListSwitch">Белый список</label>
+            <div id="loadingWhiteList" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.CommandBlock)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="CommandSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="CommandSwitch">
+            }
+            <label class="form-check-label me-1" for="CommandSwitch">Коммандные блоки</label>
+            <div id="loadingCommand" class="form-check-label loader-sm hideFZ"></div>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between">
+            <div class="input-group w-50">
+                <select class="form-select" id="difficultySelect" aria-label="Difficulty">
+                    @switch(Model.Difficulty)
+                    {
+                        case HomeSite.Managers.Difficulty.peaceful:
+                            <option value="peaceful" selected>Мирный</option>
+                            <option value="easy">Легко</option>
+                            <option value="normal">Нормально</option>
+                            <option value="hard">Тяжелый</option>
+                            break;
+                        case HomeSite.Managers.Difficulty.easy:
+                            <option value="peaceful">Мирный</option>
+							<option value="easy" selected>Легко</option>
+                            <option value="normal">Нормально</option>
+                            <option value="hard">Тяжелый</option>
+                            break;
+                        case HomeSite.Managers.Difficulty.normal:
+                            <option value="peaceful">Мирный</option>
+                            <option value="easy">Легко</option>
+							<option value="normal" selected>Нормально</option>
+                            <option value="hard">Тяжелый</option>
+                            break;
+                        case HomeSite.Managers.Difficulty.hard:
+                            <option value="peaceful">Мирный</option>
+                            <option value="easy">Легко</option>
+                            <option value="normal">Нормально</option>
+                            <option value="hard" selected>Тяжелый</option>
+                            break;
+                    }
+                </select>
+            </div>
+            <label class="me-3 ms-3 align-middle mt-1">Сложность</label>
+            <div id="loadingDifficulty" class="form-check-label loader hideFZ"></div>
+        </div>
+    </div>
+</div>
+<div class=" d-flex flex-column mx-auto a-div-sm">
+    <button class="btn btn-warning shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        ! Важно прочитать !
+    </button>
+    <div class="collapse mt-1" id="collapseExample">
+        <div class="card card-body text-center">
+            Архив <u class="text-danger">НЕ ДОЛЖЕН содержать моды на визуал.</u>
+            Oculus-Rubidium, OptiFine, BetterFog, TrueDarkness и прочие.
+            Серверу эти моды не нужны, и они <u class="text-warning">будут вызывать ошибки.</u>
+            Это только клиентские моды.
+            Так же можно вырезать моды по типу AmbientSurrounding,
+            так как они зачастую весят много и серверу так же на них плевать,
+            однако с ними сервер сможет запуститься.
+        </div>
+    </div>
+</div>
+<div class="d-flex justify-content-center mt-4">
+    <button class="btn btn-green text-white" id="finishBtn">Закончить создание</button>
+    <div id="loadingCreating" class="loader hideFZ"></div>
+</div>
+<script src="~/js/serverconf.js"></script>

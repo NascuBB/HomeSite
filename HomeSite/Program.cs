@@ -27,12 +27,12 @@ try
     builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
     builder.Services.AddSingleton<LogConnectionManager>();
-    builder.Services.AddSingleton(new MinecraftServerManager(new LogConnectionManager()));
+    builder.Services.AddSingleton<MinecraftServerManager>();
 
-    builder.Services.AddSignalR();
+    //builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>
     {
-        options.MultipartBodyLengthLimit = 209715200; // if don't set default value is: 128 MB
+        options.MultipartBodyLengthLimit = 1073741824; // if don't set default value is: 128 MB
     });
 
 #if DEBUG
@@ -53,7 +53,7 @@ try
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);
 #endif
 
-
+    MinecraftServerManager.Prepare();
 
 
 	var app = builder.Build();
@@ -79,6 +79,7 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseWebSockets();
 
 
     app.MapControllerRoute(

@@ -21,9 +21,10 @@ namespace HomeSite.Managers
         private readonly LogConnectionManager _logConnectionManager;
 
         private static readonly string versionsFolder = Path.Combine(Directory.GetCurrentDirectory(), "versions");
-        private static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
         private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
         private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
+
+        public static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
 
         public static List<MinecraftServer> serversOnline = new List<MinecraftServer>();
         public static Dictionary<string, ServerCreation> inCreation = new Dictionary<string, ServerCreation>();
@@ -42,12 +43,16 @@ namespace HomeSite.Managers
         public MinecraftServerManager(LogConnectionManager logConnectionManager)
         {
             _logConnectionManager = logConnectionManager;
-            Task.Run(async () => { 
+        }
+
+        public static void Prepare()
+        {
+            Task.Run(async () => {
                 serverMainSpecs = await GetServersSpecs();
                 await UpdateAvailablePorts();
             });
             Task.Run(async () => { inCreation = await GetServersInCreation(); });
-            if(!Directory.Exists(folder))
+            if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
                 File.Create(serversjsPath);
@@ -71,9 +76,56 @@ namespace HomeSite.Managers
             switch(version)
             {
                 case MinecraftVersion._1_12_2: return "_1_12_2";
-                case MinecraftVersion._1_16_2: return "_1_16_2";
+                case MinecraftVersion._1_16_5: return "_1_16_5";
                 case MinecraftVersion._1_19_2: return "_1_19_2";
                 default: return "";
+            }
+        }
+
+        public static string GetDifficulty(Difficulty difficulty)
+        {
+            switch(difficulty)
+            {
+                case Difficulty.peaceful: return "peaceful";
+                case Difficulty.normal: return "normal";
+                case Difficulty.easy: return "easy";
+                case Difficulty.hard: return "hard";
+                default: return "";
+            }
+        }
+        public static Difficulty GetDifficulty(string difficulty)
+        {
+            switch (difficulty)
+            {
+                case "peaceful": return Difficulty.peaceful;
+                case "normal": return Difficulty.normal;
+                case "easy": return  Difficulty.easy;
+                case "hard": return Difficulty.hard;
+                default: return Difficulty.peaceful;
+            }
+        }
+
+        public static string GetGameMode(GameMode gameMode)
+        {
+            switch (gameMode)
+            {
+                case GameMode.survival: return "survival";
+                case GameMode.creative: return "creative";
+                case GameMode.adventure: return "adventure";
+                case GameMode.spectrator: return "spectrator";
+                default: return "";
+            }
+        }
+
+        public static GameMode GetGameMode(string gameMode)
+        {
+            switch (gameMode)
+            {
+                case "survival": return GameMode.survival;
+                case "creative": return GameMode.creative;
+                case "adventure": return GameMode.adventure;
+                case "spectrator": return GameMode.spectrator;
+                default: return GameMode.survival;
             }
         }
 
@@ -85,7 +137,7 @@ namespace HomeSite.Managers
         /// <param name="version">version of server</param>
         /// <param name="description">description to server</param>
         /// <returns></returns>
-        public static async Task<string> CreateServer(string name, string ownerName, MinecraftVersion version, string description = "welcome to my server")
+        public static async Task<string> CreateServer(string name, string ownerName, MinecraftVersion version, string? description = null)
         {
             string genId = Guid.NewGuid().ToString();
             inCreation.Add(genId, ServerCreation.AddingMods);
@@ -106,13 +158,15 @@ namespace HomeSite.Managers
             serverMainSpecs.Add(genId, serverSpecs);
             await SaveServersSpecs();
             Helper.Copy(Path.Combine(versionsFolder, GetVersion(version)), Path.Combine(folder, genId));
-            File.WriteAllText(Path.Combine(folder, genId, "server.properties"), Helper.DefaultServerProperties(port, rconP));
+            File.WriteAllText(Path.Combine(folder, genId, "server.properties"), ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
             return genId;
         }
 
-        public static async Task CompleteCreation(string Id)
+        public static async Task<bool> FinishServerCreation(string Id)
         {
             inCreation.Remove(Id);
+            await SaveServersInCreation();
+            return true;
         }
 
         private static async Task<Dictionary<string, MinecraftServerSpecifications>> GetServersSpecs()
@@ -243,7 +297,7 @@ namespace HomeSite.Managers
         {
             get
             {
-                if (ServerConsoleProcess == null && ServerConsoleProcess.HasExited)
+                if (ServerConsoleProcess == null || ServerConsoleProcess.HasExited)
                 {
                     return false;
                 }
@@ -626,10 +680,18 @@ namespace HomeSite.Managers
         hard
     }
 
+    public enum GameMode
+    {
+        survival,
+        creative,
+        adventure,
+        spectrator
+    }
+
     public enum MinecraftVersion
     {
         _1_12_2,
-        _1_16_2,
+        _1_16_5,
         _1_19_2
     }
 
@@ -642,5 +704,11 @@ namespace HomeSite.Managers
         public string Name { get; set; }
         public string Description { get; set; }
 
+    }
+
+    public class PreferenceRequest
+    {
+        public string Preference { get; set; }
+        public string Value { get; set; }
     }
 }

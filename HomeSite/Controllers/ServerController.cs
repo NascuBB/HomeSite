@@ -1,4 +1,5 @@
 ﻿using HomeSite.Entities;
+using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -68,19 +69,67 @@ namespace HomeSite.Controllers
             }
             if (ModelState.IsValid)
             {
-                string id = MinecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name,model.Version, model.Description ?? "A Minecraft server").Result;
+                string id = MinecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name,model.Version, model.Description).Result;
                 _usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerID = id;
                 _usersContext.SaveChanges();
-                return RedirectToAction("configure");
+                return RedirectToAction($"configure", new { Id = id});
             }
             return View(model);
         }
 
-        public IActionResult configure()
+        [Route("/Server/configure/{Id}")]
+        public async Task<IActionResult> configure(string Id)
         {
-            return View();
+            string filepath = Path.Combine(MinecraftServerManager.folder, Id, "server.properties");
+            return View(new ConfigureServerViewModel
+            {
+                CommandBlock = await ServerPropertiesManager.GetProperty<bool>(filepath, "enable-command-block"),
+                Difficulty = await ServerPropertiesManager.GetProperty<Difficulty>(filepath, "difficulty"),
+                GameMode = await ServerPropertiesManager.GetProperty<GameMode>(filepath, "gamemode"),
+                Flight = await ServerPropertiesManager.GetProperty<bool>(filepath, "allow-flight"),
+                ForceGM = await ServerPropertiesManager.GetProperty<bool>(filepath, "force-gamemode"),
+                MaxPlayers = await ServerPropertiesManager.GetProperty<int>(filepath, "max-players"),
+                Nether = await ServerPropertiesManager.GetProperty<bool>(filepath, "allow-nether"),
+                OnlineMode = await ServerPropertiesManager.GetProperty<bool>(filepath, "online-mode"),
+                Pvp = await ServerPropertiesManager.GetProperty<bool>(filepath, "pvp"),
+                SpawnMonsters = await ServerPropertiesManager.GetProperty<bool>(filepath, "spawn-monsters"),
+                SpawnProtection = await ServerPropertiesManager.GetProperty<int>(filepath, "spawn-protection"),
+                Whitelist = await ServerPropertiesManager.GetProperty<bool>(filepath, "white-list"),
+            });
         }
 
+        [HttpPost]
+        [Route("/Server/configure/{Id}/set")]
+        public async Task<IActionResult> Set(string Id, [FromBody] PreferenceRequest request)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return Unauthorized();
+            }
+
+            if (await ServerPropertiesManager.EditProperty(Path.Combine(MinecraftServerManager.folder, Id, "server.properties"), request.Preference, request.Value))
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPost]
+        [Route("/Server/configure/{Id}/finish")]
+        public async Task<IActionResult> FinishServer(string Id)
+        {
+            if (HttpContext.User.Identity?.IsAuthenticated != true)
+            {
+                return Unauthorized("Вы не авторизованы");
+            }
+
+            bool isCreated = await  MinecraftServerManager.FinishServerCreation(Id);
+
+            return Ok(isCreated); // Возвращает true или false
+        }
 
         [Route("/Server/See/{Id}")]
         public IActionResult See(string Id)

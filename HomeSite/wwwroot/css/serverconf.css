@@ -1,0 +1,100 @@
+﻿body {
+}
+
+.loader {
+    align-self: center;
+    border: 5px solid #00000000; /* Light grey */
+    border-top: 5px solid #00FF00; /* Blue */
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    animation: spin 0.5s ease-in-out infinite;
+}
+
+.loader-sm {
+    align-self: center;
+    border: 4px solid #00000000; /* Light grey */
+    border-top: 4px solid #00FF00; /* Blue */
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5em;
+    animation: spin 0.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.a-div {
+    width: 100%;
+    max-width: 600px;
+}
+.a-div-sm {
+    width: 100%;
+    max-width: 370px;
+}
+
+.form-check-input {
+    clear: left;
+}
+
+.form-check-input:checked{
+    background-color: #00DF00;
+    border-color: #00DF00;
+}
+
+.form-switch.form-switch-sm {
+    margin-bottom: 0.5rem; /* JUST FOR STYLING PURPOSE */
+}
+
+    .form-switch.form-switch-sm .form-check-input {
+        height: 1rem;
+        width: calc(1rem + 0.75rem);
+        border-radius: 2rem;
+    }
+
+.form-switch.form-switch-md {
+    /*margin-bottom: 1rem;*/ /* JUST FOR STYLING PURPOSE */
+}
+
+    .form-switch.form-switch-md .form-check-input {
+        height: 1.5rem;
+        width: calc(2rem + 0.75rem);
+        border-radius: 3rem;
+    }
+
+.form-switch.form-switch-lg {
+    margin-bottom: 1.5rem; /* JUST FOR STYLING PURPOSE */
+}
+
+    .form-switch.form-switch-lg .form-check-input {
+        height: 2rem;
+        width: calc(3rem + 0.75rem);
+        border-radius: 4rem;
+    }
+
+.form-switch.form-switch-xl {
+    margin-bottom: 2rem; /* JUST FOR STYLING PURPOSE */
+}
+
+    .form-switch.form-switch-xl .form-check-input {
+        height: 2.5rem;
+        width: calc(4rem + 0.75rem);
+        border-radius: 5rem;
+    }
+
+.hideFZ {
+    transition: 0.3s;
+    opacity: 0;
+}
+
+.showFZ {
+    transition: 0.3s;
+    opacity: 1;
+}

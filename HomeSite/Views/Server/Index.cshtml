@@ -22,12 +22,12 @@
     else if(Model.ServerCreation == ServerCreation.AddingMods)
     {
         <div class="list-group" style="min-width: 250px;">
-            <a class="list-group-item d-flex list-group-item-action justify-content-between align-items-start" asp-controller="Server" asp-action="configure" asp-route-id="@Model.OwnServer.Id">
-                <div class="ms-2 me-auto">
+            <a class="list-group-item d-flex list-group-item-action align-items-start" asp-controller="Server" asp-action="configure" asp-route-id="@Model.OwnServer.Id">
+                <div class="me-1 ms-auto me-auto">
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
                     @Model.OwnServer!.Description
                 </div>
-                <span class="badge bg-warning text-warning rounded-pill">-</span>
+                <span class="my-auto badge bg-warning text-warning rounded-pill">-</span>
             </a>
         </div>
     }
@@ -39,7 +39,14 @@
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
                     @Model.OwnServer!.Description
                 </div>
-                <span class="badge bg-danger text-danger rounded-pill">-</span>
+                @if(Model.OwnServer.IsRunning)
+                {
+                    <span class="my-auto badge bg-green text-green rounded-pill">-</span>
+                }
+                else
+                { 
+                    <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
+                }
             </a>
         </div>
     }
@@ -62,11 +69,11 @@
                     </div>
                     @if(server.IsRunning)
                     {
-                        <span class="badge bg-green text-green rounded-pill">-</span>
+                        <span class="my-auto badge bg-green text-green rounded-pill">-</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger text-danger rounded-pill">-</span>
+                        <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
                     }
 
                 </a>

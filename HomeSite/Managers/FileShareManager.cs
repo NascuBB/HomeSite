@@ -59,6 +59,33 @@ namespace HomeSite.Managers
             }
             return filename;
         }
+
+        public static async Task<bool> WriteAndUnpackMods(IFormFile file, string Id)
+        {
+            //string filename = "";
+            try
+            {
+                //string id = DateTime.Now.Ticks.ToString();
+                var extension = "." + file.FileName.Split('.')[file.FileName.Split('.').Length - 1];
+                if(extension != ".zip")
+                    return false;
+                //filename = id + extension;
+
+                var exactpath = Path.Combine(MinecraftServerManager.folder, Id, $"mods{extension}");
+                using (var stream = new FileStream(exactpath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                System.IO.Compression.ZipFile.ExtractToDirectory(exactpath, Path.Combine(MinecraftServerManager.folder, Id, "mods"));
+                //sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename });
+                //File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return true;
+        }
     }
 
 

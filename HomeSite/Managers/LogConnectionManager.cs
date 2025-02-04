@@ -6,7 +6,7 @@ namespace HomeSite.Managers
 {
     public class LogConnectionManager
     {
-        private readonly ConcurrentDictionary<string, List<WebSocket>> _connections = new();
+        private readonly Dictionary<string, List<WebSocket>> _connections = new();
 
         public async Task HandleWebSocketAsync(string serverId, WebSocket socket)
         {

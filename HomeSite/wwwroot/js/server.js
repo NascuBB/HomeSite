@@ -7,6 +7,8 @@ const serverId = window.location.pathname.split('/').pop();
 const startBtn = document.getElementById("start-server");
 const stopBtn = document.getElementById("stopServer");
 
+let loaderC = document.getElementById('loading');
+
 if (startBtn != null) {
     startBtn.addEventListener("click", async () => {
         const response = await fetch("/Server/See/" + serverId + "/api/start", {
@@ -23,6 +25,26 @@ if (startBtn != null) {
             });
         }
     });
+}
+async function subscribeToServerStart() {
+    const eventSource = new EventSource(window.location.href + "/sti/subscribe");
+
+    eventSource.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.Type === "ServerStarted") {
+            document.getElementById('text-bottom').textContent = 'Сервер запущен';
+            loaderC.className = 'hideFZ loader';
+            document.getElementById('check').className = 'showFZ checkmark';
+            eventSource.close();
+            setInterval(fetchServerStats, 5000);
+        }
+    };
+
+    eventSource.onerror = function () {
+        console.error("Ошибка SSE, повторное подключение...");
+        setTimeout(subscribeToServerStart, 0); // Повторное подключение через 3 секунды
+    };
 }
 
 async function fetchServerStats() {
@@ -51,24 +73,21 @@ async function fetchServerStats() {
 if (stopBtn != null) {
     let loaderC = document.getElementById('loading');
     document.addEventListener('DOMContentLoaded', () => {
-        const eventSource = new EventSource(window.location.href + "/sti/subscribe");
 
-        eventSource.onmessage = function (event) {
-            const data = JSON.parse(event.data);
+        const serverId = window.location.pathname.split('/').pop(); // Берём ID из URL
+        const socket = new WebSocket(`ws://${window.location.host}/ws/logs/${serverId}`, [], {
+            credentials: 'include'
+        });
+        const logsContainer = document.getElementById('logs');
 
-            if (data.Type === "ServerStarted") {
-                document.getElementById('text-bottom').textContent = 'Сервер запущен';
-                loaderC.className = 'hideFZ loader';
-                document.getElementById('check').className = 'showFZ checkmark';
-                eventSource.close();
-                setInterval(fetchServerStats, 5000);
-            }
+        socket.onmessage = (event) => {
+            logsContainer.innerText += `\n${event.data}`;
+            logsContainer.scrollTop = logsContainer.scrollHeight;
         };
 
-        eventSource.onerror = function () {
-            console.error("Ошибка SSE, повторное подключение...");
-            setTimeout(subscribeToServerStart, 0); // Повторное подключение через 3 секунды
-        };
+        subscribeToServerStart();
+
+
 
         //const eventSource = new EventSource(window.location.href + '/sti');
 

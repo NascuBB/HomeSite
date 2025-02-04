@@ -31,6 +31,29 @@ namespace HomeSite.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("uploadmods")]
+        [RequestSizeLimit(1073741824)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Uploadmods(IFormFile file, CancellationToken cancellationtoken)
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return BadRequest("Not logged in");
+            }
+            var Id = HttpContext.Request.Query["Id"].ToString();
+            try
+            {
+                await FileShareManager.WriteAndUnpackMods(file, Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet]
         [Route("downloadfile")]
         public async Task<IActionResult> DownloadFile(string id)

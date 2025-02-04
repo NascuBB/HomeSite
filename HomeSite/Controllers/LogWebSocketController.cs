@@ -17,11 +17,11 @@ namespace HomeSite.Controllers
         [HttpGet]
         public async Task Get(string serverId)
         {
-            if (!User.Identity?.IsAuthenticated ?? false)
-            {
-                HttpContext.Response.StatusCode = 401; // Unauthorized
-                return;
-            }
+            //if (!User.Identity?.IsAuthenticated ?? false)
+            //{
+            //    HttpContext.Response.StatusCode = 401; // Unauthorized
+            //    return;
+            //}
 
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
