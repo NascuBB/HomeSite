@@ -316,32 +316,43 @@ sendBtn.addEventListener('click', async () => {
     }
 });
 
-document.getElementById("finishBtn").addEventListener("click", async () => {
-    let loader = document.getElementById("loadingCreating"); // Индикатор загрузки
-    loader.className = "loader showFZ"; // Показываем индикатор
+var finishbtn = document.getElementById("finishBtn");
+var backbtn = document.getElementById('backBtn');
 
-    try {
-        let serverId = window.location.pathname.split("/").pop(); // Получаем ID из URL
+if (finishbtn != null) {
+    finishbtn.addEventListener("click", async () => {
+        let loader = document.getElementById("loadingCreating"); // Индикатор загрузки
+        loader.className = "loader showFZ"; // Показываем индикатор
 
-        const response = await fetch(`/Server/configure/${serverId}/finish`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-        });
+        try {
+            let serverId = window.location.pathname.split("/").pop(); // Получаем ID из URL
 
-        if (!response.ok) {
-            throw new Error(await response.text()); // Выводим ошибку, если не 200 OK
+            const response = await fetch(`/Server/configure/${serverId}/finish`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text()); // Выводим ошибку, если не 200 OK
+            }
+
+            let isSuccess = await response.json(); // Получаем `true` или `false`
+
+            if (isSuccess) {
+                window.location.href = `/Server/See/${serverId}`; // Перенаправляем на сервер
+            } else {
+                alert("Ошибка: сервер не удалось создать.");
+            }
+        } catch (error) {
+            alert("Ошибка: " + error.message);
+        } finally {
+            lloader.className = "loader hideFZ"; // Скрываем индикатор
         }
-
-        let isSuccess = await response.json(); // Получаем `true` или `false`
-
-        if (isSuccess) {
-            window.location.href = `/Server/See/${serverId}`; // Перенаправляем на сервер
-        } else {
-            alert("Ошибка: сервер не удалось создать.");
-        }
-    } catch (error) {
-        alert("Ошибка: " + error.message);
-    } finally {
-        lloader.className = "loader hideFZ"; // Скрываем индикатор
-    }
-});
+    });
+}
+else {
+    let serverId = window.location.pathname.split("/").pop()
+    backbtn.addEventListener('click', () => {
+        window.location.href = `/Server/See/${serverId}`;
+    });
+}

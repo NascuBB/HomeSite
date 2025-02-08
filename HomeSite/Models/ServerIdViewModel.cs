@@ -14,6 +14,7 @@ namespace HomeSite.Models
 	public enum ServerState
 	{
 		starting,
-		started
+		started,
+		stopped
 	}
 }

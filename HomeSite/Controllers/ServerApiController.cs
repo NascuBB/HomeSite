@@ -29,15 +29,11 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost("stop")]
-        public async Task<IActionResult> StopServer([FromBody] string pass, string Id)
+        public async Task<IActionResult> StopServer(string Id)
         {
             try
             {
-                if(pass != "Jonkler1111")
-                {
-                    return Ok("пароль не верный");
-                }
-                //await MinecraftServerManager.GetInstance().StopServer();
+                await MinecraftServerManager.serversOnline.First(x => x.Id == Id).StopServer();
                 return Ok("Выключение.");
             }
             catch (Exception ex)

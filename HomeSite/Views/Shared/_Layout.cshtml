@@ -24,6 +24,16 @@
                         </li>
                         @if (Context.User.Identity.Name != null)
                         {
+                            @* <li class="nav-item dropdown">
+                                <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Сервер
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Index">Мои сервера</a></li>
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Configure">Настройки сервера</a></li>
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Mods">Моды сервера</a></li>
+                                </ul>
+                            </li> *@
                             <li class="nav-item">
                                 <a class="nav-link text-secondary" asp-area="" asp-controller="Server" asp-action="Index">Сервер</a>
                             </li>

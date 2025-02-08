@@ -22,7 +22,7 @@ namespace HomeSite.Controllers
             }
             try
             {
-                var result = await FileShareManager.WriteFile(file);
+                var result = await FileShareManager.WriteFile(file, HttpContext.User.Identity.Name);
                 return Ok(result);
             }
             catch (Exception ex)

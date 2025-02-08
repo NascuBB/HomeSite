@@ -16,6 +16,11 @@
         <input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload" accept=".zip">
         <button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
     </div>
+    @if(Model.ModsInstalled)
+    {
+        <label class="">У вас уже есть загруженые моды на сервере. Если загрузить новый архив, старые моды будут удалены и распакуються новые</label>
+
+    }
     @* <span id="completeSpan" class="text-success hideFZ">Моды успешно загружены</span> *@
 @*     <div class="input-group">
         <span class="input-group-text" type="button">ID: </span>
@@ -229,8 +234,18 @@
         </div>
     </div>
 </div>
-<div class="d-flex justify-content-center mt-4">
-    <button class="btn btn-green text-white" id="finishBtn">Закончить создание</button>
-    <div id="loadingCreating" class="loader hideFZ"></div>
-</div>
+@if(!Model.IsConfigured)
+{
+    <div class="d-flex justify-content-center mt-4">
+        <button class="btn btn-green text-white" id="backBtn">К серверу</button>
+        @* <div id="loadingCreating" class="loader hideFZ"></div> *@
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-center mt-4">
+        <button class="btn btn-green text-white" id="finishBtn">Закончить создание</button>
+        <div id="loadingCreating" class="loader hideFZ"></div>
+    </div>
+}
 <script src="~/js/serverconf.js"></script>

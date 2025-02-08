@@ -16,5 +16,7 @@ namespace HomeSite.Models
         public bool Nether { get; set; }
         public bool ForceGM { get; set; }
         public int SpawnProtection { get; set; }
+        public bool IsConfigured { get; set; }
+        public bool ModsInstalled { get; set; }
     }
 }

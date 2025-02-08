@@ -245,6 +245,32 @@ namespace HomeSite.Managers
             minecraftServer.StartServer();
         }
 
+        public static string GetLastLogs(string Id)
+        {
+            Queue<string> recentLines = new Queue<string>(10);
+
+            using (StreamReader reader = new StreamReader(Path.Combine(folder, Id, "logs", "latest.log")))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (recentLines.Count >= 10)
+                    {
+                        recentLines.Dequeue(); // Удаляем старейшую строку
+                    }
+                    recentLines.Enqueue(line); // Добавляем новую строку
+                }
+            }
+
+            return string.Join("\n", recentLines);
+        }
+
+        public static async Task ServerEnded(MinecraftServer server)
+        {
+            serversOnline.Remove(server);
+            await Task.CompletedTask;
+        }
+
 
 
 
@@ -385,6 +411,7 @@ namespace HomeSite.Managers
                 //process.OutputDataReceived += Process_OutputDataReceived;
                 File.WriteAllText(LogPath, string.Empty);
                 ServerConsoleProcess = process;
+				process.Exited += ServerConsoleProcess_Exited;
                 process.Start();
 
                 //Task.Run(() =>
@@ -416,8 +443,16 @@ namespace HomeSite.Managers
             }
         }
 
-        async Task MonitorLogAsync(string Id, string logPath, CancellationToken token)
+		private async void ServerConsoleProcess_Exited(object? sender, EventArgs e)
+		{
+			cts.Cancel();
+            await ServerController.NotifyServerCrashed(Id);
+            MinecraftServerManager.ServerEnded(this);
+		}
+
+		async Task MonitorLogAsync(string Id, string logPath, CancellationToken token)
         {
+
             if (!File.Exists(logPath))
             {
                 Console.WriteLine($"Файл логов не найден: {logPath}");
@@ -430,36 +465,60 @@ namespace HomeSite.Managers
             using StreamReader reader = new StreamReader(fs, Encoding.UTF8);
 
             reader.BaseStream.Seek(0, SeekOrigin.End); // Пропускаем старые строки
-
-            while (!token.IsCancellationRequested)
+            try
             {
-                string? line = await reader.ReadLineAsync();
-                if (line != null)
+                while (!token.IsCancellationRequested)
                 {
-                    if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
+                    string? line = await reader.ReadLineAsync();
+                    if (line != null)
                     {
-                        Task.Run(CheckStartedServer);
+                        if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
+                        {
+#if DEBUG
+                            Task.Run(async () => { 
+                                await ServerController.NotifyServerStarted(Id);
+                                ServerState = ServerState.started;
+                            });
+#else
+                            Task.Run(() => CheckStartedServer(token));
+#endif
+                        }
+                        Console.WriteLine(line);
+                        await _logConnectionManager.BroadcastLogAsync(Id, line);
+                        consoleLogs += "\n" + line;
                     }
-                    Console.WriteLine(line);
-                    await _logConnectionManager.BroadcastLogAsync(Id, line);
+                    else
+                    {
+                        await Task.Delay(100, token); // Ждём, если новых строк нет
+                    }
                 }
-                else
-                {
-                    await Task.Delay(100, token); // Ждём, если новых строк нет
-                }
+            }
+            catch (Exception ex) //when (ex is not TaskCanceledException)
+            {
+				if (ex is not TaskCanceledException)
+					Console.WriteLine($"Error: {ex}");
             }
         }
 
-        private async void CheckStartedServer()
+        private async void CheckStartedServer(CancellationToken token)
         {
             //await Task.Delay(7000);
             if (ServerProcess == null)
             {
                 var processes = Process.GetProcessesByName("java");
-                while (processes.Length < MinecraftServerManager.serversOnline.Count)
+                while (processes.Length < MinecraftServerManager.serversOnline.Count && !token.IsCancellationRequested)
                 {
-                    await Task.Delay(100);
-                    processes = Process.GetProcessesByName("java");
+                    try
+                    {
+                        await Task.Delay(100, token);
+                        processes = Process.GetProcessesByName("java");
+                    }
+                    catch(Exception ex)
+                    {
+                        if (ex is not TaskCanceledException)
+                            Console.WriteLine($"Error: {ex}");
+                        return;
+					}
                 }
                 if (processes.Length == MinecraftServerManager.serversOnline.Count)
                     ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
@@ -623,10 +682,10 @@ namespace HomeSite.Managers
 #endif
                     await Task.Delay(5000, token);
                 }
-                catch (Exception ex)
-                {
-                    if (ex is not OperationCanceledException)
-                        Console.WriteLine(ex.ToString());
+                catch (Exception ex) //when (ex is not TaskCanceledException)
+				{
+					if (ex is not TaskCanceledException)
+						Console.WriteLine(ex.ToString());
                 }
             }
         }

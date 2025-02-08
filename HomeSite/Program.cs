@@ -9,12 +9,11 @@ using System.Security.Cryptography.X509Certificates;
 
 try
 {
-
-
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
 	Task.Run(FileShareManager.PrepareFileShare);
+    Task.Run(FileShareManager.OnceADayClock);
 #pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
 
 	var builder = WebApplication.CreateBuilder(args);
@@ -47,7 +46,7 @@ try
         // Настройка HTTPS
         options.Listen(System.Net.IPAddress.Parse("192.168.31.204"), 443, listenOptions =>
         {
-            listenOptions.UseHttps(@"C:\Users\nonam\source\publish\certificate.pfx", "gamemode1");
+            listenOptions.UseHttps(Path.Combine(Directory.GetCurrentDirectory(),"certificate.pfx"), "gamemode1");
         });
     });
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);

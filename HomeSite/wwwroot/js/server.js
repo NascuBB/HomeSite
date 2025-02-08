@@ -7,7 +7,10 @@ const serverId = window.location.pathname.split('/').pop();
 const startBtn = document.getElementById("start-server");
 const stopBtn = document.getElementById("stopServer");
 
+let statsId;
+
 let loaderC = document.getElementById('loading');
+let textIndicator = document.getElementById('text-top');
 
 if (startBtn != null) {
     startBtn.addEventListener("click", async () => {
@@ -16,11 +19,12 @@ if (startBtn != null) {
         });
         const result = await response.text();
         if (result == "Сервер запускается.") {
-            startBtn.className = "hideFZ btn btn-success";
-            document.getElementById("loading").className = "showFZ loader";
-            document.getElementById("text-top").textContent = result;
+            //startBtn.className = "hideFZ btn btn-success";   removeAttribute("disabled")
+            startBtn.setAttribute("disabled", "")
+            loaderC.className = "showFZ loader ms-1";
+            textIndicator.textContent = result;
             sleep(1000).then(() => {
-                document.getElementById("text-top").textContent = "Сайт сейчас перезагрузиться";
+                textIndicator.textContent = "Сайт сейчас перезагрузиться";
                 sleep(1000).then(() => { location.reload(); });
             });
         }
@@ -33,11 +37,19 @@ async function subscribeToServerStart() {
         const data = JSON.parse(event.data);
 
         if (data.Type === "ServerStarted") {
-            document.getElementById('text-bottom').textContent = 'Сервер запущен';
-            loaderC.className = 'hideFZ loader';
-            document.getElementById('check').className = 'showFZ checkmark';
+            textIndicator.textContent = 'Сервер запущен';
+            loaderC.className = 'hideFZ loader ms-1';
+            document.getElementById('check').className = 'showFZ checkmark ms-3';
+            stopBtn.removeAttribute('disabled');
             eventSource.close();
-            setInterval(fetchServerStats, 5000);
+            fetchServerStats();
+            statsId = setInterval(fetchServerStats, 5000);
+        }
+        else if (data.Type === "ServerCrashed") {
+            stopBtn.setAttribute('disabled', '');
+            textIndicator.textContent = 'Ошибка запуска сервера';
+            loaderC.className = 'hideFZ loader ms-1';
+            document.getElementById('cross').className = 'showFZ cross ms-3';
         }
     };
 
@@ -49,21 +61,28 @@ async function subscribeToServerStart() {
 
 async function fetchServerStats() {
     try {
-        const response = await fetch(window.location.href + '/sti');
+        const response = await fetch(window.location.href + '/sti', { method: 'GET' });
         const data = await response.json();
 
-        if (data.Type == "Info") {
+        if (data.type == "Info") {
             //if (loaderC.classList.contains('hideFZ')) {
             //    document.getElementById('text-bottom').textContent = 'Сервер запущен';
             //    loaderC.className = 'hideFZ loader';
             //    document.getElementById('check').className = 'showFZ checkmark';
             //}
-            document.getElementById('players-online').textContent = `Онлайн: ${data.Players}`;
-            document.getElementById('ram-free').textContent = `Занято: ${data.MemoryUsage} MB`;
+            document.getElementById('players-online').textContent = `Онлайн: ${data.players}`;
+            document.getElementById('ram-free').textContent = `Занято: ${data.memoryUsage} MB`;
             document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
         }
-        else {
-
+        else if (data.type == "Stop") {
+            clearInterval(statsId);
+            stopBtn.setAttribute('disabled', '');
+            textIndicator.textContent = 'Сервер завершил роботу';
+            loaderC.className = 'hideFZ loader ms-1';
+            document.getElementById('check').className = 'hideFZ checkmark ms-3';
+            document.getElementById('players-online').textContent = `Онлайн: уже нету`;
+            document.getElementById('ram-free').textContent = `Занято: опять хз MB`;
+            document.getElementById('ram-usage').textContent = `Использование: уже нет%`;
         }
     } catch (error) {
         console.error('Ошибка запроса:', error);
@@ -71,7 +90,12 @@ async function fetchServerStats() {
 }
 
 if (stopBtn != null) {
-    let loaderC = document.getElementById('loading');
+    if (!document.getElementById('check').classList.contains('showFZ')) {
+        loaderC.className = "showFZ loader ms-1";
+        textIndicator.textContent = 'Сервер запускаеться';
+    }
+
+
     document.addEventListener('DOMContentLoaded', () => {
 
         const serverId = window.location.pathname.split('/').pop(); // Берём ID из URL
@@ -118,16 +142,19 @@ if (stopBtn != null) {
     });
 
     stopBtn.addEventListener("click", async () => {
-        const pass = document.getElementById('passInput').value;
-        if (!pass) return alert('Введите пароль');
+        //const pass = document.getElementById('passInput').value;
+        //if (!pass) return alert('Введите пароль');
         const response = await fetch("/Server/See/" + serverId + "/api/stop", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pass),
+            //body: //JSON.stringify(pass),
         });
         const result = await response.text();
         if (result == "Выключение.") {
-            document.getElementById('text-bottom').textContent = result;
+            textIndicator.textContent = result;
+            document.getElementById('check').className = 'hideFZ checkmark ms-3';
+            loaderC.className = 'showFZ loader ms-1';
+            stopBtn.setAttribute('disabled', '');
         }
         else {
             return alert(result);

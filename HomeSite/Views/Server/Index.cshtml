@@ -27,25 +27,29 @@
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
                     @Model.OwnServer!.Description
                 </div>
-                <span class="my-auto badge bg-warning text-warning rounded-pill">-</span>
+                <span class="my-auto badge bg-primary text-primary rounded-pill">-</span>
             </a>
         </div>
     }
     else
     {
-        <div class="list-group">
+        <div class="list-group" style="min-width: 250px;">
             <a class="list-group-item d-flex list-group-item-action justify-content-between align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@Model.OwnServer.Id">
-                <div class="ms-2 me-auto">
+                <div class="ms-2 ms-auto me-auto">
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
                     @Model.OwnServer!.Description
                 </div>
-                @if(Model.OwnServer.IsRunning)
+                @switch(Model.OwnServer.ServerState)
                 {
-                    <span class="my-auto badge bg-green text-green rounded-pill">-</span>
-                }
-                else
-                { 
-                    <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
+                    case ServerState.started:
+                        <span class="my-auto badge bg-green text-green rounded-pill">-</span>
+                        break;
+                    case ServerState.stopped:
+                        <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
+                        break;
+                    case ServerState.starting:
+                        <span class="my-auto badge bg-warning text-warning rounded-pill">-</span>
+                        break;
                 }
             </a>
         </div>
@@ -67,13 +71,17 @@
                         <div class="text-center fw-bold">@server.Name</div>
                         <span class="text-center">@server.Description</span>
                     </div>
-                    @if(server.IsRunning)
+                    @switch (server.ServerState)
                     {
-                        <span class="my-auto badge bg-green text-green rounded-pill">-</span>
-                    }
-                    else
-                    {
-                        <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
+                        case ServerState.started:
+                            <span class="my-auto badge bg-green text-green rounded-pill">-</span>
+                            break;
+                        case ServerState.stopped:
+                            <span class="my-auto badge bg-danger text-danger rounded-pill">-</span>
+                            break;
+                        case ServerState.starting:
+                            <span class="my-auto badge bg-warning text-warning rounded-pill">-</span>
+                            break;
                     }
 
                 </a>

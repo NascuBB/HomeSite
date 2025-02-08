@@ -34,10 +34,11 @@ namespace HomeSite.Controllers
             var specs = MinecraftServerManager.GetServerSpecs(user.ServerID);
             if (MinecraftServerManager.inCreation.ContainsKey(user.ServerID))
             {
-                return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, IsRunning = false, Name = specs.Name}, ServerCreation = ServerCreation.AddingMods });
+                return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, ServerState = ServerState.stopped, Name = specs.Name}, ServerCreation = ServerCreation.AddingMods });
             }
             //string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
-            return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, IsRunning = MinecraftServerManager.serversOnline.Any(x => x.Id == user.ServerID), Name = specs.Name }, ServerCreation = ServerCreation.Created });
+            MinecraftServer? server = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == user.ServerID);
+            return View(new ServerViewModel { AllowedServers = null, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerID, ServerState = server == null ? ServerState.stopped : server.ServerState, Name = specs.Name }, ServerCreation = ServerCreation.Created });
             //return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
 
@@ -78,9 +79,10 @@ namespace HomeSite.Controllers
         }
 
         [Route("/Server/configure/{Id}")]
-        public async Task<IActionResult> configure(string Id)
+        public async Task<IActionResult> Configure(string Id)
         {
             string filepath = Path.Combine(MinecraftServerManager.folder, Id, "server.properties");
+            string modsPath = Path.Combine(MinecraftServerManager.folder, Id, "mods");
             return View(new ConfigureServerViewModel
             {
                 CommandBlock = await ServerPropertiesManager.GetProperty<bool>(filepath, "enable-command-block"),
@@ -95,6 +97,8 @@ namespace HomeSite.Controllers
                 SpawnMonsters = await ServerPropertiesManager.GetProperty<bool>(filepath, "spawn-monsters"),
                 SpawnProtection = await ServerPropertiesManager.GetProperty<int>(filepath, "spawn-protection"),
                 Whitelist = await ServerPropertiesManager.GetProperty<bool>(filepath, "white-list"),
+                IsConfigured = MinecraftServerManager.inCreation.Any(x => x.Key == Id),
+                ModsInstalled = Directory.Exists(modsPath) ? Directory.GetFiles(modsPath).Length > 0 : false,
             });
         }
 
@@ -143,7 +147,7 @@ namespace HomeSite.Controllers
             if (thisServer == null)
             {
                 MinecraftServerSpecifications specs = MinecraftServerManager.GetServerSpecs(Id);
-                return View(new ServerIdViewModel { IsRunning = false, logs = null, ServerDesc = new MinecraftServerWrap { Description = specs.Description, Name = specs.Name, Id = Id, IsRunning = false}, ServerState = ServerState.starting});
+                return View(new ServerIdViewModel { IsRunning = false, logs = "Последние 10 логов\n" + MinecraftServerManager.GetLastLogs(Id), ServerDesc = new MinecraftServerWrap { Description = specs.Description, Name = specs.Name, Id = Id, ServerState = ServerState.stopped}, ServerState = ServerState.stopped});
             }
             else
             {
@@ -156,11 +160,46 @@ namespace HomeSite.Controllers
             return RedirectToAction("Index");
         }
 
+        [Route("/Server/configure/{Id}/mods")]
+        public IActionResult Mods(string Id)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            string modsFolder = Path.Combine(MinecraftServerManager.folder, Id, "mods");
+
+            if (!Directory.Exists(modsFolder))
+            {
+                return View(new ModsViewModel
+                {
+                    Files = null,
+                    ModsInstalled = false,
+                    Name = MinecraftServerManager.GetServerSpecs(Id).Name,
+                    ServerId = Id
+                });
+            }
+
+            var files = Directory.GetFiles(modsFolder)
+                                 .Select(Path.GetFileName)
+                                 .ToList();
+
+            return View(new ModsViewModel { ServerId = Id, ModsInstalled = true, Files = files, Name = MinecraftServerManager.GetServerSpecs(Id).Name });
+        }
+
         [HttpGet("/Server/See/{Id}/sti")]
         public IActionResult GetServerStats(string Id)
         {
-            MinecraftServer server = MinecraftServerManager.serversOnline.First(x => x.Id == Id);
-            Response.ContentType = "text/event-stream";
+            MinecraftServer? server = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
+            if (server == null)
+            {
+                return Ok(new
+                {
+                    Type = "Stop"
+                });
+            }
+            //Response.ContentType = "text/event-stream";
             switch (server.ServerState)
             {
                 //case ServerState.starting:
@@ -221,6 +260,25 @@ namespace HomeSite.Controllers
                     try
                     {
                         await response.WriteAsync("data: {\"Type\": \"ServerStarted\"}\n\n");
+                        await response.Body.FlushAsync();
+                    }
+                    catch
+                    {
+                        // Если клиент отключился, просто игнорируем
+                    }
+                }
+                _subscribers.Remove(serverId, out _);
+            }
+        }
+        public static async Task NotifyServerCrashed(string serverId)
+        {
+            if (_subscribers.TryGetValue(serverId, out var subscribers))
+            {
+                foreach (var response in subscribers)
+                {
+                    try
+                    {
+                        await response.WriteAsync("data: {\"Type\": \"ServerCrashed\"}\n\n");
                         await response.Body.FlushAsync();
                     }
                     catch
