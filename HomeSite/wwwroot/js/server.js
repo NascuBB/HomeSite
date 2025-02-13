@@ -59,6 +59,57 @@ async function subscribeToServerStart() {
     };
 }
 
+const addUserBtn = document.getElementById('addUserBtn');
+
+if (addUserBtn != null) {
+    addUserBtn.addEventListener('click', () => {
+        document.getElementById('addUserBtn').classList.add('hideFZ');
+        document.getElementById('addUserBtn').classList.remove('d-flex');
+        document.getElementById('addUserBtn').classList.add('d-none');
+        document.getElementById('addUserInputGroup').classList.remove('hideFZ');
+        document.getElementById('addUserInputGroup').classList.add('showFZ');
+    });
+
+    document.getElementById('confirmAddUserBtn').addEventListener('click', async () => {
+        const username = document.getElementById('addUserInput').value;
+        if (!username) return alert('Введите имя пользователя');
+        document.getElementById('addUserInput').value = "";
+        try {
+            const response = await fetch("/Server/See/" + serverId + "/allow/add?user=" + username, {
+                method: 'GET'
+            });
+            let res = await response.json();
+            if (res.result == 'done') {
+                window.location.href = '/Server/See/' + serverId + '/allow?user=' + username;
+            }
+            else if (res.result == 'alreadyshared') {
+                alert('Пользователь уже добавлен');
+            }
+            else if (res.result == 'usernotfound') {
+                alert('Пользователь не найден');
+            }
+            else if (res.result == 'self') {
+                alert('Ты и так создатель сервера');
+            }
+        } catch (err) {
+            console.error('Ошибка отправки команды:', err);
+        }
+    });
+}
+
+const copyBtn = document.getElementById('copyAddr');
+
+copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(copyBtn.textContent.split(' ')[0]);
+    const badge = document.getElementById('copiedBadge');
+    badge.classList.remove('hide');
+    badge.classList.add('show');
+    sleep(2000).then(() => {
+        badge.classList.add('hide');
+        badge.classList.remove('show');
+    });
+});
+
 async function fetchServerStats() {
     try {
         const response = await fetch(window.location.href + '/sti', { method: 'GET' });
@@ -172,21 +223,24 @@ if (stopBtn != null) {
     //});
 
     //connection.start().catch(err => console.error(err.toString()));
+    const sendCommandBtn = document.getElementById('sendCommand');
 
-    document.getElementById('sendCommand').addEventListener('click', async () => {
-        const command = document.getElementById('commandInput').value;
-        if (!command) return alert('Введите команду');
-        if (command == "stop") return alert('Ага, че умный дофига?');
-        document.getElementById('commandInput').value = "";
-        try {
-            const response = await fetch("/Server/See/" + serverId + "/api/command", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(command),
-            });
-            alert(await response.text());
-        } catch (err) {
-            console.error('Ошибка отправки команды:', err);
-        }
-    });
+    if (sendCommandBtn != null) {
+        sendCommandBtn.addEventListener('click', async () => {
+            const command = document.getElementById('commandInput').value;
+            if (!command) return alert('Введите команду');
+            if (command == "stop") return alert('Ага, че умный дофига?');
+            document.getElementById('commandInput').value = "";
+            try {
+                const response = await fetch("/Server/See/" + serverId + "/api/command", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(command),
+                });
+                alert(await response.text());
+            } catch (err) {
+                console.error('Ошибка отправки команды:', err);
+            }
+        });
+    }
 }

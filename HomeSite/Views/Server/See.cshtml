@@ -2,10 +2,31 @@
 @{
     ViewData["Title"] = "Minecraft server";
 }
-<link rel="stylesheet" href="~/css/server.css" />
+<link rel="stylesheet" href="~/css/server.css?v=3" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <div class=" d-flex justify-content-center ">
     <h1 class="text-white display-5">@Model.ServerDesc.Name</h1>
+</div>
+<div class="m-2 mb-3 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-2">
+    <div class="input-group" style="max-width: 500px;">
+        <span class="input-group-text">Адрес</span>
+        <button id="copyAddr" class="form-control">@Model.PublicAddress
+            <span id="copiedBadge" class="position-absolute top-0 start-100 translate-middle badge bg-green p-2 hide">скопировано<span class="visually-hidden">copied</span></span>
+        </button>
+    </div>
+    <div class="row">
+        <div class="col-12 col-md-auto">
+            <div class="input-group">
+                <span class="input-group-text">Версия</span>
+                <span class="form-control" />@Model.Version
+            </div>
+        </div>
+    </div>
+    <div class="input-group" style="max-width: 500px;">
+        <span class="input-group-text">Описание</span>
+        <span class="form-control" />@Model.ServerDesc.Description
+    </div>
 </div>
 <div class="d-flex justify-content-center align-items-center">
     <div class="container">
@@ -19,7 +40,17 @@
                     </div>
                     <div class="log-entry-holder input-group">
                         <input id="commandInput" type="text" class="form-control" placeholder="console..." />
-                        <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
+                        @if(Model.ServerDesc.ServerState == ServerState.started)
+                        {
+                            @if(Model.SharedRights.SendCommands)
+                            {
+                                <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
+                            }
+                            else
+                            {
+                                <button id="sendCommand" class="btn btn-green text-white" disabled>Отправить</button>
+                            }
+                        }
                     </div>
                 </div>
             </div>
@@ -67,22 +98,88 @@
                     </div>
                     @if(!Model.IsRunning)
                     {
-                        <button class="btn btn-green" id="start-server">Staaaaaaaaaaaart</button>
+                        @if(Model.SharedRights.StartStopServer)
+                        {
+                            <button class="btn btn-green" id="start-server">Staaaaaaaaaaaart</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-green" id="start-server" disabled>Staaaaaaaaaaaart</button>
+                        }
+
                     }
                     else
                     {
-                        <button class="btn btn-danger" id="stopServer" disabled>Выключить</button>
+                        @switch(Model.ServerState)
+                        {
+                            case ServerState.starting:
+                                <button class="btn btn-danger" id="stopServer" disabled>Выключить</button>
+                            break;
+
+                            case ServerState.started:
+                                @if (Model.SharedRights.StartStopServer)
+                                {
+                                    <button class="btn btn-danger" id="stopServer">Выключить</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-danger" id="stopServer" disabled>Выключить</button>
+                                }
+                            break;
+                        }
                     }
 					@*<button class="btn btn-danger">Остановить сервер</button>
                     <button class="btn btn-warning">Перезапустить сервер</button> *@
-                    <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/mods" class="btn btn-info">Управление модами</a>
-                    <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id" class="btn btn-info">Настройки сервера</a>
+                    
+                    @if(Model.SharedRights.EditMods)
+                    {
+                        <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/mods" class="btn btn-info">Управление модами</a>
+                    }
+                    @if(Model.SharedRights.EditServerPreferences)
+                    {
+                        <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id" class="btn btn-info">Настройки сервера</a>
+                    }
+
+                    @if(Model.SharedRights.AddShareds)
+                    {
+                        <div class="d-flex flex-column align-items-center mt-auto">
+						    <label class="">Разрешенные пользователи</label>
+                            <div class="log-holder overflow-auto" style="height: 150px; border-color: #4d4d4d;">
+                                @foreach(string username in Model.AllowedUsers)
+                                {
+                                    <a asp-action="Allow" asp-controller="Server" asp-route-user="@username" asp-route-id="@ViewBag.ThisId" style="height: 50px;" class="d-flex align-items-center justify-content-between btn-transparent btn w-100">
+                                        @username
+                                        <i class="fa fa-pencil" style="font-size:24px;color:#0F0;"></i>
+                                    </a>
+                                    <hr style="padding: 0px;margin: 0px;" />
+                                }
+                                <button id="addUserBtn" style="height: 50px;" class="d-flex align-items-center justify-content-between btn-transparent btn w-100">
+								    Добавить пользователя
+                                    <span class="plus mb-1">
+                                        <div class="plus_stem_l"></div>
+                                        <div class="plus_stem_r"></div>
+                                    </span>
+                                </button>
+                                <div id="addUserInputGroup" class="input-group mb-1 hideFZ mt-1">
+                                    <label class="input-group-text">Имя</label>
+                                    <input id="addUserInput" class="form-control" />
+                                    <button id="confirmAddUserBtn" class="btn btn-green">
+                                        <span id="check" class="checkmark" >
+                                            <div style="background-color: white;" class="checkmark_stem ms-2"></div>
+                                            <div style="background-color: white;" class="checkmark_kick ms-2"></div>
+                                        </span>
+                                    </button>
+                                </div>
+                                <hr style="padding: 0px;margin: 0px;" />
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
-<section class="holder mt-2">
+<section class="mt-3 layout gap-2">
     <label class="grow1 players text-center">
         <h1>ИГРОКИ</h1>
         <p id="players-online">Онлайн: еще нет</p>
@@ -117,7 +214,7 @@
     </div>
 </div> *@
 @* <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script> *@
-<script src="~/js/server.js"></script>
+<script src="~/js/server.js?v=4"></script>
 
 
 

@@ -55,7 +55,7 @@
         </div>
     }
     <span class="text-muted display-6">Разрешенные сервера</span>
-    @if(Model.AllowedServers == null)
+    @if(Model.AllowedServers.Count == 0)
     {
         <p id="text-top">
             Разрешенных серверов нет :(
@@ -63,7 +63,7 @@
     }
     else
     {
-        <div class="list-group">
+        <div class="list-group" style="min-width: 250px;" >
             @foreach(MinecraftServerWrap server in Model.AllowedServers)
             {
                 <a class="list-group-item d-flex justify-content-between list-group-item-action align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@server.Id">

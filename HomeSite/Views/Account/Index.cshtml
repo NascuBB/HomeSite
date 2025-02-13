@@ -1,5 +1,54 @@
-﻿<h4>Привет @ViewBag.Name</h4>
+﻿@model AccountViewModel
+@{
+	ViewData["Title"] = "Account";
+}
+<link rel="stylesheet" href="~/css/account.css" />
+<div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
+	<div class="d-flex justify-content-center">
+		<h1 id="username" class="text-white display-4">Привет @ViewBag.Name</h1>
+	</div>
 
-<form asp-action="Logout" method="post">
-	<input type="submit" value="Выйти" class="btn btn-danger" />
-</form>
+	<h4 class="display-6">Управление аккаунтом</h4>
+
+	<form asp-action="Logout" method="post">
+		<input type="submit" value="Выйти" class="btn btn-danger" />
+	</form>
+	<br />
+	<br />
+	@if(Model.HasServer)
+	{
+		<div class="d-flex flex-column gap-1" style="">
+			<h4 class="display-6 fs-3">Управление сервером</h4>
+			<label class="text-white fs-4 align-self-center">@Model.OwnServer!.Name</label>
+			<div class="d-flex">
+				<div class="input-group">
+					<label class="input-group-text">Имя сервера</label>
+					<input class="form-control" id="nameInput" value="@Model.OwnServer.Name" />
+					<button id="nameBtn" class="btn btn-green">Сохранить</button>
+				</div>
+				<div id="loadingName" class="ms-2 my-auto loader hideFZ"></div>
+			</div>
+			<div class="d-flex">
+				<div class="input-group">
+					<label class="input-group-text">Описание сервера</label>
+					<input class="form-control" id="descInput" value="@Model.OwnServer.Description" />
+					<button id="descBtn" class="btn btn-green">Сохранить</button>
+				</div>
+				<div id="loadingDesc" class="ms-2 my-auto loader hideFZ"></div>
+			</div>
+			<br />
+			@if(Model.OwnServer.ServerState != ServerState.stopped)
+			{
+				<label>Перед удалением сервера его нужно остановить</label>
+			}
+			else
+			{
+				<form asp-action="Delete" asp-controller="Server" asp-route-id="@Model.OwnServer.Id" method="post">
+					<input type="submit" value="Удалить" class="btn btn-danger" />
+				</form>
+			}
+		</div>
+		<span class="d-none opacity-0" id="serverId">@Model.OwnServer.Id</span>
+	}
+</div>
+<script src="~/js/account.js?v=1"></script>

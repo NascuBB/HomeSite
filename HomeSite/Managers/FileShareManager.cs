@@ -55,6 +55,19 @@ namespace HomeSite.Managers
             //string filename = "";
             try
             {
+                string modsPath = Path.Combine(MinecraftServerManager.folder, Id, "mods");
+                if (Directory.Exists(modsPath))
+                {
+                    var di = new DirectoryInfo(modsPath);
+                    foreach (FileInfo f in di.GetFiles())
+                    {
+                        f.Delete();
+                    }
+                    foreach (DirectoryInfo dir in di.GetDirectories())
+                    {
+                        dir.Delete(true);
+                    }
+                }
                 //string id = DateTime.Now.Ticks.ToString();
                 var extension = "." + file.FileName.Split('.')[file.FileName.Split('.').Length - 1];
                 if(extension != ".zip")
@@ -66,7 +79,7 @@ namespace HomeSite.Managers
                 {
                     await file.CopyToAsync(stream);
                 }
-                System.IO.Compression.ZipFile.ExtractToDirectory(exactpath, Path.Combine(MinecraftServerManager.folder, Id, "mods"));
+                System.IO.Compression.ZipFile.ExtractToDirectory(exactpath, modsPath);
                 await RenameFilesAsync(Path.Combine(MinecraftServerManager.folder, Id, "mods"));
                 //sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename });
                 //File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));

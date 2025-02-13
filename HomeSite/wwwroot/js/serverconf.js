@@ -18,7 +18,7 @@ function sleep(ms) {
 
 //Flight
 document.getElementById("FlightSwitch").addEventListener("change", async (event) => {
-    loaderFl.className = 'showFZ loader';
+    loaderFl.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -33,13 +33,13 @@ document.getElementById("FlightSwitch").addEventListener("change", async (event)
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderFl.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderFl.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 //Force game mode
 document.getElementById("ForceGMSwitch").addEventListener("change", async (event) => {
-    loaderForce.className = 'showFZ loader';
+    loaderForce.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -54,13 +54,13 @@ document.getElementById("ForceGMSwitch").addEventListener("change", async (event
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderForce.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderForce.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////Nether
 document.getElementById("NetherSwitch").addEventListener("change", async (event) => {
-    loaderNether.className = 'showFZ loader';
+    loaderNether.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -75,13 +75,13 @@ document.getElementById("NetherSwitch").addEventListener("change", async (event)
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderNether.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderNether.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////Online mode
 document.getElementById("OnlineSwitch").addEventListener("change", async (event) => {
-    loaderOnline.className = 'showFZ loader';
+    loaderOnline.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -96,13 +96,13 @@ document.getElementById("OnlineSwitch").addEventListener("change", async (event)
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderOnline.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderOnline.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////Pvp
 document.getElementById("PvpSwitch").addEventListener("change", async (event) => {
-    loaderPvp.className = 'showFZ loader';
+    loaderPvp.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -117,13 +117,13 @@ document.getElementById("PvpSwitch").addEventListener("change", async (event) =>
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderPvp.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderPvp.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////Spawn monsters
 document.getElementById("SpawnMonstersSwitch").addEventListener("change", async (event) => {
-    loaderMonst.className = 'showFZ loader';
+    loaderMonst.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -138,13 +138,13 @@ document.getElementById("SpawnMonstersSwitch").addEventListener("change", async 
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderMonst.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderMonst.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////White list
 document.getElementById("WhiteListSwitch").addEventListener("change", async (event) => {
-    loaderWhite.className = 'showFZ loader';
+    loaderWhite.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -159,13 +159,13 @@ document.getElementById("WhiteListSwitch").addEventListener("change", async (eve
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderWhite.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderWhite.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 ////Command block
 document.getElementById("CommandSwitch").addEventListener("change", async (event) => {
-    loaderCommand.className = 'showFZ loader';
+    loaderCommand.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -180,13 +180,13 @@ document.getElementById("CommandSwitch").addEventListener("change", async (event
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderCommand.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderCommand.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 //Game mode
 document.getElementById("gameModeSelect").addEventListener("change", async (event) => {
-    loaderGameMode.className = 'showFZ loader';
+    loaderGameMode.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -201,13 +201,13 @@ document.getElementById("gameModeSelect").addEventListener("change", async (even
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderGameMode.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderGameMode.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 //Difficulty
 document.getElementById("difficultySelect").addEventListener("change", async (event) => {
-    loaderDifficulty.className = 'showFZ loader';
+    loaderDifficulty.className = 'showFZ form-check-label loader-sm';
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
@@ -222,13 +222,13 @@ document.getElementById("difficultySelect").addEventListener("change", async (ev
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderDifficulty.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderDifficulty.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 //Players max-players
 document.getElementById('playersButton').addEventListener('click', async () => {
-    loaderPlayers.className = 'showFZ loader';
+    loaderPlayers.className = 'showFZ form-check-label loader-sm';
     var input = document.getElementById('playersInput');
     var v = input.value.toString() ? input.value.toString() : '0';
     try {
@@ -245,13 +245,13 @@ document.getElementById('playersButton').addEventListener('click', async () => {
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderPlayers.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderPlayers.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 //spawn protection
 document.getElementById('spawnButton').addEventListener('click', async () => {
-    loaderSpawn.className = 'showFZ loader';
+    loaderSpawn.className = 'showFZ form-check-label loader-sm';
     var input = document.getElementById('spawnInput');
     var v = input.value.toString() ? input.value.toString() : '0';
     try {
@@ -268,53 +268,55 @@ document.getElementById('spawnButton').addEventListener('click', async () => {
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
-        sleep(100).then(() => { loaderSpawn.className = 'hideFZ loader' });
+        sleep(100).then(() => { loaderSpawn.className = 'hideFZ form-check-label loader-sm' });
     }
 });
 
 
 var sendBtn = document.getElementById('fileSendBtn');
 
-sendBtn.addEventListener('click', async () => {
-    var input = document.querySelector('input[type="file"]');
-    //const successSpan = document.getElementById('completeSpan');
-    const errorSpan = document.getElementById('errorUplSpan');
-    errorSpan.className = 'hideFZ align-self-center text-danger';
+if (sendBtn != null) {
+    sendBtn.addEventListener('click', async () => {
+        var input = document.querySelector('input[type="file"]');
+        //const successSpan = document.getElementById('completeSpan');
+        const errorSpan = document.getElementById('errorUplSpan');
+        errorSpan.className = 'hideFZ align-self-center text-danger';
 
 
-    if (input.files.length === 0) {
-        errorSpan.textContent = 'Файл не выбран';
-        errorSpan.className = 'text-danger align-self-center showFZ';
-        return;
-    }
-
-    var file = input.files[0];
-
-    var data = new FormData();
-    data.append('file', file);
-
-    let loaderC = document.getElementById('loading');
-    loaderC.className = 'showFZ loader';
-
-    try {
-        const response = await fetch(`/shared/uploadmods?Id=${serverId}`, {
-            method: 'POST',
-            body: data
-        });
-
-        if (!response.ok) {
-            throw new Error(await response.text());
+        if (input.files.length === 0) {
+            errorSpan.textContent = 'Файл не выбран';
+            errorSpan.className = 'text-danger align-self-center showFZ';
+            return;
         }
-        errorSpan.className = 'text-success align-self-center showFZ';
-        errorSpan.textContent = 'Моды успешно загружены';
-    } catch (err) {
-        console.error("Ошибка загрузки файла:", err);
-        errorSpan.textContent = 'Ошибка загрузки. Возможно, файл слишком большой';
-        errorSpan.className = 'text-danger align-self-center showFZ';
-    } finally {
-        loaderC.className = 'hideFZ loader';
-    }
-});
+
+        var file = input.files[0];
+
+        var data = new FormData();
+        data.append('file', file);
+
+        let loaderC = document.getElementById('loading');
+        loaderC.className = 'showFZ loader';
+
+        try {
+            const response = await fetch(`/shared/uploadmods?Id=${serverId}`, {
+                method: 'POST',
+                body: data
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            errorSpan.className = 'text-success align-self-center showFZ';
+            errorSpan.textContent = 'Моды успешно загружены';
+        } catch (err) {
+            console.error("Ошибка загрузки файла:", err);
+            errorSpan.textContent = 'Ошибка загрузки. Возможно, файл слишком большой';
+            errorSpan.className = 'text-danger align-self-center showFZ';
+        } finally {
+            loaderC.className = 'hideFZ loader';
+        }
+    });
+}
 
 var finishbtn = document.getElementById("finishBtn");
 var backbtn = document.getElementById('backBtn');
@@ -346,7 +348,7 @@ if (finishbtn != null) {
         } catch (error) {
             alert("Ошибка: " + error.message);
         } finally {
-            lloader.className = "loader hideFZ"; // Скрываем индикатор
+            loader.className = "loader hideFZ"; // Скрываем индикатор
         }
     });
 }

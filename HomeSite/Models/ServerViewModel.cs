@@ -6,7 +6,7 @@ namespace HomeSite.Models
     {
         public ServerCreation ServerCreation { get; set; }
         public MinecraftServerWrap? OwnServer { get; set; }
-        public List<MinecraftServerWrap>? AllowedServers { get; set; }
+        public List<MinecraftServerWrap> AllowedServers { get; set; }
     }
 
     public enum ServerCreation

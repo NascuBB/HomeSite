@@ -18,5 +18,6 @@ namespace HomeSite.Models
         public int SpawnProtection { get; set; }
         public bool IsConfigured { get; set; }
         public bool ModsInstalled { get; set; }
+        public bool UploadMods { get; set; }
     }
 }

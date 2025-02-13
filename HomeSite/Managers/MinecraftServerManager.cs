@@ -82,6 +82,17 @@ namespace HomeSite.Managers
             }
         }
 
+        public static string GetVersionDBO(MinecraftVersion version)
+        {
+            switch (version)
+            {
+                case MinecraftVersion._1_12_2: return "1.12.2";
+                case MinecraftVersion._1_16_5: return "1.16.5";
+                case MinecraftVersion._1_19_2: return "1.19.2";
+                default: return "";
+            }
+        }
+
         public static string GetDifficulty(Difficulty difficulty)
         {
             switch(difficulty)
@@ -190,6 +201,27 @@ namespace HomeSite.Managers
             }
         }
 
+        public static async Task<bool> DeleteServer(string Id)
+        {
+            if (serversOnline.Any(x => x.Id == Id))
+            {
+                return false;
+            }
+
+            try
+            {
+                serverMainSpecs.Remove(Id);
+                await SaveServersSpecs();
+                Directory.Delete(Path.Combine(folder, Id), true);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return false;
+            }
+            return true;
+        }
+
         public static async Task<ServerCreation> GetServerCreation(string Id)
         {
             if(!inCreation.ContainsKey(Id))
@@ -200,7 +232,27 @@ namespace HomeSite.Managers
 
         }
 
-        private static async Task SaveServersSpecs()
+        public static async Task SetServerDesc(string Id, string newValue)
+        {
+            serverMainSpecs[Id].Description = newValue;
+            if(serversOnline.Any(x => x.Id == Id))
+            {
+                serversOnline.First(x => x.Id == Id).Description = newValue;
+            }
+            await SaveServersSpecs();
+        }
+
+		public static async Task SetServerName(string Id, string newValue)
+		{
+			serverMainSpecs[Id].Name = newValue;
+			if (serversOnline.Any(x => x.Id == Id))
+			{
+				serversOnline.First(x => x.Id == Id).Name = newValue;
+			}
+			await SaveServersSpecs();
+		}
+
+		private static async Task SaveServersSpecs()
         {
             string servers = JsonConvert.SerializeObject(serverMainSpecs, Formatting.Indented);
             await File.WriteAllTextAsync(serversjsPath,servers);
@@ -236,6 +288,11 @@ namespace HomeSite.Managers
         public static MinecraftServerSpecifications GetServerSpecs(string id)
         {
             return serverMainSpecs[id];
+        }
+
+        public static bool ServerExists(string Id)
+        {
+            return serverMainSpecs.ContainsKey(Id);
         }
 
         public void LaunchServer(string Id)
@@ -314,9 +371,10 @@ namespace HomeSite.Managers
 
     public class MinecraftServer : IDisposable
     {
-        public ServerState ServerState { get; private set; }
-        public string Description { get; private set; }
-        public string Name { get; private set; }
+		public string Description { get; set; }
+		public string Name { get; set; }
+
+		public ServerState ServerState { get; private set; }
         public string OwnerUsername { get; private set; }
 
         public bool IsRunning
@@ -446,8 +504,9 @@ namespace HomeSite.Managers
 		private async void ServerConsoleProcess_Exited(object? sender, EventArgs e)
 		{
 			cts.Cancel();
-            await ServerController.NotifyServerCrashed(Id);
-            MinecraftServerManager.ServerEnded(this);
+            if(ServerState == ServerState.starting)
+                await ServerController.NotifyServerCrashed(Id);
+            await MinecraftServerManager.ServerEnded(this);
 		}
 
 		async Task MonitorLogAsync(string Id, string logPath, CancellationToken token)

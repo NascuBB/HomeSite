@@ -53,6 +53,7 @@ try
 #endif
 
     MinecraftServerManager.Prepare();
+    SharedAdministrationManager.Prepare();
 
 
 	var app = builder.Build();

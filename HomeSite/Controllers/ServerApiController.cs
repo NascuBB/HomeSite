@@ -17,6 +17,10 @@ namespace HomeSite.Controllers
         [HttpPost("start")]
         public IActionResult StartServer(string Id)
         {
+            if (HttpContext.User.Identity.Name == null || MinecraftServerManager.GetServerSpecs(Id).OwnerName != HttpContext.User.Identity.Name)
+                if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).StartStopServer)
+                    return Unauthorized();
             try
             {
                 _minecraftServerManager.LaunchServer(Id);
@@ -31,6 +35,10 @@ namespace HomeSite.Controllers
         [HttpPost("stop")]
         public async Task<IActionResult> StopServer(string Id)
         {
+            if (HttpContext.User.Identity.Name == null || MinecraftServerManager.GetServerSpecs(Id).OwnerName != HttpContext.User.Identity.Name)
+                if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).StartStopServer)
+                    return Unauthorized();
             try
             {
                 await MinecraftServerManager.serversOnline.First(x => x.Id == Id).StopServer();
@@ -45,6 +53,10 @@ namespace HomeSite.Controllers
         [HttpPost("command")]
         public async Task<IActionResult> SendCommand([FromBody] string command, string Id)
         {
+            if (HttpContext.User.Identity.Name == null || MinecraftServerManager.GetServerSpecs(Id).OwnerName != HttpContext.User.Identity.Name)
+                if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).SendCommands)
+                    return Unauthorized();
             try
             {
                 string res = await MinecraftServerManager.serversOnline.First(x => x.Id == Id).SendCommandAsync(command);

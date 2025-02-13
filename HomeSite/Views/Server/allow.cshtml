@@ -1,0 +1,93 @@
+﻿@using HomeSite.Managers
+@model SharedRights
+@{
+    ViewData["Title"] = "Configure server";
+}
+<link rel="stylesheet" href="~/css/serverconf.css" />
+<div class=" d-flex flex-column align-items-center">
+    <h1 class="text-white display-5">Разрешения</h1>
+    <h5 class="text-white display-6">Для @ViewBag.AllowName</h5>
+</div>
+<br />
+<div class="m-2 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly">
+    <div class="gap-2 d-flex flex-column mb-2 a-div-sm">
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.SendCommands)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="SendCommandsSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="SendCommandsSwitch">
+            }
+            <label class="form-check-label me-1" for="SendCommandsSwitch">Отправлять команды</label>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.UploadMods)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="UploadModsSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="UploadModsSwitch">
+            }
+            <label class="form-check-label me-1" for="UploadModsSwitch">Загружать моды на сервер</label>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.EditServerPreferences)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditSPSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditSPSwitch">
+            }
+            <label class="form-check-label me-1" for="EditSPSwitch">Управлять настройками сервера</label>
+        </div>
+    </div>
+    <div class="gap-2 d-flex flex-column mb-2 a-div-sm">
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.EditMods)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditModsSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditModsSwitch">
+            }
+            <label class="form-check-label me-1" for="EditModsSwitch">Управление модами</label>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.StartStopServer)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="StopStartServerSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="StopStartServerSwitch">
+            }
+            <label class="form-check-label me-1" for="StopStartServerSwitch">Запускать/останавливать сервер</label>
+        </div>
+        <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @if (Model.AddShareds)
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditSharedsSwitch" checked>
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" id="EditSharedsSwitch">
+            }
+            <label class="form-check-label me-1" for="EditSharedsSwitch">Управлять разрешенными пользователями</label>
+        </div>
+    </div>
+</div>
+<br />
+<div class="d-flex justify-content-center gap-3">
+    <button class="btn btn-green w-25 ms-5" id="saveBtn">Сохранить</button>
+    <button class="btn btn-danger w-25" id="deleteBtn">Удалить</button>
+    <div id="loading" class="loader hideFZ ms-1"></div>
+</div>
+<div class="mt-4 d-flex justify-content-center gap-2">
+    <button class="btn btn-green" id="backBtn">Назад</button>
+</div>
+<script src="~/js/allow.js?v=3"></script>

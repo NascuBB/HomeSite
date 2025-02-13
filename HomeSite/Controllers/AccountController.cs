@@ -1,11 +1,13 @@
 ﻿using HomeSite.Entities;
 using HomeSite.Helpers;
+using HomeSite.Managers;
 using HomeSite.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 
 namespace HomeSite.Controllers
@@ -25,7 +27,27 @@ namespace HomeSite.Controllers
 				return RedirectToAction("Login");
 			}
 			ViewBag.Name = HttpContext.User.Identity.Name;
-			return View();
+
+			string userServerId = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ServerID;
+			MinecraftServerWrap? wrap = null;
+			if(userServerId != "no")
+			{
+				var server = MinecraftServerManager.GetServerSpecs(userServerId);
+				wrap = new MinecraftServerWrap
+				{
+					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)
+					? MinecraftServerManager.serversOnline.First(x => x.Id == userServerId).ServerState
+					: ServerState.stopped,
+					Description = server.Description,
+					Id = userServerId,
+					Name = server.Name,
+				};
+			}
+			return View(new AccountViewModel
+			{
+				HasServer = userServerId != "no",
+				OwnServer = wrap
+			});
 		}
 
 		public IActionResult Register()
@@ -118,5 +140,7 @@ namespace HomeSite.Controllers
 			HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 			return RedirectToAction("Index", "Home");
 		}
+
+
 	}
 }
