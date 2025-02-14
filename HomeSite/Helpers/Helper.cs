@@ -10,6 +10,17 @@ namespace HomeSite.Helpers
         {
             thisApp = application;
         }
+
+        public static void Copy(string sourceDir, string targetDir)
+        {
+            Directory.CreateDirectory(targetDir);
+
+            foreach (var file in Directory.GetFiles(sourceDir))
+                File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)));
+
+            foreach (var directory in Directory.GetDirectories(sourceDir))
+                Copy(directory, Path.Combine(targetDir, Path.GetFileName(directory)));
+        }
         public static bool GetMinecraftServer()
         {
             Process? mServer = Process.GetProcessesByName("Minecraft Server")[0];

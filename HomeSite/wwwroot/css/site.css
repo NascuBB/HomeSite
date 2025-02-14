@@ -26,6 +26,7 @@ html {
     }
 
 .btn-green {
+    color: white;
     background-color: #00DF00;
     color: white;
 }
@@ -38,10 +39,24 @@ html {
         background-color: #00DF00;
         box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00FF00;
     }
+    .btn-green:disabled {
+        color: white;
+        background-color: #00B800;
+        border-color: #00B800;
+    }
+
+
+.bg-green {
+    background-color: #00FF00;
+}
+
+.text-green {
+    color: #00FF00;
+}
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {

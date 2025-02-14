@@ -22,9 +22,22 @@
                         <li class="nav-item">
                             <a class="nav-link text-secondary" asp-area="" asp-controller="Home" asp-action="Index">Главная</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-secondary" asp-area="" asp-controller="Server" asp-action="Index">Сервер</a>
-                        </li>
+                        @if (Context.User.Identity.Name != null)
+                        {
+                            @* <li class="nav-item dropdown">
+                                <button class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Сервер
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Index">Мои сервера</a></li>
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Configure">Настройки сервера</a></li>
+                                    <li><a class="nav-link text-secondary dropdown-item" asp-area="" asp-controller="Server" asp-action="Mods">Моды сервера</a></li>
+                                </ul>
+                            </li> *@
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" asp-area="" asp-controller="Server" asp-action="Index">Сервер</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-secondary" asp-area="" asp-controller="Fileshare" asp-action="Index">Обменник</a>
                         </li>
@@ -32,7 +45,9 @@
                             <a class="nav-link text-secondary" asp-area="" asp-controller="Home" asp-action="Privacy">Прикол</a>
                         </li>
                     </ul>
+                    @await Html.PartialAsync("_LoginPartial")
                 </div>
+               
 @*                 <button class="btn btn-info" id="btnSwitch">
                     Theme
                 </button> *@
@@ -47,7 +62,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2024 - Just1x
+            &copy; 2024-2025 - Just1x
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

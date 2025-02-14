@@ -4,7 +4,14 @@
 <link rel="stylesheet" href="~/css/index.css"/>
 <script src="~/js/index.js?v=3"></script>
 <div class="text-center">
-    <h1 class="display-4">Велкам</h1>
+    @if(Context.User.Identity.Name == null)
+    {
+        <h1 class="display-4">Велкам</h1>
+    }
+    else
+    {
+        <h1 class="display-4">Велкам, @Context.User.Identity.Name</h1>
+    }
     @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
     <section class="layout">
         <label class="grow1 cpu">
@@ -26,6 +33,15 @@
         </div> *@
     </section>
     <p class="display-5" id="firstZero">(первое всегда 0)</p>
-    <h1 class="display-6 fs-3"><span style="transform: scaleX(-1);">👇</span> Моды этого сервера 👇</h1>
-    <a asp-action="Index" asp-controller="Fileshare" class="btn btn-green text-white">Скачать</a>
+    @if (Context.User.Identity.Name == null)
+    {
+        <h1 class="display-6 fs-3">Теперь чтобы зайти на сервер нужно войти в свой аккаунт</h1>
+        <a asp-action="Login" asp-controller="Account" class="btn btn-green text-white">Войти</a>
+    }
+    else
+    {
+        <h1 class="display-6 fs-3">Теперь сервер не один. Теперь ты сам можешь создать свой сервер</h1>
+        <a asp-action="Index" asp-controller="Server" class="btn btn-green text-white">Создать</a>
+    }
+
 </div>

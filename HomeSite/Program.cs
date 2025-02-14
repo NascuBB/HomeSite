@@ -1,16 +1,19 @@
+using HomeSite.Entities;
 using HomeSite.Helpers;
+using HomeSite.Managers;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography.X509Certificates;
 
 try
 {
-
-
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
 	Task.Run(FileShareManager.PrepareFileShare);
+    Task.Run(FileShareManager.OnceADayClock);
 #pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
 
 	var builder = WebApplication.CreateBuilder(args);
@@ -18,10 +21,17 @@ try
     // Add services to the container.
     builder.Services.AddControllersWithViews();
 
-    builder.Services.AddSignalR();
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+
+    builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+    builder.Services.AddSingleton<LogConnectionManager>();
+    builder.Services.AddSingleton<MinecraftServerManager>();
+
+    //builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>
     {
-        options.MultipartBodyLengthLimit = 209715200; // if don't set default value is: 128 MB
+        options.MultipartBodyLengthLimit = 1073741824; // if don't set default value is: 128 MB
     });
 
 #if DEBUG
@@ -36,13 +46,14 @@ try
         // Настройка HTTPS
         options.Listen(System.Net.IPAddress.Parse("192.168.31.204"), 443, listenOptions =>
         {
-            listenOptions.UseHttps(@"C:\Users\nonam\source\publish\certificate.pfx", "gamemode1");
+            listenOptions.UseHttps(Path.Combine(Directory.GetCurrentDirectory(),"certificate.pfx"), "gamemode1");
         });
     });
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);
 #endif
 
-
+    MinecraftServerManager.Prepare();
+    SharedAdministrationManager.Prepare();
 
 
 	var app = builder.Build();
@@ -60,13 +71,15 @@ try
     app.UseHsts();
 #endif
 
-    app.MapHub<MinecraftLogHub>("/minecraftHub");
+    //app.MapHub<MinecraftLogHub>("/minecraftHub");
 
     app.UseStaticFiles();
 
     app.UseRouting();
 
+    app.UseAuthentication();
     app.UseAuthorization();
+    app.UseWebSockets();
 
 
     app.MapControllerRoute(
