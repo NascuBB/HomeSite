@@ -40,7 +40,7 @@
                     </div>
                     <div class="log-entry-holder input-group">
                         <input id="commandInput" type="text" class="form-control" placeholder="console..." />
-                        @if(Model.ServerDesc.ServerState == ServerState.started)
+                        @if(Model.ServerState == ServerState.started)
                         {
                             @if(Model.SharedRights.SendCommands)
                             {

@@ -542,17 +542,16 @@ namespace HomeSite.Managers
                     {
                         if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
                         {
-//#if DEBUG
-//                            Task.Run(async () => { 
-//                                await ServerController.NotifyServerStarted(Id);
-//                                ServerState = ServerState.started;
-//                            });
-//                            Task.Run(() => StartClock(token));
-//#else
-//                            Task.Run(() => CheckStartedServer(token));
-//#endif
-
+#if DEBUG
+                            Task.Run(async () =>
+                            {
+                                await ServerController.NotifyServerStarted(Id);
+                                ServerState = ServerState.started;
+                            });
+                            Task.Run(() => StartClock(token));
+#else
                             Task.Run(() => CheckStartedServer(token));
+#endif
                         }
                         //Console.WriteLine(line);
                         await _logConnectionManager.BroadcastLogAsync(Id, line);
@@ -791,7 +790,7 @@ namespace HomeSite.Managers
             {
                 try
                 {
-#if DEBUG
+#if !DEBUG
                     ServerProcess!.Refresh();
                     ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 - 78;
                     string plRaw = await SendCommandAsync("list");

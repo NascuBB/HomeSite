@@ -6,6 +6,7 @@
 const serverId = window.location.pathname.split('/').pop();
 const startBtn = document.getElementById("start-server");
 const stopBtn = document.getElementById("stopServer");
+const sendCommandBtn = document.getElementById('sendCommand');
 
 let IsShuttingDown = true;
 
@@ -87,6 +88,7 @@ async function subscribeToServerStart() {
             loaderC.className = 'hideFZ loader ms-1';
             document.getElementById('check').className = 'showFZ checkmark ms-3';
             stopBtn.removeAttribute('disabled');
+            sendCommandBtn.removeAttribute('disabled');
             eventSource.close();
             fetchServerStats();
             MainTimer();
@@ -181,10 +183,12 @@ async function fetchServerStats() {
             document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
+
             document.getElementById('timerSpan').className = 'hideFZ';
             IsShuttingDown = false;
             clearInterval(statsId);
             stopBtn.setAttribute('disabled', '');
+            sendCommandBtn.setAttribute('disabled', '');
             textIndicator.textContent = 'Сервер завершил роботу';
             loaderC.className = 'hideFZ loader ms-1';
             document.getElementById('check').className = 'hideFZ checkmark ms-3';
@@ -271,6 +275,7 @@ if (stopBtn != null) {
             document.getElementById('check').className = 'hideFZ checkmark ms-3';
             loaderC.className = 'showFZ loader ms-1';
             stopBtn.setAttribute('disabled', '');
+            sendCommandBtn.setAttribute('disabled', '');
         }
         else {
             return alert(result);
@@ -288,24 +293,22 @@ if (stopBtn != null) {
     //});
 
     //connection.start().catch(err => console.error(err.toString()));
-    const sendCommandBtn = document.getElementById('sendCommand');
 
-    if (sendCommandBtn != null) {
-        sendCommandBtn.addEventListener('click', async () => {
-            const command = document.getElementById('commandInput').value;
-            if (!command) return alert('Введите команду');
-            if (command == "stop") return alert('Ага, че умный дофига?');
-            document.getElementById('commandInput').value = "";
-            try {
-                const response = await fetch("/Server/See/" + serverId + "/api/command", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(command),
-                });
-                alert(await response.text());
-            } catch (err) {
-                console.error('Ошибка отправки команды:', err);
-            }
-        });
-    }
+
+    sendCommandBtn.addEventListener('click', async () => {
+        const command = document.getElementById('commandInput').value;
+        if (!command) return alert('Введите команду');
+        if (command == "stop") return alert('Ага, че умный дофига?');
+        document.getElementById('commandInput').value = "";
+        try {
+            const response = await fetch("/Server/See/" + serverId + "/api/command", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(command),
+            });
+            alert(await response.text());
+        } catch (err) {
+            console.error('Ошибка отправки команды:', err);
+        }
+    });
 }

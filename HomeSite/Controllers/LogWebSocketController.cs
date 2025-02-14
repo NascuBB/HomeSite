@@ -14,7 +14,6 @@ namespace HomeSite.Controllers
             _logConnectionManager = logConnectionManager;
         }
 
-        [HttpGet]
         public async Task Get(string serverId)
         {
             //if (!User.Identity?.IsAuthenticated ?? false)
