@@ -394,17 +394,25 @@ namespace HomeSite.Managers
         public string ConsoleLogs { get => consoleLogs; }
         public int Players { get => players; }
         public float RamUsage { get => ramUsage; }
+        public int RemainingTime { get => remainingTime; }
 
         private Process? ServerProcess { get; set; }
         private Process? ServerConsoleProcess { get; set; }
 
-        private string consoleLogs = "Логи сервера появятся здесь...";
         private int players = 0;
         private float ramUsage = 0;
+        private int remainingTime = 5 * 60;
+
+        private string consoleLogs = "Логи сервера появятся здесь...";
         private RCON? rcon = null;
+        private Timer shutdownTimer;
+        private Timer reconnectTimer;
 
         private readonly LogConnectionManager _logConnectionManager;
         private readonly CancellationTokenSource cts;
+
+        public event Action<string> OnServerShutdown; // Событие для уведомления об остановке сервера
+        public event Action<string, int> OnTimerUpdate; // Отправка оставшегося времени на клиент
 
         public string Id { get; }
         public MinecraftVersion Version { get; }
@@ -518,7 +526,7 @@ namespace HomeSite.Managers
                 return;
             }
 
-            Console.WriteLine($"Следим за логами: {logPath}");
+            //Console.WriteLine($"Следим за логами: {logPath}");
 
             using FileStream fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using StreamReader reader = new StreamReader(fs, Encoding.UTF8);
@@ -538,11 +546,13 @@ namespace HomeSite.Managers
                                 await ServerController.NotifyServerStarted(Id);
                                 ServerState = ServerState.started;
                             });
+                            Task.Run(() => StartClock(token));
 #else
                             Task.Run(() => CheckStartedServer(token));
 #endif
+                            shutdownTimer = new Timer(TimerCallback, null, 1000, 1000);
                         }
-                        Console.WriteLine(line);
+                        //Console.WriteLine(line);
                         await _logConnectionManager.BroadcastLogAsync(Id, line);
                         consoleLogs += "\n" + line;
                     }
@@ -557,6 +567,25 @@ namespace HomeSite.Managers
 				if (ex is not TaskCanceledException)
 					Console.WriteLine($"Error: {ex}");
             }
+        }
+
+        private void TimerCallback(object state)
+        {
+            if(cts.Token.IsCancellationRequested)
+            {
+                shutdownTimer.Dispose();
+                return;
+            }
+            if (remainingTime <= 0)
+            {
+                shutdownTimer.Dispose();
+                StopServer();
+                Console.WriteLine("Сервер выключен из-за неактивности.");
+                return;
+            }
+
+            remainingTime--;
+            Console.WriteLine($"Оставшееся время: {remainingTime / 60}:{remainingTime % 60:D2}");
         }
 
         private async void CheckStartedServer(CancellationToken token)
@@ -710,7 +739,7 @@ namespace HomeSite.Managers
         public async Task<string> SendCommandAsync(string command)
         {
             if (rcon == null) { return "сервер еще запускается"; }
-            if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
+            //if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
 
             return await rcon.SendCommandAsync(command);
         }
@@ -729,16 +758,45 @@ namespace HomeSite.Managers
             {
                 try
                 {
-
+#if !DEBUG
                     ServerProcess!.Refresh();
                     ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 - 78;
-#if !DEBUG
-                            string plRaw = await SendCommandAsync("list");
-                            int.TryParse(new string(plRaw
-                             .SkipWhile(x => !char.IsDigit(x))
-                             .TakeWhile(x => char.IsDigit(x))
-                             .ToArray()), out players);
+                    string plRaw = await SendCommandAsync("list");
+                    int.TryParse(new string(plRaw
+                        .SkipWhile(x => !char.IsDigit(x))
+                        .TakeWhile(x => char.IsDigit(x))
+                        .ToArray()), out players);
+#else
+                    int c = 0;
+                    if (c > 2)
+                    {
+                        if (c > 6)
+                        {
+                            players = 0;
+                        }
+                        else
+                        {
+                            players = 1;        
+                        }
+                    }
+                    c++;
 #endif
+                    if(players > 0)
+                    {
+                        if(shutdownTimer != null)
+                        {
+                            shutdownTimer.Dispose();
+                            shutdownTimer = null;
+                        }
+                    }
+                    else
+                    {
+                        if (shutdownTimer == null)
+                        {
+                            remainingTime = 120;
+                            shutdownTimer = new Timer(TimerCallback, null, 1000, 1000);
+                        }
+                    }
                     await Task.Delay(5000, token);
                 }
                 catch (Exception ex) //when (ex is not TaskCanceledException)

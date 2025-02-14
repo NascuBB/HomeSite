@@ -435,8 +435,11 @@ namespace HomeSite.Controllers
             await Response.Body.FlushAsync();
 
             await Task.Delay(60000); // Ожидание максимум 1 минуту, потом клиент должен переподключиться
-
-            _subscribers[Id].Remove(Response);
+            try
+            {
+                _subscribers[Id].Remove(Response);
+            }
+            catch { }
         }
 
         public static async Task NotifyServerStarted(string serverId)

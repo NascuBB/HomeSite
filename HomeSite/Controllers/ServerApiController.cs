@@ -68,5 +68,12 @@ namespace HomeSite.Controllers
                 return StatusCode(500, $"Ошибка отправки команды: {ex.Message}");
             }
         }
+
+        [HttpGet("remaining-time")]
+        public IActionResult GetRemainingTime(string Id)
+        {
+            if (!MinecraftServerManager.serversOnline.Any(x => x.Id == Id)) return NotFound("Сервер не найден");
+            return Ok(new { remainingTime = MinecraftServerManager.serversOnline.First(x => x.Id == Id).RemainingTime });
+        }
     }
 }

@@ -7,6 +7,8 @@ const serverId = window.location.pathname.split('/').pop();
 const startBtn = document.getElementById("start-server");
 const stopBtn = document.getElementById("stopServer");
 
+let IsShuttingDown = true;
+
 let statsId;
 
 let loaderC = document.getElementById('loading');
@@ -30,6 +32,50 @@ if (startBtn != null) {
         }
     });
 }
+
+async function MainTimer() {
+    let timerElement = document.getElementById("timer");
+    let timerSpan = document.getElementById("timerSpan");
+    timerSpan.className = 'showFZ';
+
+    try {
+        let response = await fetch("/Server/See/" + serverId + "/api/remaining-time");
+        if (!response.ok) throw new Error("Ошибка при получении времени");
+        let data = await response.json();
+        let remainingTime = data.remainingTime;
+        if (remainingTime === -1) {
+            IsShuttingDown = false
+            timerSpan.className = 'hideFZ';
+            return;
+        }
+        else {
+            IsShuttingDown = true;
+        }
+
+        function updateTimer() {
+            if (IsShuttingDown === false) {
+                return;
+            }
+            if (remainingTime <= 0) {
+                timerSpan.textContent = "Время истекло! Сервер отключается.";
+                timerElement.textContent = '';
+                return;
+            }
+
+            let minutes = Math.floor(remainingTime / 60);
+            let seconds = remainingTime % 60;
+            timerElement.textContent = `Осталось времени: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            remainingTime--;
+            setTimeout(updateTimer, 1000);
+        }
+
+        updateTimer(); // Запускаем таймер
+
+    } catch (error) {
+        timerElement.textContent = "Ошибка загрузки таймера.";
+        console.error(error);
+    }
+}
 async function subscribeToServerStart() {
     const eventSource = new EventSource(window.location.href + "/sti/subscribe");
 
@@ -43,6 +89,7 @@ async function subscribeToServerStart() {
             stopBtn.removeAttribute('disabled');
             eventSource.close();
             fetchServerStats();
+            MainTimer();
             statsId = setInterval(fetchServerStats, 5000);
         }
         else if (data.Type === "ServerCrashed") {
@@ -121,11 +168,21 @@ async function fetchServerStats() {
             //    loaderC.className = 'hideFZ loader';
             //    document.getElementById('check').className = 'showFZ checkmark';
             //}
+            if (data.players > 0  && IsShuttingDown === true) {
+                document.getElementById('timerSpan').className = 'hideFZ';
+                IsShuttingDown = false;
+                //timerSpan.;
+            }
+            if (data.players === 0 && IsShuttingDown === false) {
+                MainTimer();
+            }
             document.getElementById('players-online').textContent = `Онлайн: ${data.players}`;
             document.getElementById('ram-free').textContent = `Занято: ${data.memoryUsage} MB`;
             document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
+            document.getElementById('timerSpan').className = 'hideFZ';
+            IsShuttingDown = false;
             clearInterval(statsId);
             stopBtn.setAttribute('disabled', '');
             textIndicator.textContent = 'Сервер завершил роботу';
@@ -160,7 +217,15 @@ if (stopBtn != null) {
             logsContainer.scrollTop = logsContainer.scrollHeight;
         };
 
-        subscribeToServerStart();
+        if (document.getElementById('check').classList.contains('hideFZ')) {
+            subscribeToServerStart();
+        }
+        else {
+            fetchServerStats();
+            MainTimer();
+            statsId = setInterval(fetchServerStats, 5000);
+        }
+
 
 
 

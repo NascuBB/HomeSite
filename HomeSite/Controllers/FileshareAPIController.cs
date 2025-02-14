@@ -11,7 +11,7 @@ namespace HomeSite.Controllers
     {
         [HttpPost]
         [Route("uploadfile")]
-		[RequestSizeLimit(209715200)]
+		[RequestSizeLimit(1073741824)]
 		[ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
 		public async Task<IActionResult> UploadFile(IFormFile file, CancellationToken cancellationtoken)

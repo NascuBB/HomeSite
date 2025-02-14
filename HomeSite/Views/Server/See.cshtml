@@ -51,6 +51,10 @@
                                 <button id="sendCommand" class="btn btn-green text-white" disabled>Отправить</button>
                             }
                         }
+                        else
+                        {
+                            <button id="sendCommand" class="btn btn-green text-white" disabled>Отправить</button>
+                        }
                     </div>
                 </div>
             </div>
@@ -74,7 +78,6 @@
                                     <div class="cross_stem_r"></div>
                                 </span>
                                 break;
-
                             case ServerState.started:
                                 <p id="text-top">Сервер запущен</p>
                                 @* <div id="loading" class="loader hideFZ ms-1"></div> *@
@@ -82,7 +85,7 @@
                                     <div class="checkmark_stem"></div>
                                     <div class="checkmark_kick"></div>
                                 </span>
-
+                                @* <span class="hideFZ" id="timerSpan">Время на подключение<span id="timer">5:00</span></span> *@
                                 break;
                             case ServerState.stopped:
                                 <p id="text-top">
@@ -96,6 +99,7 @@
                                 break;
                         }
                     </div>
+                    <span class="hideFZ" id="timerSpan"><span id="timer">5:00</span></span>
                     @if(!Model.IsRunning)
                     {
                         @if(Model.SharedRights.StartStopServer)
@@ -214,7 +218,7 @@
     </div>
 </div> *@
 @* <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script> *@
-<script src="~/js/server.js?v=4"></script>
+<script src="~/js/server.js?v=7"></script>
 
 
 
