@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 
 try
 {
+    Console.WriteLine(Directory.GetCurrentDirectory());
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // “ак как этот вызов не ожидаетс€, выполнение существующего метода продолжаетс€ до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));

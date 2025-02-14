@@ -207,7 +207,7 @@ if (stopBtn != null) {
     document.addEventListener('DOMContentLoaded', () => {
 
         const serverId = window.location.pathname.split('/').pop(); // Берём ID из URL
-        const socket = new WebSocket(`ws://${window.location.host}/ws/logs/${serverId}`, [], {
+        const socket = new WebSocket(`wss://${window.location.host}/ws/logs/${serverId}`, [], {
             credentials: 'include'
         });
         const logsContainer = document.getElementById('logs');

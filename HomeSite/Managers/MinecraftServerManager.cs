@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using HomeSite.Migrations;
+using System.Management;
 
 namespace HomeSite.Managers
 {
@@ -484,7 +485,7 @@ namespace HomeSite.Managers
                 //{
                 //    HookConsoleLog.Iniciate(process.Id);
                 //});
-                await Task.Delay(2000);
+                await Task.Delay(5000);
                 Thread t = new Thread(async () => await MonitorLogAsync(Id, LogPath, cts.Token));
                 t.Start();
                 //Task.Run(CheckStartedServer);
@@ -541,16 +542,17 @@ namespace HomeSite.Managers
                     {
                         if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
                         {
-#if DEBUG
-                            Task.Run(async () => { 
-                                await ServerController.NotifyServerStarted(Id);
-                                ServerState = ServerState.started;
-                            });
-                            Task.Run(() => StartClock(token));
-#else
+//#if DEBUG
+//                            Task.Run(async () => { 
+//                                await ServerController.NotifyServerStarted(Id);
+//                                ServerState = ServerState.started;
+//                            });
+//                            Task.Run(() => StartClock(token));
+//#else
+//                            Task.Run(() => CheckStartedServer(token));
+//#endif
+
                             Task.Run(() => CheckStartedServer(token));
-#endif
-                            shutdownTimer = new Timer(TimerCallback, null, 1000, 1000);
                         }
                         //Console.WriteLine(line);
                         await _logConnectionManager.BroadcastLogAsync(Id, line);
@@ -590,33 +592,64 @@ namespace HomeSite.Managers
 
         private async void CheckStartedServer(CancellationToken token)
         {
+            Console.WriteLine("ИЩУ СЕРВЕР ЖАВАВ");
             //await Task.Delay(7000);
             if (ServerProcess == null)
             {
-                var processes = Process.GetProcessesByName("java");
-                while (processes.Length < MinecraftServerManager.serversOnline.Count && !token.IsCancellationRequested)
+                //           var processes = Process.GetProcessesByName("java");
+                //           while (processes.Length < MinecraftServerManager.serversOnline.Count && !token.IsCancellationRequested)
+                //           {
+                //               try
+                //               {
+                //                   await Task.Delay(100, token);
+                //                   processes = Process.GetProcessesByName("java");
+                //               }
+                //               catch(Exception ex)
+                //               {
+                //                   if (ex is not TaskCanceledException)
+                //                       Console.WriteLine($"Error: {ex}");
+                //                   return;
+                //}
+                //               Console.WriteLine("ВСЕ ЕЩЕ ИЩУ СЕРВЕР ЖАВАВ");
+                //           }
+                var processes = GetChildProcesses(ServerConsoleProcess.Id);
+                while (processes.Length == 1)
                 {
                     try
                     {
                         await Task.Delay(100, token);
-                        processes = Process.GetProcessesByName("java");
+                        processes = GetChildProcesses(ServerConsoleProcess.Id);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         if (ex is not TaskCanceledException)
                             Console.WriteLine($"Error: {ex}");
                         return;
-					}
+                    }
                 }
+
+                ServerProcess = processes.FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
+                ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
+                Console.WriteLine("НАШЕЛ СЕРВЕР ЖАВАВ");
+                Console.WriteLine(ServerProcess);
                 if (processes.Length == MinecraftServerManager.serversOnline.Count)
                     ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
                 ServerState = ServerState.started;
                 rcon = new RCON(new IPEndPoint(IPAddress.Parse("192.168.31.204"), RCONPort), "gamemode1");
                 Task.Run(() => StartClock(cts.Token));
+                shutdownTimer = new Timer(TimerCallback, null, 1000, 1000);
                 await ServerController.NotifyServerStarted(Id);
                 //ServerController.Sendtype = SendType.Server;
 
             }
+        }
+        static Process[] GetChildProcesses(int parentId)
+        {
+            var searcher = new ManagementObjectSearcher(
+                $"SELECT ProcessId FROM Win32_Process WHERE ParentProcessId={parentId}");
+            return searcher.Get().Cast<ManagementObject>()
+                .Select(mo => Process.GetProcessById(Convert.ToInt32(mo["ProcessId"])))
+                .ToArray();
         }
 
         //        public async void OutputDataReceived(string? msg)
@@ -661,7 +694,7 @@ namespace HomeSite.Managers
                 //ServerConsoleProcess = null;
                 rcon = null;
                 cts.Cancel();
-                cts.Dispose();
+                //cts.Dispose();
             }
             catch (Exception ex)
             {
@@ -758,7 +791,7 @@ namespace HomeSite.Managers
             {
                 try
                 {
-#if !DEBUG
+#if DEBUG
                     ServerProcess!.Refresh();
                     ramUsage = ServerProcess.WorkingSet64 / 1024 / 1024 - 78;
                     string plRaw = await SendCommandAsync("list");
@@ -803,6 +836,7 @@ namespace HomeSite.Managers
 				{
 					if (ex is not TaskCanceledException)
 						Console.WriteLine(ex.ToString());
+                    return;
                 }
             }
         }
