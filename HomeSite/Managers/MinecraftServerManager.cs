@@ -408,6 +408,7 @@ namespace HomeSite.Managers
         private RCON? rcon = null;
         private Timer shutdownTimer;
         private Timer reconnectTimer;
+        private readonly string RconStartedMessage;
 
         private readonly LogConnectionManager _logConnectionManager;
         private readonly CancellationTokenSource cts;
@@ -443,7 +444,20 @@ namespace HomeSite.Managers
             LogPath = Path.Combine(ServerPath, "logs", "latest.log");
             TempLogPath = Path.Combine(ServerPath, "logs", "temp.log");
 
-        }
+			switch (Version)
+			{
+				case MinecraftVersion._1_12_2:
+                    RconStartedMessage = "RCON running on";
+					break;
+                case MinecraftVersion._1_16_5:
+                    RconStartedMessage = "empty";
+                    break;
+                case MinecraftVersion._1_19_2:
+                    RconStartedMessage = "Thread RCON Listener started";
+                    break;
+			}
+
+		}
 
         //~MinecraftServer()
         //{
@@ -540,7 +554,8 @@ namespace HomeSite.Managers
                     string? line = await reader.ReadLineAsync();
                     if (line != null)
                     {
-                        if (ServerState != ServerState.started && line.Contains("Thread RCON Listener started"))
+
+                        if (ServerState != ServerState.started && line.Contains(RconStartedMessage))
                         {
 #if DEBUG
                             Task.Run(async () =>
