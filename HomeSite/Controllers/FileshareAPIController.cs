@@ -95,7 +95,30 @@ namespace HomeSite.Controllers
                 contenttype = "application/octet-stream";
             }
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(filepath);
+            byte[]? bytes = null;
+
+			try
+            {
+                bytes = await System.IO.File.ReadAllBytesAsync(filepath);
+            }
+            catch (Exception ex)
+            {
+                if(ex is IOException)
+                {
+                    string temp = Path.Combine(MinecraftServerManager.folder, id, "logs", "temp.log");
+					System.IO.File.Copy(filepath, temp, true);
+					bytes = await System.IO.File.ReadAllBytesAsync(temp);
+                    System.IO.File.Delete(temp);
+				}
+                else
+                {
+                    throw;
+				}
+				if (bytes == null)
+				{
+					throw;
+				}
+			}
             return File(bytes, contenttype, "latest.log");
         }
 

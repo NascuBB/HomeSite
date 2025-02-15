@@ -29,6 +29,11 @@ namespace HomeSite.Controllers
 			List<MinecraftServerWrap> allowedWraps = new List<MinecraftServerWrap>();
 			foreach (var allowedServer in SharedAdministrationManager.GetAllowedServers(username) ?? new())
 			{
+                if(!MinecraftServerManager.ServerExists(allowedServer.Key))
+                {
+                    SharedAdministrationManager.DeleteSharedUser(allowedServer.Key, username);
+                    continue;
+                }
 				MinecraftServerSpecifications allowedSpecs = MinecraftServerManager.GetServerSpecs(allowedServer.Key);
 				allowedWraps.Add(new MinecraftServerWrap
 				{

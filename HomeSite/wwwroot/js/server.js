@@ -184,7 +184,6 @@ async function fetchServerStats() {
             document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 6000) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
-
             document.getElementById('timerSpan').className = 'hideFZ';
             IsShuttingDown = false;
             clearInterval(statsId);
@@ -218,7 +217,7 @@ if (getLogsBtn != null) {
             alert('Сервер не найден');
             return;
         }
-        window.location.href = response.url;
+        window.open(response.url, '_blank');
     });
 }
 
