@@ -180,7 +180,7 @@ async function fetchServerStats() {
             }
             document.getElementById('players-online').textContent = `Онлайн: ${data.players}`;
             document.getElementById('ram-free').textContent = `Занято: ${data.memoryUsage} MB`;
-            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.MemoryUsage / 6000) * 100)).toFixed(2)}%`;
+            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 6000) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
 

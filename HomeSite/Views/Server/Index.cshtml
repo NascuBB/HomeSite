@@ -67,7 +67,7 @@
             @foreach(MinecraftServerWrap server in Model.AllowedServers)
             {
                 <a class="list-group-item d-flex justify-content-between list-group-item-action align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@server.Id">
-                    <div class="ms-2 me-auto">
+                    <div class="ms-2 me-auto ms-auto">
                         <div class="text-center fw-bold">@server.Name</div>
                         <span class="text-center">@server.Description</span>
                     </div>
