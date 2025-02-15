@@ -15,6 +15,7 @@ namespace HomeSite.Entities
 		[DataType(DataType.EmailAddress)]
 		public string Email { get; set; }
 		public string ServerID { get; set; }
+		public bool ShortLogs { get; set; }
         public string PasswordHash { get; set; }
     }
 }

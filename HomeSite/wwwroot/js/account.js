@@ -2,7 +2,28 @@
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+let loaderShortlog = document.getElementById('loadingShortLogs');
 const saveDescBtn = document.getElementById('descBtn');
+
+document.getElementById("ShortLogsSwitch").addEventListener("change", async (event) => {
+    loaderShortlog.className = 'form-check-label loader-sm showFZ mt-1 ms-2';
+    try {
+        const response = await fetch(`/Account/setpref`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                preference: '',
+                value: event.currentTarget.checked.toString()
+            }),
+        });
+
+        //alert(await response.text());
+    } catch (err) {
+        console.error('Ошибка отправки команды:', err);
+    } finally {
+        sleep(100).then(() => { loaderShortlog.className = 'form-check-label loader-sm hideFZ mt-1 ms-2' });
+    }
+});
 
 if (saveDescBtn != null) {
     let loaderDesc = document.getElementById('loadingDesc');

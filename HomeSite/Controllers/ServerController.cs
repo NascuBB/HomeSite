@@ -223,6 +223,9 @@ namespace HomeSite.Controllers
             }
             else
             {
+                string logs = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs
+                    ? "Сокращенные логи:\n" + Helper.GetTrimmedLogs(thisServer.ConsoleLogs)
+                    : thisServer.ConsoleLogs;
                 return View(new ServerIdViewModel 
                 {
                     SharedRights = MinecraftServerManager.GetServerSpecs(Id).OwnerName == HttpContext.User.Identity.Name
@@ -232,7 +235,7 @@ namespace HomeSite.Controllers
                         : SharedAdministrationManager.defaultRights,
                     AllowedUsers = SharedAdministrationManager.GetAllowedUsers(Id),
                     IsRunning = thisServer.IsRunning,
-                    logs = thisServer.ConsoleLogs,
+                    logs = logs,
                     ServerDesc = new MinecraftServerWrap
                     {
                         Name = thisServer.Name,

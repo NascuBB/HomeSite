@@ -7,6 +7,7 @@ const serverId = window.location.pathname.split('/').pop();
 const startBtn = document.getElementById("start-server");
 const stopBtn = document.getElementById("stopServer");
 const sendCommandBtn = document.getElementById('sendCommand');
+const getLogsBtn = document.getElementById('getLogsBtn');
 
 let IsShuttingDown = true;
 
@@ -201,6 +202,26 @@ async function fetchServerStats() {
     }
 }
 
+if (getLogsBtn != null) {
+    getLogsBtn.addEventListener('click', async () => {
+
+        const response = await fetch('/shared/getlogs?id=' + serverId, {
+            method: 'GET',
+        });
+
+        if (response.status == 401) {
+            alert('Запрещено');
+            return;
+        }
+
+        if (response.status == 404) {
+            alert('Сервер не найден');
+            return;
+        }
+        window.location.href = response.url;
+    });
+}
+
 if (stopBtn != null) {
     if (!document.getElementById('check').classList.contains('showFZ')) {
         loaderC.className = "showFZ loader ms-1";
@@ -213,6 +234,11 @@ if (stopBtn != null) {
         const serverId = window.location.pathname.split('/').pop(); // Берём ID из URL
         const socket = new WebSocket(`wss://${window.location.host}/ws/logs/${serverId}`, [], {
             credentials: 'include'
+        });
+        window.addEventListener("beforeunload", () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.close(1000, "Page reloading");
+            }
         });
         const logsContainer = document.getElementById('logs');
 

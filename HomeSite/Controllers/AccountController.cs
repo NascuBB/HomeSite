@@ -27,8 +27,9 @@ namespace HomeSite.Controllers
 				return RedirectToAction("Login");
 			}
 			ViewBag.Name = HttpContext.User.Identity.Name;
+			UserAccount user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
 
-			string userServerId = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ServerID;
+			string userServerId = user.ServerID;
 			MinecraftServerWrap? wrap = null;
 			if(userServerId != "no")
 			{
@@ -46,7 +47,8 @@ namespace HomeSite.Controllers
 			return View(new AccountViewModel
 			{
 				HasServer = userServerId != "no",
-				OwnServer = wrap
+				OwnServer = wrap,
+				ShortLogs = user.ShortLogs
 			});
 		}
 
@@ -139,6 +141,18 @@ namespace HomeSite.Controllers
 		{
 			HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 			return RedirectToAction("Index", "Home");
+		}
+
+		[HttpPost("Account/setpref")]
+		public IActionResult ChangeShortLogs([FromBody] PreferenceRequest request)
+		{
+			if(HttpContext.User.Identity.Name == null)
+			{
+				return RedirectToAction("Login");
+			}
+			_usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs = request.Value == "true" ? true : false;
+			_usersContext.SaveChanges();
+			return Ok();
 		}
 
 

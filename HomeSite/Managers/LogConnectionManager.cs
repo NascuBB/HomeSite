@@ -10,22 +10,31 @@ namespace HomeSite.Managers
 
         public async Task HandleWebSocketAsync(string serverId, WebSocket socket)
         {
-            if (!_connections.ContainsKey(serverId))
-                _connections[serverId] = new List<WebSocket>();
-
-            _connections[serverId].Add(socket);
-            //Console.WriteLine($"🔗 Пользователь подключился к логам сервера {serverId}");
-
-            var buffer = new byte[1024 * 4];
-            while (socket.State == WebSocketState.Open)
+            try
             {
-                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                if (result.MessageType == WebSocketMessageType.Close)
+
+
+                if (!_connections.ContainsKey(serverId))
+                    _connections[serverId] = new List<WebSocket>();
+
+                _connections[serverId].Add(socket);
+                //Console.WriteLine($"🔗 Пользователь подключился к логам сервера {serverId}");
+
+                var buffer = new byte[1024 * 4];
+                while (socket.State == WebSocketState.Open)
                 {
-                    _connections[serverId].Remove(socket);
-                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
-                    break;
+                    var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        _connections[serverId].Remove(socket);
+                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
+                        break;
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 

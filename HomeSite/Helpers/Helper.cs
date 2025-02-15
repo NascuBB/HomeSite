@@ -11,7 +11,20 @@ namespace HomeSite.Helpers
             thisApp = application;
         }
 
-        public static void Copy(string sourceDir, string targetDir)
+		public static string GetTrimmedLogs(string logs)
+		{
+			string[] lines = logs.Split('\n');
+
+			if (lines.Length <= 20)
+				return logs; // Если строк 20 или меньше, возвращаем их без изменений
+
+			string[] first10 = lines.Take(new Range(1, 6)).ToArray();
+			string[] last10 = lines.Skip(lines.Length - 10).ToArray();
+
+			return string.Join("\n", first10) + "\n.\n.\n.\n" + string.Join("\n", last10);
+		}
+
+		public static void Copy(string sourceDir, string targetDir)
         {
             Directory.CreateDirectory(targetDir);
 

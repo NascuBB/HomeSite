@@ -581,17 +581,16 @@ namespace HomeSite.Managers
             {
                 shutdownTimer.Dispose();
                 StopServer();
-                Console.WriteLine("Сервер выключен из-за неактивности.");
+                //Console.WriteLine("Сервер выключен из-за неактивности.");
                 return;
             }
 
             remainingTime--;
-            Console.WriteLine($"Оставшееся время: {remainingTime / 60}:{remainingTime % 60:D2}");
+            //Console.WriteLine($"Оставшееся время: {remainingTime / 60}:{remainingTime % 60:D2}");
         }
 
         private async void CheckStartedServer(CancellationToken token)
         {
-            Console.WriteLine("ИЩУ СЕРВЕР ЖАВАВ");
             //await Task.Delay(7000);
             if (ServerProcess == null)
             {
@@ -629,7 +628,6 @@ namespace HomeSite.Managers
 
                 ServerProcess = processes.FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
                 ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
-                Console.WriteLine("НАШЕЛ СЕРВЕР ЖАВАВ");
                 Console.WriteLine(ServerProcess);
                 if (processes.Length == MinecraftServerManager.serversOnline.Count)
                     ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
@@ -786,7 +784,10 @@ namespace HomeSite.Managers
 
         private async Task StartClock(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+#if DEBUG
+			int c = 0;
+#endif
+			while (!token.IsCancellationRequested)
             {
                 try
                 {
@@ -799,7 +800,6 @@ namespace HomeSite.Managers
                         .TakeWhile(x => char.IsDigit(x))
                         .ToArray()), out players);
 #else
-                    int c = 0;
                     if (c > 2)
                     {
                         if (c > 6)

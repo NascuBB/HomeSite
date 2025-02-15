@@ -73,6 +73,32 @@ namespace HomeSite.Controllers
             return File(bytes, contenttype, sharedFile.OriginalFilename);
         }
 
+        [HttpGet("getlogs")]
+        public async Task<IActionResult> GetLogs(string id)
+        {
+            if(HttpContext.User.Identity.Name == null || !MinecraftServerManager.ServerExists(id))
+            {
+                return NotFound();
+            }
+
+            if(!SharedAdministrationManager.HasSharedThisServer(id, HttpContext.User.Identity.Name))
+            //|| SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).)
+            {
+                return Unauthorized();
+            }
+
+            string filepath = Path.Combine(MinecraftServerManager.folder, id, "logs", "latest.log");
+
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(filepath, out var contenttype))
+            {
+                contenttype = "application/octet-stream";
+            }
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(filepath);
+            return File(bytes, contenttype, "latest.log");
+        }
+
 		[HttpGet]
 		[Route("downloadlogs")]
 		public async Task<IActionResult> DownloadLogs(string id)

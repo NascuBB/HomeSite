@@ -3,6 +3,7 @@
 	ViewData["Title"] = "Account";
 }
 <link rel="stylesheet" href="~/css/account.css" />
+<link rel="stylesheet" href="~/css/serverconf.css" />
 <div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
 	<div class="d-flex justify-content-center">
 		<h1 id="username" class="text-white display-4">Привет @ViewBag.Name</h1>
@@ -13,6 +14,18 @@
 	<form asp-action="Logout" method="post">
 		<input type="submit" value="Выйти" class="btn btn-danger" />
 	</form>
+	<div class="d-flex flex-row justify-content-between text-end form-check form-switch form-switch-md mt-4">
+		<label class="form-check-label me-5 mt-1" for="ShortLogsSwitch">Получать логи в сокращенном виде</label>
+		@if (Model.ShortLogs)
+		{
+			<input class="form-check-input" type="checkbox" role="switch" id="ShortLogsSwitch" checked>
+		}
+		else
+		{
+			<input class="form-check-input" type="checkbox" role="switch" id="ShortLogsSwitch">
+		}
+		<div id="loadingShortLogs" class="form-check-label loader-sm hideFZ mt-1 ms-2"></div>
+	</div>
 	<br />
 	<br />
 	@if(Model.HasServer)
@@ -21,16 +34,16 @@
 			<h4 class="display-6 fs-3">Управление сервером</h4>
 			<label class="text-white fs-4 align-self-center">@Model.OwnServer!.Name</label>
 			<div class="d-flex">
-				<div class="input-group">
-					<label class="input-group-text">Имя сервера</label>
+				<div class="input-group ms-5">
+					<label class="input-group-text">Имя</label>
 					<input class="form-control" id="nameInput" value="@Model.OwnServer.Name" />
 					<button id="nameBtn" class="btn btn-green">Сохранить</button>
 				</div>
 				<div id="loadingName" class="ms-2 my-auto loader hideFZ"></div>
 			</div>
 			<div class="d-flex">
-				<div class="input-group">
-					<label class="input-group-text">Описание сервера</label>
+				<div class="input-group ms-5">
+					<label class="input-group-text">Описание</label>
 					<input class="form-control" id="descInput" value="@Model.OwnServer.Description" />
 					<button id="descBtn" class="btn btn-green">Сохранить</button>
 				</div>
@@ -51,4 +64,4 @@
 		<span class="d-none opacity-0" id="serverId">@Model.OwnServer.Id</span>
 	}
 </div>
-<script src="~/js/account.js?v=1"></script>
+<script src="~/js/account.js?v=3"></script>
