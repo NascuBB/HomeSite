@@ -408,6 +408,7 @@ namespace HomeSite.Managers
         private RCON? rcon = null;
         private Timer shutdownTimer;
         private Timer reconnectTimer;
+
         private readonly string RconStartedMessage;
 
         private readonly LogConnectionManager _logConnectionManager;
@@ -499,7 +500,7 @@ namespace HomeSite.Managers
                 //{
                 //    HookConsoleLog.Iniciate(process.Id);
                 //});
-                await Task.Delay(5000);
+                await Task.Delay(1000);
                 Thread t = new Thread(async () => await MonitorLogAsync(Id, LogPath, cts.Token));
                 t.Start();
                 //Task.Run(CheckStartedServer);
@@ -567,9 +568,9 @@ namespace HomeSite.Managers
 #else
                             Task.Run(() => CheckStartedServer(token));
 #endif
-                        }
-                        //Console.WriteLine(line);
-                        await _logConnectionManager.BroadcastLogAsync(Id, line);
+						}
+						//Console.WriteLine(line);
+						await _logConnectionManager.BroadcastLogAsync(Id, line);
                         consoleLogs += "\n" + line;
                     }
                     else
@@ -642,7 +643,8 @@ namespace HomeSite.Managers
                 }
 
                 ServerProcess = processes.FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
-                ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
+                if(Version == MinecraftVersion._1_19_2)
+                    ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
                 Console.WriteLine(ServerProcess);
                 if (processes.Length == MinecraftServerManager.serversOnline.Count)
                     ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
