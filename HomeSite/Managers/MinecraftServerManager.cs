@@ -643,8 +643,8 @@ namespace HomeSite.Managers
                 }
 
                 ServerProcess = processes.FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
-                if(Version == MinecraftVersion._1_19_2)
-                    ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
+                //if(Version == MinecraftVersion._1_19_2)
+                //    ServerProcess = GetChildProcesses(ServerProcess.Id).FirstOrDefault(x => x.MainModule.ModuleName == "java.exe");
                 Console.WriteLine(ServerProcess);
                 if (processes.Length == MinecraftServerManager.serversOnline.Count)
                     ServerProcess = processes[MinecraftServerManager.serversOnline.Count - 1];
