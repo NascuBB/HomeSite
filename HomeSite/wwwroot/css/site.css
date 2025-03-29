@@ -45,6 +45,10 @@ html {
         border-color: #00B800;
     }
 
+.cb-green {
+    accent-color: #00DF00;
+}
+
 
 .bg-green {
     background-color: #00FF00;
