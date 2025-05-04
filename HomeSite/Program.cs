@@ -23,8 +23,11 @@ try
     builder.Services.AddControllersWithViews();
 
     builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+    //var com = builder.Configuration.GetConnectionString("postgresql"); options => options.UseNpgsql(builder.Configuration.GetConnectionString("postgresql")
+    builder.Services.AddDbContext<UserDBContext>();
+    builder.Services.AddDbContext<ServerDBContext>();
 
-    builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    //builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
 
     builder.Services.AddSingleton<LogConnectionManager>();
     builder.Services.AddSingleton<MinecraftServerManager>();
@@ -54,7 +57,7 @@ try
 #endif
 
     MinecraftServerManager.Prepare();
-    SharedAdministrationManager.Prepare();
+    //SharedAdministrationManager.Prepare();
 
 
 	var app = builder.Build();

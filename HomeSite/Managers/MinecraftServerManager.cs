@@ -14,6 +14,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using HomeSite.Migrations;
 using System.Management;
+using HomeSite.Entities;
 
 namespace HomeSite.Managers
 {
@@ -49,7 +50,7 @@ namespace HomeSite.Managers
         public static void Prepare()
         {
             Task.Run(async () => {
-                serverMainSpecs = await GetServersSpecs();
+                //serverMainSpecs = await GetServersSpecs();
                 await UpdateAvailablePorts();
             });
             Task.Run(async () => { inCreation = await GetServersInCreation(); });
@@ -63,11 +64,16 @@ namespace HomeSite.Managers
 
         static async Task UpdateAvailablePorts()
         {
-            foreach(var serverSpec in serverMainSpecs)
+            using (var context = new ServerDBContext())
             {
-                if(availablePorts.ContainsKey(serverSpec.Value.PublicPort))
+                var servers = context.Servers.ToList();
+            
+                foreach (var serverSpec in servers)
                 {
-                    availablePorts.Remove(serverSpec.Value.PublicPort);
+                    if(availablePorts.ContainsKey(serverSpec.publicport))
+                    {
+                        availablePorts.Remove(serverSpec.publicport);
+                    }
                 }
             }
         }
@@ -158,16 +164,22 @@ namespace HomeSite.Managers
             int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
             int rconP = availablePorts[port];
             availablePorts.Remove(port);
-            MinecraftServerSpecifications serverSpecs = new MinecraftServerSpecifications
+            Server serverSpecs = new Server
             {
-                Description = description,
-                Name = name,
-                OwnerName = ownerName,
-                Version = version,
-                PublicPort = port,
-                RCONPort = rconP
+                id = genId,
+                description = description,
+                name = name,
+                //OwnerName = ownerName,
+                version = version,
+                publicport = port,
+                rconport = rconP
             };
-            serverMainSpecs.Add(genId, serverSpecs);
+            using (var context = new ServerDBContext())
+            {
+                context.Servers.Add(serverSpecs);
+                context.SaveChanges();
+            }
+            //serverMainSpecs.Add(genId, serverSpecs);
             await SaveServersSpecs();
             Helper.Copy(Path.Combine(versionsFolder, GetVersion(version)), Path.Combine(folder, genId));
             File.WriteAllText(Path.Combine(folder, genId, "server.properties"), ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
@@ -181,26 +193,26 @@ namespace HomeSite.Managers
             return true;
         }
 
-        private static async Task<Dictionary<string, MinecraftServerSpecifications>> GetServersSpecs()
-        {
-            try
-            {
-                if (!Path.Exists(folder))
-                {
-                    Directory.CreateDirectory(folder);
-                }
-                if (!File.Exists(serversjsPath))
-                {
-                    return new Dictionary<string, MinecraftServerSpecifications>();
-                }
-                return JsonConvert.DeserializeObject<Dictionary<string, MinecraftServerSpecifications>>(await File.ReadAllTextAsync(serversjsPath)) ?? new Dictionary<string, MinecraftServerSpecifications>();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                return new Dictionary<string, MinecraftServerSpecifications>();
-            }
-        }
+        //private static async Task<Dictionary<string, MinecraftServerSpecifications>> GetServersSpecs()
+        //{
+        //    try
+        //    {
+        //        if (!Path.Exists(folder))
+        //        {
+        //            Directory.CreateDirectory(folder);
+        //        }
+        //        if (!File.Exists(serversjsPath))
+        //        {
+        //            return new Dictionary<string, MinecraftServerSpecifications>();
+        //        }
+        //        return JsonConvert.DeserializeObject<Dictionary<string, MinecraftServerSpecifications>>(await File.ReadAllTextAsync(serversjsPath)) ?? new Dictionary<string, MinecraftServerSpecifications>();
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine(e.ToString());
+        //        return new Dictionary<string, MinecraftServerSpecifications>();
+        //    }
+        //}
 
         public static async Task<bool> DeleteServer(string Id)
         {
@@ -286,14 +298,31 @@ namespace HomeSite.Managers
             await File.WriteAllTextAsync(creatingsPath, servers);
         }
 
-        public static MinecraftServerSpecifications GetServerSpecs(string id)
+        public static Server GetServerSpecs(string id)
         {
-            return serverMainSpecs[id];
+            using (var context = new ServerDBContext())
+            {
+                return context.Servers.First(x => x.id == id);
+            }
         }
+
+        //public static bool IsOwner(string serverId, string username)
+        //{
+        //    using (var serverContext = new ServerDBContext())
+        //    {
+        //        using (var userContext = new UserDBContext())
+        //        {
+        //            return serverContext.servers.Any(x => x.userid == userContext.useraccounts.First(x => x.username == username).id);
+        //        }
+        //    }
+        //}
 
         public static bool ServerExists(string Id)
         {
-            return serverMainSpecs.ContainsKey(Id);
+            using (var context = new ServerDBContext())
+            {
+                return context.Servers.Any(x => x.id == Id);
+            }
         }
 
         public void LaunchServer(string Id)
@@ -432,13 +461,18 @@ namespace HomeSite.Managers
             cts = new CancellationTokenSource();
             Id = id;
 
-            MinecraftServerSpecifications specs = MinecraftServerManager.GetServerSpecs(id);
-            Name = specs.Name;
-            Description = specs.Description;
-            Version = specs.Version;
-            PublicPort = specs.PublicPort;
-            RCONPort = specs.RCONPort;
-            OwnerUsername = specs.OwnerName;
+            Server specs;
+            using (var context = new ServerDBContext())
+            {
+                specs = context.Servers.First(x => x.id == id);
+            }
+
+            Name = specs.name;
+            Description = specs.description;
+            Version = specs.version;
+            PublicPort = specs.publicport;
+            RCONPort = specs.rconport;
+            //OwnerUsername = specs.OwnerName;
 
             ServerState = ServerState.starting;
             ServerPath = Path.Combine(Directory.GetCurrentDirectory(), "servers", Id);

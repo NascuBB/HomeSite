@@ -10,7 +10,7 @@ namespace HomeSite.Models
 		public ServerState ServerState { get; set; }
 		public string logs { get; set; }
         public List<string> AllowedUsers { get; set; }
-		public SharedRights SharedRights { get; set; }
+		public SharedRightsDBO SharedRights { get; set; }
 		public string Version { get; set; }
 		public string PublicAddress { get; set; }
     }

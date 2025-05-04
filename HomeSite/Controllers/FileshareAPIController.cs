@@ -1,4 +1,6 @@
-﻿using HomeSite.Managers;
+﻿using HomeSite.Entities;
+using HomeSite.Helpers;
+using HomeSite.Managers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -81,11 +83,13 @@ namespace HomeSite.Controllers
                 return NotFound();
             }
 
-            if(!SharedAdministrationManager.HasSharedThisServer(id, HttpContext.User.Identity.Name))
-            //|| SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).)
-            {
-                return Unauthorized();
-            }
+            using (var context = new UserDBContext())
+                if (context.UserAccounts.Find(UserHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != id)
+                    if(!SharedAdministrationManager.HasSharedThisServer(id, HttpContext.User.Identity.Name))
+                    //|| SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).)
+                    {
+                        return Unauthorized();
+                    }
 
             string filepath = Path.Combine(MinecraftServerManager.folder, id, "logs", "latest.log");
 

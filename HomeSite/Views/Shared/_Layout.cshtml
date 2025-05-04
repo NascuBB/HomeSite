@@ -43,7 +43,7 @@
                             <a class="nav-link text-secondary" asp-area="" asp-controller="Fileshare" asp-action="Index">Обменник</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-secondary" asp-area="" asp-controller="Home" asp-action="Privacy">Прикол</a>
+                            <a class="nav-link text-secondary" asp-area="" asp-controller="Home" asp-action="Privacy">Политика конфиденциальности</a>
                         </li>
                     </ul>
                     @await Html.PartialAsync("_LoginPartial")
@@ -61,9 +61,12 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="d-flex border-top footer text-muted">
         <div class="container">
             &copy; 2024-2025 - Just1x (beta)
+        </div>
+        <div class="me-2">
+            <a class="nav-link text-secondary" asp-area="" asp-controller="Home" asp-action="Changes">Изминэния дон</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

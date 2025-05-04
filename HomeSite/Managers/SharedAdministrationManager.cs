@@ -1,4 +1,5 @@
-﻿using HomeSite.Models;
+﻿using HomeSite.Entities;
+using HomeSite.Helpers;
 using Newtonsoft.Json;
 
 namespace HomeSite.Managers
@@ -7,73 +8,105 @@ namespace HomeSite.Managers
 	{
 		private static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
 		private static readonly string sharedjs = Path.Combine(folder, "shareds.json");
-		
-		public static readonly SharedRights defaultRights = new SharedRights 
-		{
-			StartStopServer = false,
-			EditMods = false,
-			EditServerPreferences = false,
-			SendCommands = false,
-			UploadMods = false,
-			AddShareds = false,
-		};
-        public static readonly SharedRights allRights = new SharedRights
+
+        public static SharedRightsDBO defaultRightsDBO = new SharedRightsDBO
+        {
+            StartStopServer = false,
+            EditMods = false,
+            EditServerPreferences = false,
+            SendCommands = false,
+            UploadMods = false,
+            AddShareds = false
+        };
+
+        public static SharedRightsDBO allRightsDBO = new SharedRightsDBO
         {
             StartStopServer = true,
             EditMods = true,
             EditServerPreferences = true,
             SendCommands = true,
             UploadMods = true,
-			AddShareds = true,
+            AddShareds = true
         };
         //user -> serverid -> rights
-        public static Dictionary<string, Dictionary<string, SharedRights>> serversSharedAdmins { get; private set; } = new();
-		
-		public static async void Prepare()
-		{
-            serversSharedAdmins = await GetServersShareds();
-		}
+        //public static Dictionary<string, Dictionary<string, SharedRights>> serversSharedAdmins { get; private set; } = new();
 
-		private static async Task<Dictionary<string, Dictionary<string, SharedRights>>> GetServersShareds()
-		{
-			try
-			{
-				if (!Path.Exists(folder))
-				{
-					Directory.CreateDirectory(folder);
-				}
-				if (!File.Exists(sharedjs))
-				{
-					File.Create(sharedjs);
-					return new Dictionary<string, Dictionary<string, SharedRights>>();
-				}
-				return JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, SharedRights>>>(await File.ReadAllTextAsync(sharedjs)) ?? new Dictionary<string, Dictionary<string, SharedRights>>();
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.ToString());
-				return new Dictionary<string, Dictionary<string, SharedRights>>();
-			}
-		}
+        //public static async void Prepare()
+        //{
+        //          serversSharedAdmins = await GetServersShareds();
+        //}
 
-		private static async Task SaveServersShareds()
-		{
-			string servers = JsonConvert.SerializeObject(serversSharedAdmins, Formatting.Indented);
-			await File.WriteAllTextAsync(sharedjs, servers);
-		}
+        //private static async Task<Dictionary<string, Dictionary<string, SharedRights>>> GetServersShareds()
+        //{
+        //	try
+        //	{
+        //		if (!Path.Exists(folder))
+        //		{
+        //			Directory.CreateDirectory(folder);
+        //		}
+        //		if (!File.Exists(sharedjs))
+        //		{
+        //			File.Create(sharedjs);
+        //			return new Dictionary<string, Dictionary<string, SharedRights>>();
+        //		}
+        //		return JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, SharedRights>>>(await File.ReadAllTextAsync(sharedjs)) ?? new Dictionary<string, Dictionary<string, SharedRights>>();
+        //	}
+        //	catch (Exception e)
+        //	{
+        //		Console.WriteLine(e.ToString());
+        //		return new Dictionary<string, Dictionary<string, SharedRights>>();
+        //	}
+        //}
 
-		public static List<string> GetAllowedUsers(string Id)
+        //private static async Task SaveServersShareds()
+        //{
+        //	string servers = JsonConvert.SerializeObject(serversSharedAdmins, Formatting.Indented);
+        //	await File.WriteAllTextAsync(sharedjs, servers);
+        //}
+
+        public static SharedRights defaultRights(int userId, string serverId)
+        {
+            return new SharedRights
+            {
+                startstopserver = false,
+                editmods = false,
+                editserverpreferences = false,
+                sendcommands = false,
+                uploadmods = false,
+                addshareds = false,
+                userid = userId,
+                serverid = serverId
+            };
+        }
+        public static SharedRights allRights(int userId, string serverId)
+        {
+            return new SharedRights
+            {
+                startstopserver = true,
+                editmods = true,
+                editserverpreferences = true,
+                sendcommands = true,
+                uploadmods = true,
+                addshareds = true,
+                userid = userId,
+                serverid = serverId
+            };
+        }
+
+        public static List<string> GetAllowedUsernames(string Id)
 		{
-			List<string> users = new List<string>();
-			foreach(var user in serversSharedAdmins)
+			using (var context = new SharedRightsDBContext())
 			{
-				if(user.Value.ContainsKey(Id))
-				{
-					users.Add(user.Key);
-				}
-			}
-			return users;
-			//var s = serversSharedAdmins.Values.Where(x => x.Keys.Contains(Id));
+				var shares = context.SharedRights.Where(x => x.serverid == Id).ToList();
+                List<string> users = new List<string>();
+                foreach (var share in shares)
+                {
+					string? uname = UserHelper.GetUsername(share.userid);
+					if (uname != null)
+                        users.Add(uname);
+                }
+                return users;
+            }
 		}
 
 		//public static bool CreateSharedUser(string Id, string user, SharedRights? rights = null)
@@ -91,67 +124,66 @@ namespace HomeSite.Managers
 
 		public static bool DeleteSharedUser(string Id, string user)
 		{
-			bool res = serversSharedAdmins[user].Remove(Id);
-			if (res)
-				SaveServersShareds();
-            return res;
+			using (var context = new SharedRightsDBContext())
+			{				
+				SharedRights? shToDel = context.SharedRights.Find(UserHelper.GetUserId(user), Id);
+				if(shToDel is not null)
+				{
+                    context.SharedRights.Remove(shToDel);
+					context.SaveChanges();
+					return true;
+                }
+				return false;
+			}
 		}
 
 		public static bool HasSharedThisServer(string Id, string user)
 		{
-			if(!serversSharedAdmins.ContainsKey(user)) { return false; }
-			return serversSharedAdmins[user].ContainsKey(Id);
+			using(var context = new SharedRightsDBContext())
+			{
+				if (!context.SharedRights.Any(x => x.userid == UserHelper.GetUserId(user))) return false;
+                SharedRights? shToDel = context.SharedRights.Find(UserHelper.GetUserId(user), Id);
+				return shToDel is not null;
+            }
 		}
 
-		public static Dictionary<string, SharedRights>? GetAllowedServers(string username)
+		public static List<SharedRights>? GetAllowedServers(string username)
 		{
-			if (!serversSharedAdmins.ContainsKey(username))
-			{
-				return null;
-			}
-			return serversSharedAdmins[username];
+            using (var context = new SharedRightsDBContext())
+            {
+                return context.SharedRights.Where(x => x.userid == UserHelper.GetUserId(username)).ToList();
+            }
 		}
 
 		public static SharedRights? GetUserSharedRights(string username, string Id)
 		{
-			if (!serversSharedAdmins.ContainsKey(username) || !serversSharedAdmins[username].ContainsKey(Id))
+			using ( var context = new SharedRightsDBContext())
 			{
-				return null;
+				return context.SharedRights.FirstOrDefault(x => x.serverid == Id && x.userid == UserHelper.GetUserId(username));
 			}
-
-			return serversSharedAdmins[username][Id];
 		}
 
-		public static async void SetUserSharedRights(string username, string Id, SharedRights rights)
+		public static async void SetUserSharedRights(SharedRights rights)
 		{
-			if(!serversSharedAdmins.ContainsKey(username))
-			{
-				//Dictionary<string, SharedRights> newRights = 
-				serversSharedAdmins.Add(username, new Dictionary<string, SharedRights>
+            using (var context = new SharedRightsDBContext())
+            {
+                var right = context.SharedRights.FirstOrDefault(x => x.serverid == rights.serverid && x.userid == rights.userid);
+				if (right != null)
 				{
-					{ Id, rights }
-				});
-			}
-			else if (!serversSharedAdmins[username].ContainsKey(Id))
-			{
-				serversSharedAdmins[username].Add(Id, rights);
-			}
-			else
-			{
-				serversSharedAdmins[username][Id] = rights;
-			}
-			SaveServersShareds();
+					right.addshareds = rights.addshareds;
+					right.editmods = rights.editmods;
+					right.editserverpreferences = rights.editserverpreferences;
+					right.sendcommands = rights.sendcommands;
+					right.startstopserver = rights.startstopserver;
+					right.uploadmods = rights.uploadmods;
+				}
+                else
+                {
+                    context.SharedRights.Add(rights);
+                }
+                context.SaveChanges();
+            }
 		}
 
 	}
-
-	public class SharedRights
-	{
-        public bool EditServerPreferences { get; set; }
-        public bool EditMods { get; set; }
-        public bool StartStopServer { get; set; }
-        public bool UploadMods { get; set; }
-        public bool SendCommands { get; set; }
-		public bool AddShareds { get; set; }
-    }
 }

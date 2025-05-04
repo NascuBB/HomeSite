@@ -1,4 +1,5 @@
-﻿using HomeSite.Managers;
+﻿using HomeSite.Entities;
+using HomeSite.Managers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeSite.Controllers
@@ -10,10 +11,11 @@ namespace HomeSite.Controllers
         [Route("/Server/configure/{Id}/deletemod")]
         public IActionResult DeleteMod(string Id, string file)
         {
-            if (HttpContext.User.Identity.Name == null || MinecraftServerManager.GetServerSpecs(Id).OwnerName != HttpContext.User.Identity.Name)
-                if (HttpContext.User.Identity.Name == null || !SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
-                    || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
-                    return Unauthorized();
+            using (var context = new UserDBContext())
+                if (HttpContext.User.Identity.Name == null || !context.UserAccounts.Any(x => x.serverid == Id))
+                    if (HttpContext.User.Identity.Name == null || !SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
+                        || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).editmods)
+                        return Unauthorized();
 
             string filePath = Path.Combine(MinecraftServerManager.folder, Id, "mods", file);
 
@@ -30,10 +32,11 @@ namespace HomeSite.Controllers
         [Route("/Server/configure/{Id}/uploadmod")]
         public async Task<IActionResult> UploadMod(string Id, IFormFile file)
         {
-            if (HttpContext.User.Identity.Name == null || MinecraftServerManager.GetServerSpecs(Id).OwnerName != HttpContext.User.Identity.Name)
-                if (HttpContext.User.Identity.Name == null || !SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                    || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
-                    return Unauthorized();
+            using (var context = new UserDBContext())
+                if (HttpContext.User.Identity.Name == null || !context.UserAccounts.Any(x => x.serverid == Id))
+                    if (HttpContext.User.Identity.Name == null || !SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                        || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).editmods)
+                        return Unauthorized();
             if (file == null || file.Length == 0)
             {
                 return BadRequest("Файл не выбран");

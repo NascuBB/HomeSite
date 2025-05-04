@@ -2,13 +2,17 @@
 
 namespace HomeSite.Entities
 {
-	public class UserDBContext : DbContext
-	{
+    public class ServerDBContext : DbContext
+    {
         //DbContextOptions<UserDBContext> options
-        //options
-        public UserDBContext() : base() { }
 
-        public DbSet<UserAccount> UserAccounts { get; set; }
+        //options
+        public ServerDBContext() : base()
+        {
+
+        }
+
+        public DbSet<Server> Servers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -16,8 +20,8 @@ namespace HomeSite.Entities
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-		{
-			base.OnModelCreating(modelBuilder);
-		}
-	}
+        {
+            base.OnModelCreating(modelBuilder);
+        }
+    }
 }

@@ -27,11 +27,12 @@ namespace HomeSite.Controllers
 				return RedirectToAction("Login");
 			}
 			ViewBag.Name = HttpContext.User.Identity.Name;
-			UserAccount user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+			var n = _usersContext.UserAccounts.ToList();
+			UserAccount user = _usersContext.UserAccounts.First(x => x.username == HttpContext.User.Identity.Name);
 
-			string userServerId = user.ServerID;
+			string? userServerId = user.serverid;
 			MinecraftServerWrap? wrap = null;
-			if(userServerId != "no")
+			if(userServerId != null)
 			{
 				var server = MinecraftServerManager.GetServerSpecs(userServerId);
 				wrap = new MinecraftServerWrap
@@ -39,16 +40,16 @@ namespace HomeSite.Controllers
 					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)
 					? MinecraftServerManager.serversOnline.First(x => x.Id == userServerId).ServerState
 					: ServerState.stopped,
-					Description = server.Description,
+					Description = server.description,
 					Id = userServerId,
-					Name = server.Name,
+					Name = server.name,
 				};
 			}
 			return View(new AccountViewModel
 			{
-				HasServer = userServerId != "no",
+				HasServer = userServerId != null,
 				OwnServer = wrap,
-				ShortLogs = user.ShortLogs
+				ShortLogs = user.shortlogs
 			});
 		}
 
@@ -71,7 +72,7 @@ namespace HomeSite.Controllers
             if (ModelState.IsValid)
 			{
 				Random rnd = new Random();
-				UserAccount newAccount = new UserAccount {Username = model.Username, ServerID = "no", Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
+				UserAccount newAccount = new UserAccount {username = model.Username, serverid = null, email = model.Email, passwordhash = SecurePasswordHasher.Hash(model.Password) };
 				_usersContext.Add(newAccount);
 				_usersContext.SaveChanges();
 
@@ -108,21 +109,21 @@ namespace HomeSite.Controllers
             }
             if (ModelState.IsValid)
 			{
-				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.Username == model.EmailOrUsername || x.Email == model.EmailOrUsername));
+				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.username == model.EmailOrUsername || x.email == model.EmailOrUsername));
 				if (user == null)
 				{
 					ModelState.AddModelError("", "Логин или почта неверные");
 					return View(model);
 				}
-				if(!SecurePasswordHasher.Verify(model.Password, user.PasswordHash))
+				if(!SecurePasswordHasher.Verify(model.Password, user.passwordhash))
 				{
 					ModelState.AddModelError("", "Пароль неверный");
 					return View(model);
 				}
 				List<Claim> claims = new List<Claim>
 				{
-					new Claim(ClaimTypes.Name, user.Username),
-					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Name, user.username),
+					new Claim(ClaimTypes.Email, user.email),
 					new Claim(ClaimTypes.Role, "User")
 				};
 
@@ -150,7 +151,7 @@ namespace HomeSite.Controllers
 			{
 				return RedirectToAction("Login");
 			}
-			_usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs = request.Value == "true" ? true : false;
+			_usersContext.UserAccounts.First(x => x.username == HttpContext.User.Identity.Name).shortlogs = request.Value == "true" ? true : false;
 			_usersContext.SaveChanges();
 			return Ok();
 		}

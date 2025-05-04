@@ -19,6 +19,11 @@ namespace HomeSite.Controllers
             return View();
         }
 
+        public IActionResult Changes()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

@@ -1,3 +1,38 @@
+input[type=checkbox]:focus,
+input[type=file]:focus,
+input[type=text]:focus,
+textarea:focus, select:focus, .form-control:focus, li > a:focus {
+    transition: 0.2s;
+    border-color: #00df00 !important;
+    box-shadow: 0 0 0 0.25rem rgba(0, 223, 0, 0.25) !important;
+}
+
+li > a:focus {
+    border-radius: 5px;
+}
+
+
+
+/* Зеленый фон, когда включен */
+.form-check-input:checked {
+    background-color: #00df00 !important;
+    border-color: #00df00 !important;
+}
+
+/* Зеленая обводка при фокусе */
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 223, 0, 0.25) !important;
+    border-color: #00df00 !important;
+}
+
+    /* Зеленая точка при выключенном состоянии и фокусе */
+    .form-check-input:focus:not(:checked)::before {
+        background-color: #00df00 !important;
+    }
+
+
+
+
 html {
   font-size: 14px;
 }
@@ -8,7 +43,8 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+.btn:focus, input[type=submit]:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    color: white;
     box-shadow: 0 0 0 0.1rem #212529, 0 0 0 0.25rem #00E500;
 }
 

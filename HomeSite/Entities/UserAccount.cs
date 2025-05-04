@@ -1,21 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HomeSite.Entities
 {
-	[Index(nameof(Email), IsUnique = true)]
-	[Index(nameof(Username), IsUnique = true)]
+    [Table("useraccounts")]
+    [Index(nameof(email), IsUnique = true)]
+	[Index(nameof(username), IsUnique = true)]
 	public class UserAccount
 	{
 		[Key]
-        public int Id { get; set; }
+        public int id { get; set; }
 		[MaxLength(20)]
-        public string Username { get; set; }
+        public string username { get; set; }
 		[MaxLength(100)]
 		[DataType(DataType.EmailAddress)]
-		public string Email { get; set; }
-		public string ServerID { get; set; }
-		public bool ShortLogs { get; set; }
-        public string PasswordHash { get; set; }
+		public string email { get; set; }
+        public string? serverid { get; set; }
+		public bool shortlogs { get; set; }
+        public string passwordhash { get; set; }
     }
 }
