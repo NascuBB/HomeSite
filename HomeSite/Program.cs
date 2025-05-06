@@ -26,10 +26,14 @@ try
     //var com = builder.Configuration.GetConnectionString("postgresql"); options => options.UseNpgsql(builder.Configuration.GetConnectionString("postgresql")
     builder.Services.AddDbContext<UserDBContext>();
     builder.Services.AddDbContext<ServerDBContext>();
+    builder.Services.AddDbContext<SharedRightsDBContext>();
 
-    //builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
+    builder.Services.AddScoped<IUserHelper, UserHelper>();
+	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();
 
-    builder.Services.AddSingleton<LogConnectionManager>();
+	//builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
+
+	builder.Services.AddSingleton<LogConnectionManager>();
     builder.Services.AddSingleton<MinecraftServerManager>();
 
     //builder.Services.AddSignalR();

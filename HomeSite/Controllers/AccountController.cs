@@ -32,7 +32,7 @@ namespace HomeSite.Controllers
 
 			string? userServerId = user.serverid;
 			MinecraftServerWrap? wrap = null;
-			if(userServerId != null)
+			if(userServerId != null && userServerId != "no")
 			{
 				var server = MinecraftServerManager.GetServerSpecs(userServerId);
 				wrap = new MinecraftServerWrap
@@ -47,7 +47,7 @@ namespace HomeSite.Controllers
 			}
 			return View(new AccountViewModel
 			{
-				HasServer = userServerId != null,
+				HasServer = (userServerId != null && userServerId != "no"),
 				OwnServer = wrap,
 				ShortLogs = user.shortlogs
 			});

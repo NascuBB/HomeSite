@@ -11,7 +11,17 @@ namespace HomeSite.Controllers
     [ApiController]
     public class FileshareAPIController : ControllerBase
     {
-        [HttpPost]
+		private readonly UserDBContext _usersContext;
+		private readonly ISharedAdministrationManager _sharedManager;
+        private readonly IUserHelper _userHelper;
+		public FileshareAPIController(UserDBContext userDBContext, ISharedAdministrationManager sharedAdministration, IUserHelper userHelper)
+		{
+			_sharedManager = sharedAdministration;
+			_usersContext = userDBContext;
+            _userHelper = userHelper;
+		}
+
+		[HttpPost]
         [Route("uploadfile")]
 		[RequestSizeLimit(1073741824)]
 		[ProducesResponseType(StatusCodes.Status200OK)]
@@ -83,9 +93,8 @@ namespace HomeSite.Controllers
                 return NotFound();
             }
 
-            using (var context = new UserDBContext())
-                if (context.UserAccounts.Find(UserHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != id)
-                    if(!SharedAdministrationManager.HasSharedThisServer(id, HttpContext.User.Identity.Name))
+                if (_usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != id)
+                    if(!_sharedManager.HasSharedThisServer(id, HttpContext.User.Identity.Name))
                     //|| SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).)
                     {
                         return Unauthorized();

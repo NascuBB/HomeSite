@@ -2,26 +2,26 @@
 
 namespace HomeSite.Helpers
 {
-    public class UserHelper
+    public class UserHelper : IUserHelper
     {
-        public static int GetUserId(string username)
+        private readonly UserDBContext _ucon;
+		public UserHelper(UserDBContext ucon)
+		{
+			_ucon = ucon;
+		}
+
+		public int GetUserId(string username)
         {
-            using (var ucon = new UserDBContext())
-            {
-                return ucon.UserAccounts.First(x => x.username == username).id;
-            }
+            return _ucon.UserAccounts.First(x => x.username == username).id;
         }
 
-        public static string? GetUsername(int id)
+        public string? GetUsername(int id)
         {
-            using (var ucon = new UserDBContext())
-            {
-                var user = ucon.UserAccounts.Find(id);
-                if (user == null)
-                    return null;
-                else
-                    return user.username;
-            }
+            var user = _ucon.UserAccounts.Find(id);
+            if (user == null)
+                return null;
+            else
+                return user.username;
         }
     }
 }

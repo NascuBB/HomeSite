@@ -11,19 +11,24 @@ namespace HomeSite.Controllers
     public class ServerApiController : ControllerBase
     {
         private readonly MinecraftServerManager _minecraftServerManager;
-        public ServerApiController(MinecraftServerManager manager)
+		private readonly UserDBContext _usersContext;
+		private readonly ISharedAdministrationManager _sharedManager;
+        private readonly IUserHelper _userHelper;
+		public ServerApiController(MinecraftServerManager manager, IUserHelper userHelper, UserDBContext userDBContext, ISharedAdministrationManager sharedAdministration)
         {
             _minecraftServerManager = manager;
+            _sharedManager = sharedAdministration;
+			_usersContext = userDBContext;
+            _userHelper = userHelper;
         }
 
         [HttpPost("start")]
         public IActionResult StartServer(string Id)
         {
-            using (var context = new UserDBContext())
-                if (HttpContext.User.Identity.Name == null || context.UserAccounts.Find(UserHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
-                    if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                        || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
-                        return Unauthorized();
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+                if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
+                    return Unauthorized();
             try
             {
                 _minecraftServerManager.LaunchServer(Id);
@@ -38,11 +43,10 @@ namespace HomeSite.Controllers
         [HttpPost("stop")]
         public async Task<IActionResult> StopServer(string Id)
         {
-            using (var context = new UserDBContext())
-                if (HttpContext.User.Identity.Name == null || context.UserAccounts.Find(UserHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
-                    if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                        || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
-                        return Unauthorized();
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+                if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
+                    return Unauthorized();
             try
             {
                 await MinecraftServerManager.serversOnline.First(x => x.Id == Id).StopServer();
@@ -57,11 +61,10 @@ namespace HomeSite.Controllers
         [HttpPost("command")]
         public async Task<IActionResult> SendCommand([FromBody] string command, string Id)
         {
-            using (var context = new UserDBContext())
-                if (HttpContext.User.Identity.Name == null || context.UserAccounts.Find(UserHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
-                    if (!SharedAdministrationManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                        || !SharedAdministrationManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).sendcommands)
-                        return Unauthorized();
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+                if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).sendcommands)
+                    return Unauthorized();
             try
             {
                 string res = await MinecraftServerManager.serversOnline.First(x => x.Id == Id).SendCommandAsync(command);
