@@ -25,9 +25,9 @@ namespace HomeSite.Controllers
         [HttpPost("start")]
         public IActionResult StartServer(string Id)
         {
-            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
                 if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).StartStopServer)
                     return Unauthorized();
             try
             {
@@ -43,9 +43,9 @@ namespace HomeSite.Controllers
         [HttpPost("stop")]
         public async Task<IActionResult> StopServer(string Id)
         {
-            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
                 if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).startstopserver)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).StartStopServer)
                     return Unauthorized();
             try
             {
@@ -61,9 +61,9 @@ namespace HomeSite.Controllers
         [HttpPost("command")]
         public async Task<IActionResult> SendCommand([FromBody] string command, string Id)
         {
-            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).serverid != Id)
+            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
                 if (!_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).sendcommands)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).SendCommands)
                     return Unauthorized();
             try
             {

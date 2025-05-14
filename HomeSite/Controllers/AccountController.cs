@@ -12,6 +12,7 @@ using System.Security.Claims;
 
 namespace HomeSite.Controllers
 {
+	[Route("account")]
 	public class AccountController : Controller
 	{
 		private readonly UserDBContext _usersContext;
@@ -28,9 +29,9 @@ namespace HomeSite.Controllers
 			}
 			ViewBag.Name = HttpContext.User.Identity.Name;
 			var n = _usersContext.UserAccounts.ToList();
-			UserAccount user = _usersContext.UserAccounts.First(x => x.username == HttpContext.User.Identity.Name);
+			UserAccount user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
 
-			string? userServerId = user.serverid;
+			string? userServerId = user.ServerId;
 			MinecraftServerWrap? wrap = null;
 			if(userServerId != null && userServerId != "no")
 			{
@@ -40,20 +41,20 @@ namespace HomeSite.Controllers
 					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)
 					? MinecraftServerManager.serversOnline.First(x => x.Id == userServerId).ServerState
 					: ServerState.stopped,
-					Description = server.description,
+					Description = server.Description,
 					Id = userServerId,
-					Name = server.name,
+					Name = server.Name,
 				};
 			}
 			return View(new AccountViewModel
 			{
 				HasServer = (userServerId != null && userServerId != "no"),
 				OwnServer = wrap,
-				ShortLogs = user.shortlogs
+				ShortLogs = user.ShortLogs
 			});
 		}
-
-		public IActionResult Register()
+        [Route("register")]
+        public IActionResult Register()
 		{
             if (HttpContext.User.Identity.Name != null)
             {
@@ -63,7 +64,8 @@ namespace HomeSite.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult Register(RegisterViewModel model)
+        [Route("register")]
+        public IActionResult Register(RegisterViewModel model)
 		{
             if (HttpContext.User.Identity.Name != null)
             {
@@ -72,7 +74,7 @@ namespace HomeSite.Controllers
             if (ModelState.IsValid)
 			{
 				Random rnd = new Random();
-				UserAccount newAccount = new UserAccount {username = model.Username, serverid = null, email = model.Email, passwordhash = SecurePasswordHasher.Hash(model.Password) };
+				UserAccount newAccount = new UserAccount {Username = model.Username, ServerId = null, Email = model.Email, PasswordHash = SecurePasswordHasher.Hash(model.Password) };
 				_usersContext.Add(newAccount);
 				_usersContext.SaveChanges();
 
@@ -89,8 +91,8 @@ namespace HomeSite.Controllers
 			}
 			return View(model);
 		}
-
-		public IActionResult Login()
+        [Route("login")]
+        public IActionResult Login()
 		{
             if (HttpContext.User.Identity.Name != null)
             {
@@ -101,7 +103,8 @@ namespace HomeSite.Controllers
 
 
 		[HttpPost]
-		public IActionResult Login(LoginViewModel model)
+        [Route("login")]
+        public IActionResult Login(LoginViewModel model)
 		{
             if (HttpContext.User.Identity.Name != null)
             {
@@ -109,21 +112,21 @@ namespace HomeSite.Controllers
             }
             if (ModelState.IsValid)
 			{
-				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.username == model.EmailOrUsername || x.email == model.EmailOrUsername));
+				UserAccount? user = _usersContext.UserAccounts.FirstOrDefault(x => (x.Username == model.EmailOrUsername || x.Email == model.EmailOrUsername));
 				if (user == null)
 				{
 					ModelState.AddModelError("", "Логин или почта неверные");
 					return View(model);
 				}
-				if(!SecurePasswordHasher.Verify(model.Password, user.passwordhash))
+				if(!SecurePasswordHasher.Verify(model.Password, user.PasswordHash))
 				{
 					ModelState.AddModelError("", "Пароль неверный");
 					return View(model);
 				}
 				List<Claim> claims = new List<Claim>
 				{
-					new Claim(ClaimTypes.Name, user.username),
-					new Claim(ClaimTypes.Email, user.email),
+					new Claim(ClaimTypes.Name, user.Username),
+					new Claim(ClaimTypes.Email, user.Email),
 					new Claim(ClaimTypes.Role, "User")
 				};
 
@@ -133,25 +136,27 @@ namespace HomeSite.Controllers
                 //            else
                 //                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
                 HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity), new AuthenticationProperties { IsPersistent = model.RememberMe });
+				user.DateLogged = DateTime.UtcNow.Date;
+				_usersContext.SaveChanges();
                 return RedirectToAction("Index");
 			}
 			return View(model);
 		}
-
-		public IActionResult Logout()
+        [Route("logout")]
+        public IActionResult Logout()
 		{
 			HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 			return RedirectToAction("Index", "Home");
 		}
 
-		[HttpPost("Account/setpref")]
+		[HttpPost("account/setpref")]
 		public IActionResult ChangeShortLogs([FromBody] PreferenceRequest request)
 		{
 			if(HttpContext.User.Identity.Name == null)
 			{
 				return RedirectToAction("Login");
 			}
-			_usersContext.UserAccounts.First(x => x.username == HttpContext.User.Identity.Name).shortlogs = request.Value == "true" ? true : false;
+			_usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs = request.Value == "true" ? true : false;
 			_usersContext.SaveChanges();
 			return Ok();
 		}

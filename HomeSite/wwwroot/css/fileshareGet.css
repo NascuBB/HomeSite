@@ -1,0 +1,54 @@
+﻿.download-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background-color: #2d3238;
+}
+
+.error-icon {
+    font-size: 3.5rem;
+    color: #dc3545;
+}
+
+.btn-green {
+    padding: 10px 24px;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.file-info {
+    background-color: #3f474f;
+    border-radius: 8px;
+}
+
+.file-icon {
+    font-size: 2rem;
+    color: #00df00;
+}
+
+.error-icon {
+    font-size: 3.5rem;
+    color: #dc3545;
+}
+
+
+/* Дополнительные стили, которые можно легко изменить */
+/*.error-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.error-icon {
+    font-size: 3.5rem;
+    color: #dc3545;
+}
+
+.btn-primary {
+    padding: 10px 24px;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.file-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}*/

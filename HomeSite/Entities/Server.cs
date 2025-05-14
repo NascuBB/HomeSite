@@ -8,13 +8,19 @@ namespace HomeSite.Entities
     public class Server
     {
         [Key]
-        public string id { get; set; }
+        [Column("id")]
+        public string Id { get; set; }
+        [Column("name")]
         [MaxLength(20)]
-        public string name { get; set; }
+        public string Name { get; set; }
+        [Column("description")]
         [MaxLength(50)]
-        public string description { get; set; }
-        public MinecraftVersion version { get; set; }
-        public int publicport { get; set; }
-        public int rconport { get; set; }
+        public string? Description { get; set; }
+        [Column("version")]
+        public MinecraftVersion Version { get; set; }
+        [Column("publicport")]
+        public int PublicPort { get; set; }
+        [Column("rconport")]
+        public int RCONPort { get; set; }
     }
 }

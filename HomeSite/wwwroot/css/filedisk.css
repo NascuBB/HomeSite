@@ -1,0 +1,178 @@
+﻿:root {
+    --primary-green: #00dF00;
+    --dark-bg: #212529;
+    --darker-bg: #1b1f22;
+    --card-bg: #3f474f;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: #e0e0e0;
+    /*font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;*/
+}
+
+/*.navbar-custom {
+    background-color: var(--darker-bg) !important;
+    border-bottom: 1px solid #333;
+}*/
+
+/*.btn-green {
+    background-color: var(--primary-green);
+    color: #000;
+    font-weight: 500;
+}
+
+    .btn-green:hover {
+        background-color: #00e600;
+        color: #000;
+    }*/
+
+.file-card {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .file-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 255, 0, 0.1);
+    }
+
+.file-icon {
+    font-size: 2rem;
+    color: var(--primary-green);
+}
+
+.sidebar {
+    background-color: var(--dark-bg);
+    height: calc(100vh - 56px);
+    border-right: 1px solid #333;
+}
+
+.sidebar-link {
+    color: #b0b0b0;
+    transition: all 0.2s;
+}
+
+    .sidebar-link:hover, .sidebar-link.active {
+        color: var(--primary-green);
+        background-color: rgba(0, 255, 0, 0.1);
+    }
+
+.breadcrumb-item a {
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+.context-menu {
+    position: absolute;
+    background-color: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+    .context-menu-item:hover {
+        background-color: rgba(0, 255, 0, 0.1);
+    }
+
+.search-box {
+    background-color: var(--card-bg);
+    border: 1px solid #333;
+    color: white;
+}
+
+    .search-box:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.25rem rgba(0, 255, 0, 0.25);
+    }
+
+.progress-bar-green {
+    background-color: var(--primary-green);
+}
+
+.storage-info {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 0px;
+}
+
+/* Круговой прогресс бар */
+.progress-circle {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    margin: 20px auto;
+}
+
+    .progress-circle svg {
+        width: 120px;
+        height: 120px;
+        transform: rotate(-90deg);
+    }
+
+    .progress-circle circle {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+    }
+
+.progress-circle-bg {
+    stroke: #333;
+}
+
+.progress-circle-fill {
+    stroke: var(--primary-green);
+    stroke-dasharray: 314;
+    stroke-dashoffset: calc(314 - (314 * var(--progress)) / 100);
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+    .progress-circle-text h5 {
+        font-size: 1.5rem;
+        margin-bottom: 0;
+        color: var(--primary-green);
+    }
+
+    .progress-circle-text small {
+        font-size: 0.8rem;
+        color: #b0b0b0;
+    }
+
+.sidebar-buttons {
+    margin-top: 20px;
+}
+
+
+/*.inner-holder{
+    margin-top: 10px;
+    border-radius: 8px;
+    background-color: var(--darker-bg);
+    padding-bottom: 20px;
+}*/
+
+.hideFZ {
+    transition: 0.3s;
+    opacity: 0;
+}
+
+.showFZ {
+    transition: 0.3s;
+    opacity: 1;
+}

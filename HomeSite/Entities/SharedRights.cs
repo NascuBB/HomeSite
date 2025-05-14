@@ -5,13 +5,21 @@ namespace HomeSite.Entities
     [Table("shared")]
     public class SharedRights
     {
-        public int userid { get; set; }
-        public string serverid { get; set; }
-        public bool editserverpreferences { get; set; }
-        public bool editmods { get; set; }
-        public bool startstopserver { get; set; }
-        public bool uploadmods { get; set; }
-        public bool sendcommands { get; set; }
-        public bool addshareds { get; set; }
+        [Column("userid")]
+        public int UserId { get; set; }
+        [Column("serverid")]
+        public string ServerId { get; set; }
+        [Column("editserverpreferences")]
+        public bool EditServerPreferences { get; set; }
+        [Column("editmods")]
+        public bool EditMods { get; set; }
+        [Column("startstopserver")]
+        public bool StartStopServer { get; set; }
+        [Column("uploadmods")]
+        public bool UploadServer { get; set; }
+        [Column("sendcommands")]
+        public bool SendCommands { get; set; }
+        [Column("addshareds")]
+        public bool AddShareds { get; set; }
     }
 }

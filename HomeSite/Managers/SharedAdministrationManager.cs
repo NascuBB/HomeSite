@@ -30,28 +30,28 @@ namespace HomeSite.Managers
         {
             return new SharedRights
             {
-                startstopserver = false,
-                editmods = false,
-                editserverpreferences = false,
-                sendcommands = false,
-                uploadmods = false,
-                addshareds = false,
-                userid = userId,
-                serverid = serverId
+                StartStopServer = false,
+                EditMods = false,
+                EditServerPreferences = false,
+                SendCommands = false,
+                UploadServer = false,
+                AddShareds = false,
+                UserId = userId,
+                ServerId = serverId
             };
         }
         public static SharedRights allRights(int userId, string serverId)
         {
             return new SharedRights
             {
-                startstopserver = true,
-                editmods = true,
-                editserverpreferences = true,
-                sendcommands = true,
-                uploadmods = true,
-                addshareds = true,
-                userid = userId,
-                serverid = serverId
+                StartStopServer = true,
+                EditMods = true,
+                EditServerPreferences = true,
+                SendCommands = true,
+                UploadServer = true,
+                AddShareds = true,
+                UserId = userId,
+                ServerId = serverId
             };
         }
 
@@ -66,11 +66,11 @@ namespace HomeSite.Managers
 
 		public List<string> GetAllowedUsernames(string Id)
 		{
-			var shares = _context.SharedRights.Where(x => x.serverid == Id).ToList();
+			var shares = _context.SharedRights.Where(x => x.ServerId == Id).ToList();
             List<string> users = new List<string>();
             foreach (var share in shares)
             {
-				string? uname = _userHelper.GetUsername(share.userid);
+				string? uname = _userHelper.GetUsername(share.UserId);
 				if (uname != null)
                     users.Add(uname);
             }
@@ -107,7 +107,7 @@ namespace HomeSite.Managers
             try
 			{
                 var userServerLinks = _context.SharedRights
-	            .Where(us => us.serverid == Id)
+	            .Where(us => us.ServerId == Id)
 	            .ToList();
 
 			    _context.SharedRights.RemoveRange(userServerLinks);
@@ -122,32 +122,32 @@ namespace HomeSite.Managers
 
 		public bool HasSharedThisServer(string Id, string user)
 		{
-			if (!_context.SharedRights.Any(x => x.userid == _userHelper.GetUserId(user))) return false;
+			if (!_context.SharedRights.Any(x => x.UserId == _userHelper.GetUserId(user))) return false;
             SharedRights? thisShared = _context.SharedRights.Find(_userHelper.GetUserId(user), Id);
 			return thisShared is not null;
 		}
 
 		public List<SharedRights>? GetAllowedServers(string username)
 		{
-            return _context.SharedRights.Where(x => x.userid == _userHelper.GetUserId(username)).ToList();
+            return _context.SharedRights.Where(x => x.UserId == _userHelper.GetUserId(username)).ToList();
 		}
 
 		public SharedRights? GetUserSharedRights(string username, string Id)
 		{
-			return _context.SharedRights.FirstOrDefault(x => x.serverid == Id && x.userid == _userHelper.GetUserId(username));
+			return _context.SharedRights.FirstOrDefault(x => x.ServerId == Id && x.UserId == _userHelper.GetUserId(username));
 		}
 
 		public async void SetUserSharedRights(SharedRights rights)
 		{
-            var right = _context.SharedRights.FirstOrDefault(x => x.serverid == rights.serverid && x.userid == rights.userid);
+            var right = _context.SharedRights.FirstOrDefault(x => x.ServerId == rights.ServerId && x.UserId == rights.UserId);
 			if (right != null)
 			{
-				right.addshareds = rights.addshareds;
-				right.editmods = rights.editmods;
-				right.editserverpreferences = rights.editserverpreferences;
-				right.sendcommands = rights.sendcommands;
-				right.startstopserver = rights.startstopserver;
-				right.uploadmods = rights.uploadmods;
+				right.AddShareds = rights.AddShareds;
+				right.EditMods = rights.EditMods;
+				right.EditServerPreferences = rights.EditServerPreferences;
+				right.SendCommands = rights.SendCommands;
+				right.StartStopServer = rights.StartStopServer;
+				right.UploadServer = rights.UploadServer;
 			}
             else
             {

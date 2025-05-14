@@ -16,12 +16,12 @@ namespace HomeSite.Controllers
 		}
 
 		[HttpDelete]
-        [Route("/Server/configure/{Id}/deletemod")]
+        [Route("/server/configure/{Id}/deletemod")]
         public IActionResult DeleteMod(string Id, string file)
         {
-            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.serverid == Id))
+            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.ServerId == Id))
                 if (HttpContext.User.Identity.Name == null || !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
-                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).editmods)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
                     return Unauthorized();
 
             string filePath = Path.Combine(MinecraftServerManager.folder, Id, "mods", file);
@@ -36,12 +36,12 @@ namespace HomeSite.Controllers
         }
 
         [HttpPost]
-        [Route("/Server/configure/{Id}/uploadmod")]
+        [Route("/server/configure/{Id}/uploadmod")]
         public async Task<IActionResult> UploadMod(string Id, IFormFile file)
         {
-            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.serverid == Id))
+            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.ServerId == Id))
                 if (HttpContext.User.Identity.Name == null || !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) 
-                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).editmods)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
                     return Unauthorized();
             if (file == null || file.Length == 0)
             {

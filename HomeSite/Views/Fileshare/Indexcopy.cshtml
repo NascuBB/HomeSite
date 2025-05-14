@@ -1,0 +1,51 @@
+﻿@{
+	ViewData["Title"] = "File share";
+}
+<link rel="stylesheet" href="~/css/fileshare.css?v=2" />
+<h3 class="text-white display-4 text-center">Обменник</h3>
+<div class="m-4 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-5 ">
+	<div class="d-flex flex-column align-self-center align-content-start align-items-start gap-3">
+		<span>Получить архив с модами этого сервера:</span>
+		<button id="getModsBtn" class="btn btn-green align-self-center">Скачать</button>
+	</div>
+	<div class="gap-5 d-flex flex-column">
+		@if (Context.User.Identity.Name == null)
+		{
+			<div class="d-flex flex-column align-self-center align-content-start align-items-start gap-2">
+				<span>Чтобы загрузить файл на сервер нужно войти в акаунт</span>
+				<a asp-action="Login" asp-controller="Account" class="btn btn-green align-self-center text-white">Войти</a>
+			</div>
+		}
+		else
+		{
+			<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
+				<div class="d-flex flex-row align-items-center">
+					<span>Загрузить файл на сервер</span>
+					<button type="button" class=" btn btn-sm fs-4 btn-transparent" data-bs-toggle="popover" data-bs-title="Ограничения" data-bs-content="Максимальный размер файла 200мб, он будет лежать на сервере всего 3 дня включительно, после чего будет удален">🛈</button>
+					<div id="loading" class="loader hideFZ"></div>
+				</div>
+				<div class="input-group">
+					<input type="file" class="form-control" id="inputGroupFile04" aria-describedby="fileSendBtn" aria-label="Upload">
+					<button class="btn btn-green text-white btn-outline-secondary" type="button" id="fileSendBtn">Загрузить</button>
+				</div>
+				<span>По успешной загрузке тут появится ID файла. <u class="text-danger">Его нужно запомнить</u></span>
+				<div class="input-group">
+					<span class="input-group-text" type="button">ID: </span>
+					<span class="form-control" id="fileIdResult"></span>
+					<button class="btn btn-green text-white btn-outline-secondary" type="button" id="copyIdButton">Копировать</button>
+				</div>
+				<span style="margin-top: -5px;" id="errorUplSpan" class="text-danger align-self-center hideFZ">Ошибка</span>
+			</div>
+		}
+		<div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2">
+			<span>Скачать файл с сервера</span>
+			<div class="input-group mb-3">
+				<input type="text" class="form-control" placeholder="ID файла" id="fileIdInput" aria-label="ID файла" aria-describedby="button-addon2">
+				<button class="btn btn-green text-white btn-outline-secondary" type="button" id="getFileButton">Запросить</button>
+			</div>
+			<span style="margin-top: -20px;">После успешного запроса файла он автоматически скачается</span>
+			<span style="margin-top: -5px;" id="errorGetSpan" class="text-danger align-self-center hideFZ">Файл не найден.</span>
+		</div>
+	</div>
+</div>
+<script src="~/js/fileShare.js?v=6"></script>

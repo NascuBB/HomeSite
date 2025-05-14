@@ -18,12 +18,12 @@ namespace HomeSite.Controllers
         {
             return View();
         }
-
+        [Route("changes")]
         public IActionResult Changes()
         {
             return View();
         }
-
+        [Route("privacy")]
         public IActionResult Privacy()
         {
             return View();

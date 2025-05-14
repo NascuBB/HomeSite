@@ -5,19 +5,29 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HomeSite.Entities
 {
     [Table("useraccounts")]
-    [Index(nameof(email), IsUnique = true)]
-	[Index(nameof(username), IsUnique = true)]
+    [Index(nameof(Email), IsUnique = true)]
+	[Index(nameof(Username), IsUnique = true)]
 	public class UserAccount
 	{
 		[Key]
-        public int id { get; set; }
+        [Column("id")]
+        public int Id { get; set; }
 		[MaxLength(20)]
-        public string username { get; set; }
+        [Column("username")]
+        public required string Username { get; set; }
 		[MaxLength(100)]
 		[DataType(DataType.EmailAddress)]
-		public string email { get; set; }
-        public string? serverid { get; set; }
-		public bool shortlogs { get; set; }
-        public string passwordhash { get; set; }
+        [Column("email")]
+		public required string Email { get; set; }
+        [Column("serverid")]
+        public string? ServerId { get; set; }
+        [Column("shortlogs")]
+        public bool ShortLogs { get; set; }
+        [Column("passwordhash")]
+        public required string PasswordHash { get; set; }
+        [Column("sizeused")]
+        public long SizeUsed { get; set; }
+		[Column("datelogged")]
+		public DateTime? DateLogged { get; set; }
     }
 }

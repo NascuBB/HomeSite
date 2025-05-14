@@ -14,12 +14,12 @@
             if (rights == null) return null;
             return new SharedRightsDBO
             {
-                EditServerPreferences = rights.editserverpreferences,
-                EditMods = rights.editmods,
-                StartStopServer = rights.startstopserver,
-                UploadMods = rights.uploadmods,
-                SendCommands = rights.sendcommands,
-                AddShareds = rights.addshareds
+                EditServerPreferences = rights.EditServerPreferences,
+                EditMods = rights.EditMods,
+                StartStopServer = rights.StartStopServer,
+                UploadMods = rights.UploadServer,
+                SendCommands = rights.SendCommands,
+                AddShareds = rights.AddShareds
             };
         }
     }

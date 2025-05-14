@@ -54,12 +54,12 @@ namespace HomeSite.Managers
                 await UpdateAvailablePorts();
             });
             Task.Run(async () => { inCreation = await GetServersInCreation(); });
-            if (!Directory.Exists(folder))
-            {
-                Directory.CreateDirectory(folder);
-                File.Create(serversjsPath);
-                File.Create(creatingsPath);
-            }
+            //if (!Directory.Exists(folder))
+            //{
+            //    Directory.CreateDirectory(folder);
+            //    File.Create(serversjsPath);
+            //    File.Create(creatingsPath);
+            //}
         }
 
         static async Task UpdateAvailablePorts()
@@ -70,9 +70,9 @@ namespace HomeSite.Managers
             
                 foreach (var serverSpec in servers)
                 {
-                    if(availablePorts.ContainsKey(serverSpec.publicport))
+                    if(availablePorts.ContainsKey(serverSpec.PublicPort))
                     {
-                        availablePorts.Remove(serverSpec.publicport);
+                        availablePorts.Remove(serverSpec.PublicPort);
                     }
                 }
             }
@@ -166,13 +166,13 @@ namespace HomeSite.Managers
             availablePorts.Remove(port);
             Server serverSpecs = new Server
             {
-                id = genId,
-                description = description,
-                name = name,
+                Id = genId,
+                Description = description,
+                Name = name,
                 //OwnerName = ownerName,
-                version = version,
-                publicport = port,
-                rconport = rconP
+                Version = version,
+                PublicPort = port,
+                RCONPort = rconP
             };
             using (var context = new ServerDBContext())
             {
@@ -302,7 +302,7 @@ namespace HomeSite.Managers
         {
             using (var context = new ServerDBContext())
             {
-                return context.Servers.First(x => x.id == id);
+                return context.Servers.First(x => x.Id == id);
             }
         }
 
@@ -321,7 +321,7 @@ namespace HomeSite.Managers
         {
             using (var context = new ServerDBContext())
             {
-                return context.Servers.Any(x => x.id == Id);
+                return context.Servers.Any(x => x.Id == Id);
             }
         }
 
@@ -464,14 +464,14 @@ namespace HomeSite.Managers
             Server specs;
             using (var context = new ServerDBContext())
             {
-                specs = context.Servers.First(x => x.id == id);
+                specs = context.Servers.First(x => x.Id == id);
             }
 
-            Name = specs.name;
-            Description = specs.description;
-            Version = specs.version;
-            PublicPort = specs.publicport;
-            RCONPort = specs.rconport;
+            Name = specs.Name;
+            Description = specs.Description;
+            Version = specs.Version;
+            PublicPort = specs.PublicPort;
+            RCONPort = specs.RCONPort;
             //OwnerUsername = specs.OwnerName;
 
             ServerState = ServerState.starting;

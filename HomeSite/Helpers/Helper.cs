@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HomeSite.Helpers
 {
@@ -33,6 +34,75 @@ namespace HomeSite.Helpers
 
             foreach (var directory in Directory.GetDirectories(sourceDir))
                 Copy(directory, Path.Combine(targetDir, Path.GetFileName(directory)));
+        }
+
+        public static string ShortenFileName(string fileName, int maxStart = 6, int maxEnd = 8)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return "";
+
+            if (fileName.Length <= (maxStart + maxEnd + 3)) // учтём "..."
+                return fileName;
+
+            return fileName.Substring(0, maxStart) + "..." + fileName.Substring(fileName.Length - maxEnd);
+        }
+
+        public static string FormatFileSize(long bytes)
+        {
+            if (bytes < 1024)
+                return $"{bytes} Б";
+            else if (bytes < 1024 * 1024)
+                return $"{Math.Round(bytes / 1024.0, 2)} КБ";
+            else if (bytes < 1024L * 1024 * 1024)
+                return $"{Math.Round(bytes / (1024.0 * 1024), 2)} МБ";
+            else
+                return $"{Math.Round(bytes / (1024.0 * 1024 * 1024), 2)} ГБ";
+        }
+
+        public static string GetIconClass(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension))
+                return "bi-file-earmark-fill"; // default icon
+
+            switch (extension.ToLower())
+            {
+                case ".mp3":
+                case ".wav":
+                    return "bi-file-earmark-music-fill";
+
+                case ".mp4":
+                case ".mov":
+                    return "bi-file-earmark-play-fill";
+
+                case ".pdf":
+                    return "bi-file-earmark-pdf-fill";
+
+                case ".doc":
+                case ".docx":
+                    return "bi-file-earmark-word-fill";
+
+                case ".xls":
+                case ".xlsx":
+                    return "bi-file-earmark-excel-fill";
+
+                case ".jpg":
+                case ".jpeg":
+                case ".png":
+                case ".gif":
+                    return "bi-file-earmark-image-fill";
+
+                case ".txt":
+                case ".log":
+                    return "bi-file-earmark-text-fill";
+
+                case ".zip":
+                case ".rar":
+                case ".7z":
+                    return "bi-file-earmark-zip-fill";
+
+                default:
+                    return "bi-file-earmark-fill"; // fallback icon
+            }
         }
         public static bool GetMinecraftServer()
         {

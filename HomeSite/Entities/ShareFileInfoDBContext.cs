@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HomeSite.Entities
 {
-    public class SharedRightsDBContext : DbContext
+    public class ShareFileInfoDBContext : DbContext
     {
-        public SharedRightsDBContext() : base() { }
+        public ShareFileInfoDBContext() : base()
+        { }
 
-        public DbSet<SharedRights> SharedRights { get; set; }
+        public DbSet<ShareFileInfo> SharedFiles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -16,8 +16,6 @@ namespace HomeSite.Entities
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<SharedRights>()
-                .HasKey(sr => new { sr.UserId, sr.ServerId });
             base.OnModelCreating(modelBuilder);
         }
     }

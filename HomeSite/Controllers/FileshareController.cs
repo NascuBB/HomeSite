@@ -1,15 +1,62 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using HomeSite.Helpers;
+using HomeSite.Managers;
+using HomeSite.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeSite.Controllers
 {
+    [Route("fileshare")]
     public class FileshareController : Controller
     {
         // GET: FileshareController
+        private readonly IFileShareManager _fileShareManager;
+        private readonly IUserHelper _userHelper;
+        public FileshareController(IFileShareManager fileShareManager, IUserHelper userHelper)
+        {
+            _fileShareManager = fileShareManager;
+            _userHelper = userHelper;
+        }
+
+        [HttpGet]
         public ActionResult Index()
         {
-            return View();
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            FileShareViewModel model = new FileShareViewModel();
+            model.Files = _fileShareManager.UserSharedFiles(_userHelper.GetUserId(HttpContext.User.Identity.Name))
+                .OrderByDescending(file => file.Featured)
+                .ToList();
+            long size = _userHelper.GetUserSizeUsed(HttpContext.User.Identity.Name);
+            foreach (var file in model.Files)
+            {
+                file.OriginalName = Helper.ShortenFileName(file.OriginalName!);
+            }
+            model.SpaceUsed = Math.Round((double)(size / (1024.0 * 1024 * 1024)), 2);
+            long oneGB = 1024 * 1024 * 1024; // байт в одном гигабайте
+            model.percentUsed = (int)(((double)size / oneGB) * 100);
+            return View(model);
         }
+
+        [HttpGet("{id}")]
+        public ActionResult GetFile(long id)
+        {
+            var file = _fileShareManager.GetFile(id);
+            
+            if(file == null || !file.Share)
+                return View("notfound");
+
+
+            return View("get", model: new GetFileShareViewModel
+            {
+                File = file,
+                Username = _userHelper.GetUsername(file.UserId)!
+            });
+        }
+
+
 
 
 

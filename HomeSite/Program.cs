@@ -13,7 +13,7 @@ try
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // “ак как этот вызов не ожидаетс€, выполнение существующего метода продолжаетс€ до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
-	Task.Run(FileShareManager.PrepareFileShare);
+	//Task.Run(FileShareManager.PrepareFileShare);
     Task.Run(FileShareManager.OnceADayClock);
 #pragma warning restore CS4014 // “ак как этот вызов не ожидаетс€, выполнение существующего метода продолжаетс€ до тех пор, пока вызов не будет завершен
 
@@ -27,9 +27,11 @@ try
     builder.Services.AddDbContext<UserDBContext>();
     builder.Services.AddDbContext<ServerDBContext>();
     builder.Services.AddDbContext<SharedRightsDBContext>();
+    builder.Services.AddDbContext<ShareFileInfoDBContext>();
 
     builder.Services.AddScoped<IUserHelper, UserHelper>();
 	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();
+    builder.Services.AddScoped<IFileShareManager, FileShareManager>();
 
 	//builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
 
