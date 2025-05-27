@@ -366,3 +366,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /HomeSite/Share/shares.json
 /HomeSite/wwwroot/.well-known/pki-validation
+/HomeSite/Сonfig/config.json
