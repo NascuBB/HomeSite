@@ -1,6 +1,7 @@
 using HomeSite.Entities;
 using HomeSite.Helpers;
 using HomeSite.Managers;
+using HomeSite.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
@@ -14,10 +15,9 @@ try
 #pragma warning disable CS4014 // “ак как этот вызов не ожидаетс€, выполнение существующего метода продолжаетс€ до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
 	//Task.Run(FileShareManager.PrepareFileShare);
-    Task.Run(FileShareManager.OnceADayClock);
 #pragma warning restore CS4014 // “ак как этот вызов не ожидаетс€, выполнение существующего метода продолжаетс€ до тех пор, пока вызов не будет завершен
 
-	var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
@@ -34,9 +34,12 @@ try
     builder.Services.AddScoped<IFileShareManager, FileShareManager>();
 
 	//builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
-
+    builder.Services.AddSingleton<AccountVerificationManager>();
+    builder.Services.AddSingleton<UserPasswordManager>();
 	builder.Services.AddSingleton<LogConnectionManager>();
     builder.Services.AddSingleton<MinecraftServerManager>();
+
+    builder.Services.AddMemoryCache();
 
     //builder.Services.AddSignalR();
     builder.Services.Configure<FormOptions>(options =>
@@ -44,9 +47,7 @@ try
         options.MultipartBodyLengthLimit = 1073741824; // if don't set default value is: 128 MB
     });
 
-#if DEBUG
-    Console.WriteLine("Mode=Debug");
-#else
+#if !DEBUG
     builder.WebHost.UseKestrel();
     builder.WebHost.ConfigureKestrel(options =>
     {
@@ -61,12 +62,14 @@ try
     });
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);
 #endif
-
+    var app = builder.Build();
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+#if DEBUG
+    logger.Log(LogLevel.Information,"!!! Development mode !!!");
+#endif
+    logger.Log(LogLevel.Information, "Unskipable prepairing before launch");
     MinecraftServerManager.Prepare();
-    //SharedAdministrationManager.Prepare();
-
-
-	var app = builder.Build();
+    ConfigManager.GetApiKeys();
 
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
@@ -90,6 +93,8 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseWebSockets();
+
+    app.UseMiddleware<EmailVerificationMiddleware>();
 
 
     app.MapControllerRoute(

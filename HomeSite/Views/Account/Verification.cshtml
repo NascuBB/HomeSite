@@ -1,0 +1,30 @@
+﻿@model HomeSite.Models.VerificationViewModel
+@{
+    ViewData["Title"] = "Verification";
+}
+
+<div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
+	<div class="d-flex justify-content-center">
+		<h1 id="username" class="text-white display-4">Подтверждение аккаунта</h1>
+	</div>
+
+	<div class="d-flex justify-content-center">
+		<p>Вам на почту было отправлено письмо с кодом для подтверждения аккаунта. <u class="text-warning">Проверьте папку спам</u></p>
+	</div>
+
+    <form class="d-flex flex-column gap-2" asp-action="verification" method="post">
+        <div class="form-group">
+            <label class="control-label">Код</label>
+            <input asp-for="Code" type="number" class="form-control" />
+            <span asp-validation-for="Code" class="text-danger"></span>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            <input type="submit" value="Подтвердить" class="btn btn-green" />
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-center">
+        <p>Вы не можете пользоваться всеми возможностями сайта пока не подтвержите свою почту</p>
+    </div>
+</div>

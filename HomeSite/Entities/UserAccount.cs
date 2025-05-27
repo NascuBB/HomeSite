@@ -29,5 +29,7 @@ namespace HomeSite.Entities
         public long SizeUsed { get; set; }
 		[Column("datelogged")]
 		public DateTime? DateLogged { get; set; }
+        [Column("verified")]
+        public bool Verified { get; set; } = false;
     }
 }

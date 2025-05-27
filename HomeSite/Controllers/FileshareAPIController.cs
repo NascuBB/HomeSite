@@ -60,7 +60,7 @@ namespace HomeSite.Controllers
                 return BadRequest("Not logged in");
 
             var currentSize = _userHelper.GetUserSizeUsed(username);
-            const long maxSize = 1073741824; // 1 GB
+            const long maxSize = 1073741824;
 
             if (currentSize + fileSize > maxSize)
                 return BadRequest("Недостаточно места на диске");
@@ -201,8 +201,9 @@ namespace HomeSite.Controllers
             }    
             else
             {
-                if(sharedFile.UserId != _userHelper.GetUserId(HttpContext.User.Identity.Name))
-                    return NotFound();
+                if (!sharedFile.Share)
+                    if (sharedFile.UserId != _userHelper.GetUserId(HttpContext.User.Identity.Name))
+                        return NotFound();
             }
 
 

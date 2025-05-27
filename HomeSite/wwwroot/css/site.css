@@ -3,6 +3,7 @@ input[type=file]:focus,
 input[type=text]:focus,
 textarea:focus, select:focus, .form-control:focus, li > a:focus {
     transition: 0.2s;
+
     border-color: #00df00 !important;
     box-shadow: 0 0 0 0.25rem rgba(0, 223, 0, 0.25) !important;
 }

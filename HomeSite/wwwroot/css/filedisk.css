@@ -46,7 +46,7 @@ body {
 
 .sidebar {
     background-color: var(--dark-bg);
-    height: calc(100vh - 56px);
+    height: calc(100vh - 150px);
     border-right: 1px solid #333;
 }
 
@@ -175,4 +175,12 @@ body {
 .showFZ {
     transition: 0.3s;
     opacity: 1;
+}
+
+@media (max-width: 768px){
+    .sidebar {
+        background-color: var(--dark-bg);
+        height: auto;
+        border-right: 0px;
+    }
 }

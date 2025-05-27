@@ -12,10 +12,12 @@ namespace HomeSite.Controllers
         // GET: FileshareController
         private readonly IFileShareManager _fileShareManager;
         private readonly IUserHelper _userHelper;
-        public FileshareController(IFileShareManager fileShareManager, IUserHelper userHelper)
+        private readonly AccountVerificationManager _accountVerificationManager;
+        public FileshareController(AccountVerificationManager accountVerificationManager,IFileShareManager fileShareManager, IUserHelper userHelper)
         {
             _fileShareManager = fileShareManager;
             _userHelper = userHelper;
+            _accountVerificationManager = accountVerificationManager;
         }
 
         [HttpGet]
@@ -24,6 +26,10 @@ namespace HomeSite.Controllers
             if (HttpContext.User.Identity.Name == null)
             {
                 return RedirectToAction("Index", "Home");
+            }
+            if(_accountVerificationManager.RequiresVerification(HttpContext.User.Identity.Name))
+            {
+                return RedirectToAction("Verification", "Account");
             }
             FileShareViewModel model = new FileShareViewModel();
             model.Files = _fileShareManager.UserSharedFiles(_userHelper.GetUserId(HttpContext.User.Identity.Name))

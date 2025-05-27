@@ -14,7 +14,6 @@ namespace HomeSite.Managers
             _userHelper = userHelper;
         }
 
-
         public static string folder = Path.Combine(Directory.GetCurrentDirectory(), "Share");
 
         public async Task<string> WriteFile(IFormFile file, string username)
@@ -122,7 +121,6 @@ namespace HomeSite.Managers
         }
         public static async Task<bool> WriteAndUnpackMods(IFormFile file, string Id)
         {
-            //string filename = "";
             try
             {
                 string modsPath = Path.Combine(MinecraftServerManager.folder, Id, "mods");
@@ -151,8 +149,6 @@ namespace HomeSite.Managers
                 }
                 System.IO.Compression.ZipFile.ExtractToDirectory(exactpath, modsPath);
                 await RenameFilesAsync(Path.Combine(MinecraftServerManager.folder, Id, "mods"));
-                //sharedFiles.Add(new ShareFileInfo { Description = "", OriginalFilename = file.FileName, ExpireTime = DateTime.Today.AddDays(3), Filename = filename });
-                //File.WriteAllText(sharesFilePath, JsonConvert.SerializeObject(sharedFiles));
             }
             catch (Exception ex)
             {
@@ -160,21 +156,6 @@ namespace HomeSite.Managers
             }
             return true;
         }
-
-        //public static async Task CheckUserFiles()
-        //{
-        //    sharedFiles = JsonConvert.DeserializeObject<List<ShareFileInfo>>(File.ReadAllText(sharesFilePath));
-        //    if (SharedFiles == null) sharedFiles = new();
-        //    foreach (ShareFileInfo sharedFile in sharedFiles.ToList())
-        //    {
-        //        if (sharedFile.ExpireTime < DateTime.Today)
-        //        {
-        //            File.Delete(Path.Combine(folder, sharedFile.Filename));
-        //            sharedFiles.Remove(sharedFile);
-        //        }
-        //    }
-        //    await File.WriteAllTextAsync(sharesFilePath, JsonConvert.SerializeObject(SharedFiles));
-        //}
         static async Task RenameFilesAsync(string folderPath)
         {
             if (!Directory.Exists(folderPath))
@@ -213,23 +194,6 @@ namespace HomeSite.Managers
             }
 
             await Task.CompletedTask; // Для соответствия сигнатуре async
-        }
-
-        public static async Task OnceADayClock()
-        {
-            while (true)
-            {
-                try
-                {
-                    //TODO: проверка файлов раз в день на удаление файлов
-                    //await CheckUserFiles();
-                    await Task.Delay(TimeSpan.FromHours(24));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-            }
         }
     }
 }
