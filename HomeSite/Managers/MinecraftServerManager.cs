@@ -749,79 +749,9 @@ namespace HomeSite.Managers
                 Console.WriteLine(ex.ToString());
             }
         }
-
-        //        private async void ReadLogInTime(CancellationToken token)
-        //        {
-        //            try
-        //            {
-        //                if (!File.Exists(LogPath))
-        //                {
-        //                    Console.WriteLine("Файл логов не найден.");
-        //                    return;
-        //                }
-        //                await Task.Delay(2000);
-        //                File.WriteAllText(TempLogPath, string.Empty);
-        //                consoleLogs = "Логи появяться здесь...";
-        //                CloneCycle(token);
-        //                using (var fileStream = new FileStream(TempLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-        //                using (var reader = new StreamReader(fileStream, Encoding.UTF8))
-        //                {
-        //                    //Catched:
-        //                    Console.WriteLine("Чтение копии логов...");
-
-        //                    // Переместить указатель на конец файла
-        //                    fileStream.Seek(0, SeekOrigin.End);
-
-        //                    while (true)
-        //                    {
-        //                        string? line = reader.ReadLine();
-        //                        if (!string.IsNullOrEmpty(line))
-        //                        {
-        //                            OutputDataReceived(line);
-        //                        }
-        //                        else
-        //                        {
-        //                            await Task.Delay(100); // Пауза, если новых строк нет
-        //                        }
-        //                        if (token.IsCancellationRequested)
-        //                        {
-        //                            break;
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                Console.WriteLine($"{ex.Message}");
-        //                //goto Catched;
-        //            }
-        //        }
-
-        //        private async Task CloneCycle(CancellationToken token)
-        //        {
-        //            while (!token.IsCancellationRequested)
-        //            {
-        //                try
-        //                {
-        //                    if (token.IsCancellationRequested)
-        //                    {
-        //                        return;
-        //                    }
-        //                    File.Copy(LogPath, TempLogPath, true); // Копирование файла
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    Console.WriteLine("Ошибка копирования файла: " + ex.Message);
-        //                }
-        //                await Task.Delay(1000, token);
-        //            }
-        //        }
-
         public async Task<string> SendCommandAsync(string command)
         {
             if (rcon == null) { return "сервер еще запускается"; }
-            //if (string.IsNullOrEmpty(command) || command.Contains("stop") || command.Contains("op") || command.Contains("deop") || command.Contains("gamemode") || command.Contains("summon") || command.Contains("give")) { return "ага, фигушки"; }
-
             return await rcon.SendCommandAsync(command);
         }
 
@@ -913,24 +843,8 @@ namespace HomeSite.Managers
             Description = desc;
             return this;
         }
-        //public MinecraftServerBuilder AddOwnerUsername(string username)
-        //{
-        //    _server.OwnerUsername = username;
-        //    return this;
-        //}
-        //public MinecraftServer Build()
-        //{
-        //    return new MinecraftServer(this);
-        //}
     }
 
-    //public class MinecraftLogHub : Hub
-    //{
-    //    public async Task SendLog(string message)
-    //    {
-    //        await Clients.All.SendAsync("ReceiveLog", message);
-    //    }
-    //}
 
     public enum Difficulty
     {
@@ -953,6 +867,12 @@ namespace HomeSite.Managers
         _1_12_2,
         _1_16_5,
         _1_19_2
+    }
+
+    public enum ServerCore
+    {
+        paper,
+        forge
     }
 
     interface IMinecraftServer

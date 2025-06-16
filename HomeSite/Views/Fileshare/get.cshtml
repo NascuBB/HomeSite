@@ -3,6 +3,13 @@
 @{
     ViewData["Title"] = "Download";
 }
+@section Meta {
+    <meta property="og:title" content="@Model.File.OriginalName" />
+    <meta property="og:description" content="Размер: @Helper.FormatFileSize(Model.File.Size) | Владелец: @Model.Username" />
+    <meta property="og:type" content="website" />
+    @* <meta property="og:url" content="https://example.com/file/download/@Model.Id" /> *@
+    @* <meta property="og:image" content="https://example.com/images/file-preview.png" /> *@
+}
 <link rel="stylesheet" href="~/css/fileshareGet.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
