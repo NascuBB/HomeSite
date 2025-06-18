@@ -101,7 +101,7 @@ window.addEventListener('DOMContentLoaded', function () {
         const linkText = document.createTextNode(location.origin + '/fileshare/' + currentFileId);
         const badge = document.createElement('span');
         badge.id = 'copiedBadge';
-        badge.className = 'position-absolute top-0 start-100 translate-middle badge bg-green p-2 hideFZ';
+        badge.className = 'position-absolute top-0 translate-middle margin-badge badge ms-4 bg-green p-2 hideFZ';
         badge.innerHTML = ' скопировано<span class="visually-hidden">copied</span>';
 
         copyLink.append(linkText, badge);
@@ -186,25 +186,40 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-// Контекстное меню
+let contextMenuOpen = false;
+
 function showContextMenu(event, element) {
     event.preventDefault();
 
     const contextMenu = document.getElementById('contextMenu');
-    contextMenu.style.display = 'block';
+
+    // Закрыть предыдущее меню
+    if (contextMenuOpen) {
+        contextMenu.style.display = 'none';
+        document.removeEventListener('click', closeMenu);
+    }
+
     contextMenu.style.left = event.pageX + 'px';
     contextMenu.style.top = event.pageY + 'px';
+    contextMenu.style.display = 'block';
 
     selectedElement = element;
     currentFileId = element.getAttribute('data-fileid');
     currentFileShare = element.getAttribute('data-share');
+    contextMenuOpen = true;
 
-    document.addEventListener('click', function closeMenu() {
+    setTimeout(() => {
+        document.addEventListener('click', closeMenu);
+    }, 0);
+}
+
+function closeMenu(e) {
+    const contextMenu = document.getElementById('contextMenu');
+    if (!contextMenu.contains(e.target)) {
         contextMenu.style.display = 'none';
+        contextMenuOpen = false;
         document.removeEventListener('click', closeMenu);
-        //currentFileId = null;
-        //currentFileShare = false;
-    });
+    }
 }
 document.querySelector('.btn-green').addEventListener('click', function () {
     modal = new bootstrap.Modal(document.getElementById('uploadModal'));

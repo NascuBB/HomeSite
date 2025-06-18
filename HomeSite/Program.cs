@@ -103,6 +103,7 @@ try
     app.MapControllers();
 
     Helper.SetThisApp(app);
+    //EnumGenerator.GenerateEnums("versions", "Generated/VersionEnums.cs");
 
     Thread thread = new Thread(() =>
     {

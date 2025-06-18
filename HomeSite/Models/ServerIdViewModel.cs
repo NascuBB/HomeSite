@@ -12,6 +12,7 @@ namespace HomeSite.Models
         public List<string> AllowedUsers { get; set; }
 		public SharedRightsDBO SharedRights { get; set; }
 		public string Version { get; set; }
+		public string Core { get; set; }
 		public string PublicAddress { get; set; }
     }
 

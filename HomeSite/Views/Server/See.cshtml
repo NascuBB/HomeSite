@@ -1,8 +1,9 @@
-﻿@model ServerIdViewModel
+﻿@using HomeSite.Generated
+@model ServerIdViewModel
 @{
     ViewData["Title"] = "Minecraft server";
 }
-<link rel="stylesheet" href="~/css/server.css?v=3" />
+<link rel="stylesheet" href="~/css/server.css?v=7" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <div class=" d-flex justify-content-center ">
@@ -12,12 +13,18 @@
     <div class="input-group" style="max-width: 500px;">
         <span class="input-group-text">Адрес</span>
         <button id="copyAddr" class="form-control">@Model.PublicAddress
-            <span id="copiedBadge" class="position-absolute top-0 start-100 translate-middle badge bg-green p-2 hide">скопировано<span class="visually-hidden">copied</span></span>
+            <span id="copiedBadge" class="position-absolute top-0 translate-middle margin-badge badge ms-4 bg-green p-2 hide">скопировано<span class="visually-hidden">copied</span></span>
         </button>
     </div>
     <div class="row">
         <div class="col-12 col-md-auto">
             <div class="input-group">
+                <span class="input-group-text">Ядро</span>
+                <span class="form-control" />@Model.Core
+            </div>
+        </div>
+        <div class="col-12 col-md-auto">
+            <div class="input-group mt-md-0 mt-1">
                 <span class="input-group-text">Версия</span>
                 <span class="form-control" />@Model.Version
             </div>
@@ -135,7 +142,7 @@
 					@*<button class="btn btn-danger">Остановить сервер</button>
                     <button class="btn btn-warning">Перезапустить сервер</button> *@
                     
-                    @if(Model.SharedRights.EditMods)
+                    @if(Model.SharedRights.EditMods && Model.Core != "Paper")
                     {
                         <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/mods" class="btn btn-info">Управление модами</a>
                     }
@@ -189,57 +196,11 @@
         <h1>ИГРОКИ</h1>
         <p id="players-online">Онлайн: еще нет</p>
     </label>
-@*     <div class="grow1 gpu">
-        <h1>GPU</h1>
-        <p id="gpu-usage">Использование:  еще нет%</p>
-    </div> *@
     <div class="grow1 ram text-center">
         <h1>RAM</h1>
         <span id="ram-free">Свободно: хз MB</span>
         <span id="ram-usage">Использование:  еще нет%</span>
     </div>
 </section>
-@* <div class=" d-flex text-center align-items-center align-content-center justify-content-center">
-
-    <p></p>
-    <div class="log-holder col-lg-9 col-md-12 mx-auto">
-        
-        <div id="logs" class="log-win">
-            <em style="white-space: pre-line">@Model.logs</em>
-        </div>
-        <div class="log-entry-holder input-group mb-3">
-            <input id="commandInput" type="text" class="form-control" placeholder="console..." />
-            <button id="sendCommand" class="btn btn-green text-white">Отправить</button>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-12 mt-3 mt-lg-0 d-flex justify-content-center">
-        <div class="btn-container">
-
-        </div>
-    </div>
-</div> *@
 @* <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script> *@
 <script src="~/js/server.js?v=8"></script>
-
-
-
-
-
-@* <div class="container">
-    <div class="row">
-        <!-- Консоль сервера -->
-        <div class="">
-            <div class="console-container">
-                <p>Здесь будет консоль...</p>
-            </div>
-        </div>
-
-        <!-- Кнопки управления сервером -->
-
-                <button class="btn btn-success">Запустить сервер</button>
-                <button class="btn btn-danger">Остановить сервер</button>
-                <button class="btn btn-warning">Перезапустить сервер</button>
-            </div>
-        </div>
-    </div>
-</div> *@

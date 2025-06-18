@@ -1,4 +1,5 @@
 ﻿using HomeSite.Entities;
+using HomeSite.Generated;
 using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Models;
@@ -77,7 +78,7 @@ namespace HomeSite.Controllers
             {
                 return RedirectToAction("Index");
             }
-            return View();
+            return View(new CreateServerViewModel());
         }
 
         [Route("create")]
@@ -95,7 +96,7 @@ namespace HomeSite.Controllers
             }
             if (ModelState.IsValid)
             {
-                string id = MinecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name, model.Version, model.Description ?? "A Minecraft server").Result;
+                string id = MinecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name, model.ServerCore ,model.Version, model.Description ?? "A Minecraft server").Result;
                 _usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId = id;
                 _usersContext.SaveChanges();
                 return RedirectToAction($"configure", new { Id = id});
@@ -131,7 +132,8 @@ namespace HomeSite.Controllers
                 UploadMods = (_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)
                 ?? (_usersContext.UserAccounts.Any(x => x.ServerId == Id)
                     ? SharedAdministrationManager.allRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id)
-                    : SharedAdministrationManager.defaultRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id))).UploadServer
+                    : SharedAdministrationManager.defaultRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id))).UploadServer,
+                ServerCore = MinecraftServerManager.GetServerSpecs(Id).ServerCore
             });
         }
 
@@ -226,19 +228,23 @@ namespace HomeSite.Controllers
                     : _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
                         ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)!
                         : SharedAdministrationManager.defaultRightsDBO;
-                return View(new ServerIdViewModel 
-                { 
+                return View(new ServerIdViewModel
+                {
                     SharedRights = rrr,
-                    AllowedUsers = _sharedManager.GetAllowedUsernames(Id), 
-                    IsRunning = false, logs = "Последние 10 логов\n" + MinecraftServerManager.GetLastLogs(Id),
-                    ServerDesc = new MinecraftServerWrap 
-                    { 
-                        Description = specs.Description, Name = specs.Name,
-                        Id = Id, ServerState = ServerState.stopped
+                    AllowedUsers = _sharedManager.GetAllowedUsernames(Id),
+                    IsRunning = false,
+                    logs = "Последние 10 логов\n" + MinecraftServerManager.GetLastLogs(Id),
+                    ServerDesc = new MinecraftServerWrap
+                    {
+                        Description = specs.Description,
+                        Name = specs.Name,
+                        Id = Id,
+                        ServerState = ServerState.stopped
                     },
                     ServerState = ServerState.stopped,
                     PublicAddress = "just1x.hopto.org:" + specs.PublicPort,
-                    Version = MinecraftServerManager.GetVersionDBO(specs.Version),
+                    Version = VersionHelperGenerated.GetVersionDBO(specs.Version),
+                    Core = specs.ServerCore.ToString()!
                 });
             }
             else
@@ -264,7 +270,8 @@ namespace HomeSite.Controllers
                     },
                     ServerState = thisServer.ServerState,
                     PublicAddress = "just1x.hopto.org:" + thisServer.PublicPort,
-                    Version = MinecraftServerManager.GetVersionDBO(thisServer.Version),
+                    Version = VersionHelperGenerated.GetVersionDBO(thisServer.Version),
+                    Core = thisServer.ServerCore.ToString()!
                 });
             }       
         }

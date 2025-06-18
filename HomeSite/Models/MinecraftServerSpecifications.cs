@@ -1,5 +1,5 @@
 ﻿using HomeSite.Managers;
-
+using HomeSite.Generated;
 namespace HomeSite.Models
 {
     public class MinecraftServerSpecifications

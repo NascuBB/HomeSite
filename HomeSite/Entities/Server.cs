@@ -1,4 +1,4 @@
-﻿using HomeSite.Managers;
+﻿using HomeSite.Generated;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -18,6 +18,8 @@ namespace HomeSite.Entities
         public string? Description { get; set; }
         [Column("version")]
         public MinecraftVersion Version { get; set; }
+        [Column("core")]
+        public ServerCore ServerCore { get; set; }
         [Column("publicport")]
         public int PublicPort { get; set; }
         [Column("rconport")]

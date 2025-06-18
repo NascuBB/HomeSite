@@ -143,13 +143,33 @@
 
 
 .log-holder {
-    min-width: 300px;
+    min-width: 250px;
     height: 600px;
     border-radius: 10px;
     border: medium solid #00FF00;
 
     /*padding: 15px;*/
     /*overflow-y: auto;*/
+}
+@media(min-width: 1200px){
+    .log-holder {
+        min-width: 300px;
+        height: 600px;
+        border-radius: 10px;
+        border: medium solid #00FF00;
+        /*padding: 15px;*/
+        /*overflow-y: auto;*/
+    }
+}
+@media(max-width: 991px) {
+    .log-holder {
+        min-width: 300px;
+        height: 600px;
+        border-radius: 10px;
+        border: medium solid #00FF00;
+        /*padding: 15px;*/
+        /*overflow-y: auto;*/
+    }
 }
 .log-header{
     height: 7%;
@@ -170,6 +190,26 @@
     margin-top: 1px;
     width: 99.9%;
     min-width: 290px;
+}
+
+/*.margin-badge {
+    margin-left: 1.5rem !important;
+}
+
+@media (min-width: 500px) {
+    .margin-badge {
+        margin-left: 5.5rem !important;
+    }
+}*/
+
+.margin-badge {
+    left: 80% !important;
+}
+
+@media (min-width: 500px) {
+    .margin-badge {
+        left: 85% !important;
+    }
 }
 
 .console-container {

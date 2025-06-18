@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 using HomeSite.Migrations;
 using System.Management;
 using HomeSite.Entities;
+using HomeSite.Generated;
 
 namespace HomeSite.Managers
 {
@@ -23,7 +24,7 @@ namespace HomeSite.Managers
         private readonly LogConnectionManager _logConnectionManager;
 
         private static readonly string versionsFolder = Path.Combine(Directory.GetCurrentDirectory(), "versions");
-        private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
+        //private static readonly string serversjsPath = Path.Combine(Environment.CurrentDirectory, "servers", "servers.json");
         private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
 
         public static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
@@ -75,28 +76,6 @@ namespace HomeSite.Managers
                         availablePorts.Remove(serverSpec.PublicPort);
                     }
                 }
-            }
-        }
-
-        private static string GetVersion(MinecraftVersion version)
-        {
-            switch(version)
-            {
-                case MinecraftVersion._1_12_2: return "_1_12_2";
-                case MinecraftVersion._1_16_5: return "_1_16_5";
-                case MinecraftVersion._1_19_2: return "_1_19_2";
-                default: return "";
-            }
-        }
-
-        public static string GetVersionDBO(MinecraftVersion version)
-        {
-            switch (version)
-            {
-                case MinecraftVersion._1_12_2: return "1.12.2";
-                case MinecraftVersion._1_16_5: return "1.16.5";
-                case MinecraftVersion._1_19_2: return "1.19.2";
-                default: return "";
             }
         }
 
@@ -155,7 +134,7 @@ namespace HomeSite.Managers
         /// <param name="version">version of server</param>
         /// <param name="description">description to server</param>
         /// <returns></returns>
-        public static async Task<string> CreateServer(string name, string ownerName, MinecraftVersion version, string? description = null)
+        public static async Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null)
         {
             string genId = Guid.NewGuid().ToString();
             inCreation.Add(genId, ServerCreation.AddingMods);
@@ -172,7 +151,8 @@ namespace HomeSite.Managers
                 //OwnerName = ownerName,
                 Version = version,
                 PublicPort = port,
-                RCONPort = rconP
+                RCONPort = rconP,
+                ServerCore = serverCore
             };
             using (var context = new ServerDBContext())
             {
@@ -180,8 +160,9 @@ namespace HomeSite.Managers
                 context.SaveChanges();
             }
             //serverMainSpecs.Add(genId, serverSpecs);
-            await SaveServersSpecs();
-            Helper.Copy(Path.Combine(versionsFolder, GetVersion(version)), Path.Combine(folder, genId));
+            //TODO
+            //await SaveServersSpecs();
+            Helper.Copy(Path.Combine(versionsFolder, serverCore.ToString(), VersionHelperGenerated.GetVersion(version)), Path.Combine(folder, genId));
             File.WriteAllText(Path.Combine(folder, genId, "server.properties"), ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
             return genId;
         }
@@ -224,7 +205,8 @@ namespace HomeSite.Managers
             try
             {
                 serverMainSpecs.Remove(Id);
-                await SaveServersSpecs();
+                //TODO
+                //await SaveServersSpecs();
                 Directory.Delete(Path.Combine(folder, Id), true);
             }
             catch(Exception e)
@@ -252,7 +234,8 @@ namespace HomeSite.Managers
             {
                 serversOnline.First(x => x.Id == Id).Description = newValue;
             }
-            await SaveServersSpecs();
+            //TODO
+            //await SaveServersSpecs();
         }
 
 		public static async Task SetServerName(string Id, string newValue)
@@ -262,14 +245,15 @@ namespace HomeSite.Managers
 			{
 				serversOnline.First(x => x.Id == Id).Name = newValue;
 			}
-			await SaveServersSpecs();
+            //TODO
+			//await SaveServersSpecs();
 		}
 
-		private static async Task SaveServersSpecs()
-        {
-            string servers = JsonConvert.SerializeObject(serverMainSpecs, Formatting.Indented);
-            await File.WriteAllTextAsync(serversjsPath,servers);
-        }
+		//private static async Task SaveServersSpecs()
+  //      {
+  //          string servers = JsonConvert.SerializeObject(serverMainSpecs, Formatting.Indented);
+  //          await File.WriteAllTextAsync(serversjsPath,servers);
+  //      }
 
         private static async Task<Dictionary<string, ServerCreation>> GetServersInCreation()
         {
@@ -448,6 +432,7 @@ namespace HomeSite.Managers
 
         public string Id { get; }
         public MinecraftVersion Version { get; }
+        public ServerCore ServerCore { get; }
         public string ServerPath { get; }
         public string LogPath { get; }
         public string TempLogPath { get; }
@@ -470,6 +455,7 @@ namespace HomeSite.Managers
             Name = specs.Name;
             Description = specs.Description;
             Version = specs.Version;
+            ServerCore = specs.ServerCore;
             PublicPort = specs.PublicPort;
             RCONPort = specs.RCONPort;
             //OwnerUsername = specs.OwnerName;
@@ -479,18 +465,25 @@ namespace HomeSite.Managers
             LogPath = Path.Combine(ServerPath, "logs", "latest.log");
             TempLogPath = Path.Combine(ServerPath, "logs", "temp.log");
 
-			switch (Version)
-			{
-				case MinecraftVersion._1_12_2:
-                    RconStartedMessage = "RCON running on";
-					break;
-                case MinecraftVersion._1_16_5:
-                    RconStartedMessage = "empty";
-                    break;
-                case MinecraftVersion._1_19_2:
-                    RconStartedMessage = "Thread RCON Listener started";
-                    break;
-			}
+            if (ServerCore == ServerCore.Forge)
+            {
+                switch (Version)
+                {
+                    case MinecraftVersion._1_12_2:
+                        RconStartedMessage = "RCON running on";
+                        break;
+                    case MinecraftVersion._1_16_5:
+                        RconStartedMessage = "empty";
+                        break;
+                    case MinecraftVersion._1_19_2:
+                        RconStartedMessage = "Thread RCON Listener started";
+                        break;
+                }
+            }
+            else
+            {
+                RconStartedMessage = "RCON running on";
+            }
 
 		}
 
@@ -862,18 +855,18 @@ namespace HomeSite.Managers
         spectrator
     }
 
-    public enum MinecraftVersion
-    {
-        _1_12_2,
-        _1_16_5,
-        _1_19_2
-    }
+    //public enum MinecraftVersion
+    //{
+    //    _1_12_2,
+    //    _1_16_5,
+    //    _1_19_2
+    //}
 
-    public enum ServerCore
-    {
-        paper,
-        forge
-    }
+    //public enum ServerCore
+    //{
+    //    paper,
+    //    forge
+    //}
 
     interface IMinecraftServer
     {

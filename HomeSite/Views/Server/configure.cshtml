@@ -6,7 +6,7 @@
 <div class=" d-flex justify-content-center ">
     <h1 class="text-white display-5">Настройки</h1>
 </div>
-@if (Model.UploadMods)
+@if (Model.UploadMods && Model.ServerCore != HomeSite.Generated.ServerCore.Paper)
 {
     <div class="d-flex flex-column text-center align-self-center align-content-start align-items-start gap-2 a-div container-md mx-auto">
         <div class="d-flex flex-row align-items-center">
