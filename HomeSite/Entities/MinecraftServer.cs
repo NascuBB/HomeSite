@@ -3,6 +3,7 @@ using HomeSite.Controllers;
 using HomeSite.Generated;
 using HomeSite.Managers;
 using HomeSite.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Management;
 using System.Net;
@@ -52,7 +53,7 @@ namespace HomeSite.Entities
         private readonly string RconStartedMessage;
 
         private readonly LogConnectionManager _logConnectionManager;
-        private readonly ServerDBContext _serverContext;
+        private readonly IDbContextFactory<ServerDBContext> _contextFactory;
         private readonly CancellationTokenSource cts;
 
         public event Action<string> OnServerShutdown; // Событие для уведомления об остановке сервера
@@ -68,15 +69,15 @@ namespace HomeSite.Entities
         public int RCONPort { get; }
         public ServerCreation ServerCreation { get; }
 
-        public MinecraftServer(string id, LogConnectionManager manager, ServerDBContext serverContext)
+        public MinecraftServer(string id, LogConnectionManager manager, IDbContextFactory<ServerDBContext> contextFactory)
         {
             _logConnectionManager = manager;
-            _serverContext = serverContext;
+            _contextFactory = contextFactory;
             cts = new CancellationTokenSource();
             Id = id;
 
-            Server specs;
-            specs = _serverContext.Servers.First(x => x.Id == id);
+            using var context = _contextFactory.CreateDbContext();
+            Server specs = context.Servers.First(x => x.Id == id);
 
             Name = specs.Name;
             Description = specs.Description;
@@ -115,11 +116,6 @@ namespace HomeSite.Entities
             }
 
         }
-
-        //~MinecraftServer()
-        //{
-        //    cts!.Cancel();
-        //}
 
 
         public async void StartServer()

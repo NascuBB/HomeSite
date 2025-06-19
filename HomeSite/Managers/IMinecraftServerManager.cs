@@ -46,14 +46,14 @@ namespace HomeSite.Managers
         /// </summary>
         /// <param name="id">Id of server</param>
         /// <returns><see cref="Server"/> entity of requested minecraft server</returns>
-        public Server GetServerSpecs(string id);
+        public Task<Server?> GetServerSpecs(string id);
 
         /// <summary>
         /// Check if server exists
         /// </summary>
         /// <param name="Id">Id of server</param>
         /// <returns><see cref="bool"/> true if server exists, oterwise false</returns>
-        public bool ServerExists(string Id);
+        public Task<bool> ServerExists(string Id);
 
         public void LaunchServer(string Id);
 

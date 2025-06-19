@@ -142,9 +142,16 @@
 					@*<button class="btn btn-danger">Остановить сервер</button>
                     <button class="btn btn-warning">Перезапустить сервер</button> *@
                     
-                    @if(Model.SharedRights.EditMods && Model.Core != "Paper")
+                    @if(Model.SharedRights.EditMods)
                     {
-                        <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/mods" class="btn btn-info">Управление модами</a>
+                        if (Model.Core != "Paper")
+                        {
+                            <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/mods" class="btn btn-info">Управление модами</a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-green" href="/Server/configure/@Model.ServerDesc.Id/plugins" class="btn btn-info">Управление плагинами</a>
+                        }
                     }
                     @if(Model.SharedRights.EditServerPreferences)
                     {

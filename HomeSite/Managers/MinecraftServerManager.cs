@@ -3,6 +3,7 @@ using HomeSite.Models;
 using Newtonsoft.Json;
 using HomeSite.Entities;
 using HomeSite.Generated;
+using Microsoft.EntityFrameworkCore;
 
 namespace HomeSite.Managers
 {
@@ -12,94 +13,188 @@ namespace HomeSite.Managers
         private static readonly string versionsFolder = Path.Combine(Environment.CurrentDirectory, "versions");
         private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
 
-        public static List<MinecraftServer> serversOnline = new List<MinecraftServer>();
-        public static Dictionary<string, ServerCreation> inCreation = new Dictionary<string, ServerCreation>();
+        private readonly LogConnectionManager _logConnectionManager;
+        private readonly IDbContextFactory<ServerDBContext> _contextFactory;
 
-        private static Dictionary<int, int> availablePorts = new Dictionary<int, int>{
+        // Состояния без контекста
+        public static List<MinecraftServer> serversOnline { get; } = new();
+        public static Dictionary<string, ServerCreation> inCreation { get; } = new();
+        private static Dictionary<int, int> availablePorts = new Dictionary<int, int>
+        {
             { 25550, 5000 }, { 25551, 5001 }, { 25552, 5002 }, { 25553, 5003 }, { 25554, 5004 },
             { 25555, 5005 }, { 25556, 5006 }, { 25557, 5007 }, { 25558, 5008 }, { 25559, 5009 },
             { 25560, 5010 }, { 25561, 5011 }, { 25562, 5012 }, { 25563, 5013 }, { 25564, 5014 },
             { 25565, 5015 }, { 25566, 5016 }, { 25567, 5017 }, { 25568, 5018 }, { 25569, 5019 },
             { 25570, 5020 }
         };
+        public static readonly string Folder = Path.Combine(Environment.CurrentDirectory, "servers");
+        private static readonly string VersionsFolder = Path.Combine(Environment.CurrentDirectory, "versions");
+        private static readonly string CreatingsPath = Path.Combine(Folder, "creatings.json");
 
-        private readonly LogConnectionManager _logConnectionManager;
-        private readonly ServerDBContext _serverContext;
-
-        //private static Dictionary<string, MinecraftServerSpecifications> serverMainSpecs = new Dictionary<string, MinecraftServerSpecifications>();
-
-        public MinecraftServerManager(LogConnectionManager logConnectionManager, ServerDBContext serverContext)
+        public MinecraftServerManager(
+            LogConnectionManager logConnectionManager,
+            IDbContextFactory<ServerDBContext> contextFactory)
         {
             _logConnectionManager = logConnectionManager;
-            _serverContext = serverContext;
-            Prepare();
+            _contextFactory = contextFactory;
+
+            // Загружаем порты без скоупа
+            _ = Task.Run(UpdateAvailablePortsAsync);
+            _ = Task.Run(LoadServersInCreationAsync);
         }
 
-        private void Prepare()
+        private async Task UpdateAvailablePortsAsync()
         {
-            Task.Run(UpdateAvailablePorts);
-            Task.Run(async () => { inCreation = await GetServersInCreation(); });
-        }
-
-        void UpdateAvailablePorts()
-        {
-            var servers = _serverContext.Servers.ToList();
-            
+            await using var context = _contextFactory.CreateDbContext();
+            var servers = await context.Servers.AsNoTracking().ToListAsync();
             foreach (var serverSpec in servers)
             {
-                if(availablePorts.ContainsKey(serverSpec.PublicPort))
-                {
-                    availablePorts.Remove(serverSpec.PublicPort);
-                }
+                availablePorts.Remove(serverSpec.PublicPort);
             }
         }
 
-        public static string GetDifficulty(Difficulty difficulty)
+        private async Task LoadServersInCreationAsync()
         {
-            switch(difficulty)
+            if (!Directory.Exists(Folder))
+                Directory.CreateDirectory(Folder);
+
+            if (!File.Exists(CreatingsPath))
             {
-                case Difficulty.peaceful: return "peaceful";
-                case Difficulty.normal: return "normal";
-                case Difficulty.easy: return "easy";
-                case Difficulty.hard: return "hard";
-                default: return "";
+                inCreation.Clear();
+                return;
             }
-        }
-        public static Difficulty GetDifficulty(string difficulty)
-        {
-            switch (difficulty)
-            {
-                case "peaceful": return Difficulty.peaceful;
-                case "normal": return Difficulty.normal;
-                case "easy": return  Difficulty.easy;
-                case "hard": return Difficulty.hard;
-                default: return Difficulty.peaceful;
-            }
+
+            var content = await File.ReadAllTextAsync(CreatingsPath);
+            var data = JsonConvert.DeserializeObject<Dictionary<string, ServerCreation>>(content)
+                      ?? new Dictionary<string, ServerCreation>();
+            foreach (var kv in data)
+                inCreation[kv.Key] = kv.Value;
         }
 
-        public static string GetGameMode(GameMode gameMode)
+        public async Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null)
         {
-            switch (gameMode)
+            string genId = Guid.NewGuid().ToString();
+
+            inCreation[genId] = ServerCreation.AddingMods;
+            await SaveServersInCreationAsync();
+
+            Random r = new();
+            int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
+            int rconP = availablePorts[port];
+            availablePorts.Remove(port);
+
+            var serverSpecs = new Server
             {
-                case GameMode.survival: return "survival";
-                case GameMode.creative: return "creative";
-                case GameMode.adventure: return "adventure";
-                case GameMode.spectrator: return "spectrator";
-                default: return "";
-            }
+                Id = genId,
+                Description = description,
+                Name = name,
+                Version = version,
+                PublicPort = port,
+                RCONPort = rconP,
+                ServerCore = serverCore
+            };
+
+            await using var context = _contextFactory.CreateDbContext();
+            context.Servers.Add(serverSpecs);
+            await context.SaveChangesAsync();
+
+            Helper.Copy(
+                Path.Combine(VersionsFolder, serverCore.ToString(), VersionHelperGenerated.GetVersion(version)),
+                Path.Combine(Folder, genId));
+            File.WriteAllText(
+                Path.Combine(Folder, genId, "server.properties"),
+                ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
+
+            return genId;
         }
 
-        public static GameMode GetGameMode(string gameMode)
+        public async Task<bool> DeleteServer(string id)
         {
-            switch (gameMode)
+            if (serversOnline.Any(x => x.Id == id))
+                return false;
+
+            try
             {
-                case "survival": return GameMode.survival;
-                case "creative": return GameMode.creative;
-                case "adventure": return GameMode.adventure;
-                case "spectrator": return GameMode.spectrator;
-                default: return GameMode.survival;
+                await using var context = _contextFactory.CreateDbContext();
+                var server = await context.Servers.FirstOrDefaultAsync(x => x.Id == id);
+                if (server == null)
+                    return false;
+
+                context.Servers.Remove(server);
+                await context.SaveChangesAsync();
+
+                Directory.Delete(Path.Combine(Folder, id), true);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+            return true;
         }
+
+        public async Task SetServerDesc(string id, string newDesc)
+        {
+            var serverInMemory = serversOnline.FirstOrDefault(x => x.Id == id);
+            if (serverInMemory != null)
+            {
+                serverInMemory.Description = newDesc;
+            }
+
+            await using var context = _contextFactory.CreateDbContext();
+            var server = await context.Servers.FirstOrDefaultAsync(x => x.Id == id);
+            if (server == null) return;
+            server.Description = newDesc;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task SetServerName(string id, string newName)
+        {
+            var serverInMemory = serversOnline.FirstOrDefault(x => x.Id == id);
+            if (serverInMemory != null)
+            {
+                serverInMemory.Name = newName;
+            }
+
+            await using var context = _contextFactory.CreateDbContext();
+            var server = await context.Servers.FirstOrDefaultAsync(x => x.Id == id);
+            if (server == null) return;
+            server.Name = newName;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ServerExists(string id)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            return await context.Servers.AnyAsync(x => x.Id == id);
+        }
+
+        public async Task<Server?> GetServerSpecs(string id)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            return await context.Servers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public void LaunchServer(string id)
+        {
+            var minecraftServer = new MinecraftServer(id, _logConnectionManager, _contextFactory);
+            // MinecraftServer больше не получает context — он сам обращается при надобности через менеджер
+            serversOnline.Add(minecraftServer);
+            minecraftServer.StartServer();
+        }
+
+        public static async Task ServerEnded(MinecraftServer server)
+        {
+            serversOnline.Remove(server);
+            await Task.CompletedTask;
+        }
+
+        private static async Task SaveServersInCreation()
+        {
+            string servers = JsonConvert.SerializeObject(inCreation, Formatting.Indented);
+            await File.WriteAllTextAsync(creatingsPath, servers);
+        }
+
         public static async Task<bool> FinishServerCreation(string Id)
         {
             inCreation.Remove(Id);
@@ -157,161 +252,62 @@ namespace HomeSite.Managers
             return string.Join("\n", recentLines);
         }
 
-        public static async Task ServerEnded(MinecraftServer server)
+        private static async Task SaveServersInCreationAsync()
         {
-            serversOnline.Remove(server);
-            await Task.CompletedTask;
+            var json = JsonConvert.SerializeObject(inCreation, Formatting.Indented);
+            await File.WriteAllTextAsync(CreatingsPath, json);
         }
 
-        private static async Task SaveServersInCreation()
+        public static string GetDifficulty(Difficulty difficulty)
         {
-            string servers = JsonConvert.SerializeObject(inCreation, Formatting.Indented);
-            await File.WriteAllTextAsync(creatingsPath, servers);
-        }
-
-        /// <summary>
-        /// creates server folder and returns id of new created server
-        /// </summary>
-        /// <param name="name">name of server</param>
-        /// <param name="ownerName">username of owner</param>
-        /// <param name="version">version of server</param>
-        /// <param name="description">description to server</param>
-        /// <returns></returns>
-        public async Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null)
-        {
-            string genId = Guid.NewGuid().ToString();
-            inCreation.Add(genId, ServerCreation.AddingMods);
-            await SaveServersInCreation();
-            Random r = new();
-            int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
-            int rconP = availablePorts[port];
-            availablePorts.Remove(port);
-            Server serverSpecs = new Server
+            switch (difficulty)
             {
-                Id = genId,
-                Description = description,
-                Name = name,
-                //OwnerName = ownerName,
-                Version = version,
-                PublicPort = port,
-                RCONPort = rconP,
-                ServerCore = serverCore
-            };
-            _serverContext.Servers.Add(serverSpecs);
-            _serverContext.SaveChanges();
-            //serverMainSpecs.Add(genId, serverSpecs);
-            //TODO
-            //await SaveServersSpecs();
-            Helper.Copy(Path.Combine(versionsFolder, serverCore.ToString(), VersionHelperGenerated.GetVersion(version)), Path.Combine(folder, genId));
-            File.WriteAllText(Path.Combine(folder, genId, "server.properties"), ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
-            return genId;
-        }
-        /// <summary>
-        /// Deletes minecraft server
-        /// </summary>
-        /// <param name="Id">Id of server</param>
-        /// <returns></returns>
-        public async Task<bool> DeleteServer(string Id)
-        {
-            if (serversOnline.Any(x => x.Id == Id))
-            {
-                return false;
+                case Difficulty.peaceful: return "peaceful";
+                case Difficulty.normal: return "normal";
+                case Difficulty.easy: return "easy";
+                case Difficulty.hard: return "hard";
+                default: return "";
             }
-
-            try
+        }
+        public static Difficulty GetDifficulty(string difficulty)
+        {
+            switch (difficulty)
             {
-                //serverMainSpecs.Remove(Id);
-                //TODO
-                //await SaveServersSpecs();
-                Server server = new() { Id = Id };
-                _serverContext.Servers.Attach(server);
-                _serverContext.Servers.Remove(server);
-                await _serverContext.SaveChangesAsync();
-                Directory.Delete(Path.Combine(folder, Id), true);
+                case "peaceful": return Difficulty.peaceful;
+                case "normal": return Difficulty.normal;
+                case "easy": return Difficulty.easy;
+                case "hard": return Difficulty.hard;
+                default: return Difficulty.peaceful;
             }
-            catch(Exception e)
+        }
+
+        public static string GetGameMode(GameMode gameMode)
+        {
+            switch (gameMode)
             {
-                Console.WriteLine(e.ToString());
-                return false;
+                case GameMode.survival: return "survival";
+                case GameMode.creative: return "creative";
+                case GameMode.adventure: return "adventure";
+                case GameMode.spectrator: return "spectrator";
+                default: return "";
             }
-            return true;
         }
-        /// <summary>
-        /// Sets new description to server
-        /// </summary>
-        /// <param name="Id">Id of server</param>
-        /// <param name="newValue">new description</param>
-        /// <returns></returns>
-        public async Task SetServerDesc(string Id, string newValue)
+
+        public static GameMode GetGameMode(string gameMode)
         {
-            //serverMainSpecs[Id].Description = newValue;
-            if(serversOnline.Any(x => x.Id == Id))
+            switch (gameMode)
             {
-                serversOnline.First(x => x.Id == Id).Description = newValue;
+                case "survival": return GameMode.survival;
+                case "creative": return GameMode.creative;
+                case "adventure": return GameMode.adventure;
+                case "spectrator": return GameMode.spectrator;
+                default: return GameMode.survival;
             }
-            //TODO
-            Server? server = _serverContext.Servers.Find(Id);
-            if (server == null) { return; }
-            server.Description = newValue;
-            await _serverContext.SaveChangesAsync();
-        }
-        /// <summary>
-        /// Sets new name to server
-        /// </summary>
-        /// <param name="Id">Id of server</param>
-        /// <param name="newValue">new name</param>
-        /// <returns></returns>
-        public async Task SetServerName(string Id, string newValue)
-		{
-			//serverMainSpecs[Id].Name = newValue;
-			if (serversOnline.Any(x => x.Id == Id))
-			{
-				serversOnline.First(x => x.Id == Id).Name = newValue;
-			}
-            //TODO
-            Server? server = _serverContext.Servers.Find(Id);
-            if (server == null) { return; }
-            server.Name = newValue;
-            await _serverContext.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Get server specifications
-        /// </summary>
-        /// <param name="id">Id of server</param>
-        /// <returns><see cref="Server"/> entity of requested minecraft server</returns>
-        public Server GetServerSpecs(string id)
-        {
-            return _serverContext.Servers.First(x => x.Id == id);
-        }
-
-        //public static bool IsOwner(string serverId, string username)
-        //{
-        //    using (var serverContext = new ServerDBContext())
-        //    {
-        //        using (var userContext = new UserDBContext())
-        //        {
-        //            return serverContext.servers.Any(x => x.userid == userContext.useraccounts.First(x => x.username == username).id);
-        //        }
-        //    }
-        //}
-        /// <summary>
-        /// Check if server exists
-        /// </summary>
-        /// <param name="Id">Id of server</param>
-        /// <returns><see cref="bool"/> true if server exists, oterwise false</returns>
-        public bool ServerExists(string Id)
-        {
-            return _serverContext.Servers.Any(x => x.Id == Id);
-        }
-
-        public void LaunchServer(string Id)
-        {
-            MinecraftServer minecraftServer = new MinecraftServer(Id, _logConnectionManager, _serverContext);
-            serversOnline.Add(minecraftServer);
-            minecraftServer.StartServer();
-        }
+        // Утилитарные методы для GetGameMode/GetDifficulty можно оставить static без изменений.
     }
+
 
     public enum Difficulty
     {

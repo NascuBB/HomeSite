@@ -45,7 +45,7 @@ namespace HomeSite.Controllers
 			MinecraftServerWrap? wrap = null;
 			if(userServerId != null && userServerId != "no")
 			{
-				var server = _minecraftServerManager.GetServerSpecs(userServerId);
+				var server = _minecraftServerManager.GetServerSpecs(userServerId).Result;
 				wrap = new MinecraftServerWrap
 				{
 					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)

@@ -10,11 +10,11 @@ namespace HomeSite.Controllers
     [Route("Server/See/{Id}/api")]
     public class ServerApiController : ControllerBase
     {
-        private readonly MinecraftServerManager _minecraftServerManager;
+        private readonly IMinecraftServerManager _minecraftServerManager;
 		private readonly UserDBContext _usersContext;
 		private readonly ISharedAdministrationManager _sharedManager;
         private readonly IUserHelper _userHelper;
-		public ServerApiController(MinecraftServerManager manager, IUserHelper userHelper, UserDBContext userDBContext, ISharedAdministrationManager sharedAdministration)
+		public ServerApiController(IMinecraftServerManager manager, IUserHelper userHelper, UserDBContext userDBContext, ISharedAdministrationManager sharedAdministration)
         {
             _minecraftServerManager = manager;
             _sharedManager = sharedAdministration;

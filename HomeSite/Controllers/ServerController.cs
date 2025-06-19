@@ -40,7 +40,7 @@ namespace HomeSite.Controllers
 			List<MinecraftServerWrap> allowedWraps = new List<MinecraftServerWrap>();
 			foreach (var allowedServer in _sharedManager.GetAllowedServers(username) ?? new())
 			{
-                if(!_minecraftServerManager.ServerExists(allowedServer.ServerId))
+                if(!_minecraftServerManager.ServerExists(allowedServer.ServerId).Result)
                 {
                     _sharedManager.DeleteSharedUser(allowedServer.ServerId, username);
                     continue;
@@ -136,7 +136,7 @@ namespace HomeSite.Controllers
                 ?? (_usersContext.UserAccounts.Any(x => x.ServerId == Id)
                     ? SharedAdministrationManager.allRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id)
                     : SharedAdministrationManager.defaultRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id))).UploadServer,
-                ServerCore = _minecraftServerManager.GetServerSpecs(Id).ServerCore
+                ServerCore = _minecraftServerManager.GetServerSpecs(Id).Result.ServerCore
             });
         }
 
@@ -186,20 +186,21 @@ namespace HomeSite.Controllers
         [Route("/server/delete/{Id}")]
         public async Task<IActionResult> Delete(string Id)
         {
-            if(HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ServerId != Id)
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if(user.ServerId != Id)
             {
 				return RedirectToAction("Index", "Home");
 			}
 
             if (await _minecraftServerManager.DeleteServer(Id))
             {
-                _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ServerId = "no";
+                user.ServerId = "no";
                 _usersContext.SaveChanges();
                 _sharedManager.DeleteServer(Id);
-				var server = new Server { Id = Id };
-				_serverContext.Servers.Attach(server);
-				_serverContext.Servers.Remove(server);
-				_serverContext.SaveChanges();
 				return RedirectToAction("Index");
             }
             else
@@ -299,7 +300,7 @@ namespace HomeSite.Controllers
         public IActionResult Allow(string Id,[FromQuery] string user)
         {
           
-            if (HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(Id))
+            if (HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(Id).Result)
                 return RedirectToAction("Index");
             if(_usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
                 if(!_sharedManager.HasSharedThisServer(Id ,HttpContext.User.Identity.Name) 
@@ -312,7 +313,7 @@ namespace HomeSite.Controllers
         [HttpGet("/server/see/{Id}/allow/add")]
         public IActionResult AddAllow(string Id, [FromQuery] string user)
         {
-            if(!_minecraftServerManager.ServerExists(Id))
+            if(!_minecraftServerManager.ServerExists(Id).Result)
             {
                 return NotFound();
             }
@@ -352,7 +353,7 @@ namespace HomeSite.Controllers
         [HttpPost("/server/see/{Id}/allow/delete")]
         public IActionResult DeleteAllow(string Id, [FromQuery] string user)
         {
-            if (!_minecraftServerManager.ServerExists(Id))
+            if (!_minecraftServerManager.ServerExists(Id).Result)
             {
                 return NotFound();
             }
@@ -401,8 +402,14 @@ namespace HomeSite.Controllers
             {
                 return RedirectToAction("Login");
             }
-            if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
-                if (HttpContext.User.Identity.Name == null || !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
+            var server = _minecraftServerManager.GetServerSpecs(Id).Result;
+            if (server.ServerCore == ServerCore.Paper)
+            {
+                return RedirectToAction("See", "Server", new { Id = Id });
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != Id)
+                if (!_sharedManager.HasSharedThisServer(Id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
                     return RedirectToAction("Index");
 
             string modsFolder = Path.Combine(MinecraftServerManager.folder, Id, "mods");
@@ -413,7 +420,7 @@ namespace HomeSite.Controllers
                 {
                     Files = null,
                     ModsInstalled = false,
-                    Name = _minecraftServerManager.GetServerSpecs(Id).Name,
+                    Name = server.Name,
                     ServerId = Id
                 });
             }
@@ -422,7 +429,42 @@ namespace HomeSite.Controllers
                                  .Select(Path.GetFileName)
                                  .ToList();
 
-            return View(new ModsViewModel { ServerId = Id, ModsInstalled = true, Files = files, Name = _minecraftServerManager.GetServerSpecs(Id).Name });
+            return View(new ModsViewModel { ServerId = Id, ModsInstalled = true, Files = files, Name = _minecraftServerManager.GetServerSpecs(Id).Result.Name });
+        }
+        [Route("/server/configure/{Id}/plugins")]
+        public IActionResult Plugins(string Id)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var server = _minecraftServerManager.GetServerSpecs(Id).Result;
+            if(server.ServerCore != ServerCore.Paper)
+            {
+                return RedirectToAction("See", "Server", new { Id = Id });
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != Id)
+                if (!_sharedManager.HasSharedThisServer(Id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
+                    return RedirectToAction("Index");
+
+            string modsFolder = Path.Combine(MinecraftServerManager.folder, Id, "plugins");
+
+            if (!Directory.Exists(modsFolder))
+            {
+                return View(new PluginsViewModel
+                {
+                    Files = null,
+                    Name = server.Name,
+                    ServerId = Id
+                });
+            }
+
+            var files = Directory.GetFiles(modsFolder)
+                                 .Select(Path.GetFileName)
+                                 .ToList();
+
+            return View(new PluginsViewModel { ServerId = Id, Files = files, Name = _minecraftServerManager.GetServerSpecs(Id).Result.Name });
         }
 
         [HttpGet("/server/See/{Id}/sti")]

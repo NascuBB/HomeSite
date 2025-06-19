@@ -25,9 +25,10 @@ try
     builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
     //var com = builder.Configuration.GetConnectionString("postgresql"); options => options.UseNpgsql(builder.Configuration.GetConnectionString("postgresql")
     builder.Services.AddDbContext<UserDBContext>();
-    builder.Services.AddDbContext<ServerDBContext>();
     builder.Services.AddDbContext<SharedRightsDBContext>();
     builder.Services.AddDbContext<ShareFileInfoDBContext>();
+
+    builder.Services.AddDbContextFactory<ServerDBContext>();
 
     builder.Services.AddScoped<IUserHelper, UserHelper>();
 	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();

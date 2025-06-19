@@ -224,7 +224,7 @@ namespace HomeSite.Controllers
         [HttpGet("getlogs")]
         public async Task<IActionResult> GetLogs(string id)
         {
-            if(HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(id))
+            if(HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(id).Result)
             {
                 return NotFound();
             }
