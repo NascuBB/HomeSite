@@ -18,12 +18,15 @@ namespace HomeSite.Controllers
 		private readonly UserDBContext _usersContext;
 		private readonly AccountVerificationManager _accountVerificationManager;
 		private readonly UserPasswordManager _userPasswordManager;
+		private readonly IMinecraftServerManager _minecraftServerManager;
 
-        public AccountController(UserDBContext usersContext, AccountVerificationManager accountVerificationManager, UserPasswordManager passwordManager)
+        public AccountController(UserDBContext usersContext, AccountVerificationManager accountVerificationManager,
+			UserPasswordManager passwordManager, IMinecraftServerManager minecraftServerManager)
 		{
 			_usersContext = usersContext;
 			_accountVerificationManager = accountVerificationManager;
 			_userPasswordManager = passwordManager;
+			_minecraftServerManager = minecraftServerManager;
 		}
 		public IActionResult Index()
 		{
@@ -42,7 +45,7 @@ namespace HomeSite.Controllers
 			MinecraftServerWrap? wrap = null;
 			if(userServerId != null && userServerId != "no")
 			{
-				var server = MinecraftServerManager.GetServerSpecs(userServerId);
+				var server = _minecraftServerManager.GetServerSpecs(userServerId);
 				wrap = new MinecraftServerWrap
 				{
 					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)

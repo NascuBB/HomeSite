@@ -7,10 +7,12 @@ namespace HomeSite.Managers
         public static string? SMTPKey { get; private set; }
         public static string? Domain { get; private set; }
         public static string? RealEmail { get; private set; }
+        public static string? RCONPassword { get; private set; }
+        public static string? LocalAddress { get; private set; }
         private static readonly string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Сonfig");
         private static readonly string path = Path.Combine(configPath, "config.json");
 
-        public static void GetApiKeys()
+        public static void GetConfiguration()
         {
             if (!Directory.Exists(configPath))
                 Directory.CreateDirectory(configPath);
@@ -24,6 +26,8 @@ namespace HomeSite.Managers
                     { "SMTPkey", "key" },
                     { "Domain", "domain"},
                     { "RealEmail", "mail" },
+                    { "RCONPassword", "youshallnotpass" },
+                    { "LocalAddress", "192.168.31.204" }
                 };
                 string json = JsonConvert.SerializeObject(data, Formatting.Indented);
                 File.WriteAllText(path, json);
@@ -31,6 +35,8 @@ namespace HomeSite.Managers
                 SMTPKey = "key";
                 Domain = "domain";
                 RealEmail = "mail";
+                RCONPassword = "youshallnotpass";
+                LocalAddress = "192.168.31.204";
                 return;
             }
             string fileContent = File.ReadAllText(path);
@@ -39,6 +45,8 @@ namespace HomeSite.Managers
             SMTPKey = data["SMTPkey"];
             Domain = data["Domain"];
             RealEmail = data["RealEmail"];
+            RCONPassword = data["RCONPassword"];
+            LocalAddress = data["LocalAddress"];
         }
     }
 }

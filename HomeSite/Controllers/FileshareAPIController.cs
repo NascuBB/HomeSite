@@ -15,13 +15,15 @@ namespace HomeSite.Controllers
         private readonly ISharedAdministrationManager _sharedManager;
         private readonly IUserHelper _userHelper;
         private readonly IFileShareManager _fileShareManager;
+        private readonly IMinecraftServerManager _minecraftServerManager;
         public FileshareAPIController(UserDBContext userDBContext, ISharedAdministrationManager sharedAdministration,
-            IUserHelper userHelper, IFileShareManager fileShareManager)
+            IUserHelper userHelper, IFileShareManager fileShareManager, IMinecraftServerManager minecraftServerManager)
         {
             _sharedManager = sharedAdministration;
             _usersContext = userDBContext;
             _userHelper = userHelper;
             _fileShareManager = fileShareManager;
+            _minecraftServerManager = minecraftServerManager;
         }
 
         [HttpPost]
@@ -222,7 +224,7 @@ namespace HomeSite.Controllers
         [HttpGet("getlogs")]
         public async Task<IActionResult> GetLogs(string id)
         {
-            if(HttpContext.User.Identity.Name == null || !MinecraftServerManager.ServerExists(id))
+            if(HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(id))
             {
                 return NotFound();
             }

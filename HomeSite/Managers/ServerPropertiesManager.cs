@@ -30,7 +30,7 @@
                 $"initial-disabled-packs=\r\n" +
                 $"broadcast-rcon-to-ops=true\r\n" +
                 $"view-distance=10\r\n" +
-                $"server-ip=192.168.31.204\r\n" +
+                $"server-ip={ConfigManager.LocalAddress!}\r\n" +
                 $"resource-pack-prompt=\r\n" +
                 $"allow-nether=true\r\n" +
                 $"server-port={port}\r\n" +
@@ -42,7 +42,7 @@
                 $"resource-pack=\r\n" +
                 $"entity-broadcast-range-percentage=100\r\n" +
                 $"simulation-distance=10\r\n" +
-                $"rcon.password=gamemode1\r\n" +
+                $"rcon.password={ConfigManager.RCONPassword!}\r\n" +
                 $"player-idle-timeout=0\r\n" +
                 $"force-gamemode=false\r\n" +
                 $"rate-limit=0\r\n" +

@@ -14,9 +14,9 @@ try
     var serverInfo = ServerInfo.GetInstance();
 #pragma warning disable CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
     Task.Run(() => serverInfo.StartMonitoring(serverInfo.CancellationTokenSource.Token));
-	//Task.Run(FileShareManager.PrepareFileShare);
+    //Task.Run(FileShareManager.PrepareFileShare);
 #pragma warning restore CS4014 // Так как этот вызов не ожидается, выполнение существующего метода продолжается до тех пор, пока вызов не будет завершен
-
+    ConfigManager.GetConfiguration();
     var builder = WebApplication.CreateBuilder(args);
 
     // Add services to the container.
@@ -32,12 +32,12 @@ try
     builder.Services.AddScoped<IUserHelper, UserHelper>();
 	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();
     builder.Services.AddScoped<IFileShareManager, FileShareManager>();
+    builder.Services.AddScoped<IMinecraftServerManager ,MinecraftServerManager>();
 
-	//builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
+    //builder.Services.AddDbContext<UserDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("postgres")));
     builder.Services.AddSingleton<AccountVerificationManager>();
     builder.Services.AddSingleton<UserPasswordManager>();
 	builder.Services.AddSingleton<LogConnectionManager>();
-    builder.Services.AddSingleton<MinecraftServerManager>();
 
     builder.Services.AddMemoryCache();
 
@@ -52,12 +52,12 @@ try
     builder.WebHost.ConfigureKestrel(options =>
     {
         // Настройка HTTP (необязательно)
-        options.Listen(System.Net.IPAddress.Parse("192.168.31.204"),80); // HTTP
+        options.Listen(System.Net.IPAddress.Parse(ConfigManager.LocalAddress!),80); // HTTP
         //options.Limits.MaxRequestBodySize = 209715200;
         // Настройка HTTPS
-        options.Listen(System.Net.IPAddress.Parse("192.168.31.204"), 443, listenOptions =>
+        options.Listen(System.Net.IPAddress.Parse(ConfigManager.LocalAddress!), 443, listenOptions =>
         {
-            listenOptions.UseHttps(Path.Combine(Directory.GetCurrentDirectory(),"certificate.pfx"), "gamemode1");
+            listenOptions.UseHttps(Path.Combine(Directory.GetCurrentDirectory(),"certificate.pfx"), ConfigManager.RCONPassword!);
         });
     });
     //builder.WebHost.UseUrls(["http://192.168.31.204:80", "https://192.168.31.204:443"]);
@@ -68,8 +68,6 @@ try
     logger.Log(LogLevel.Information,"!!! Development mode !!!");
 #endif
     logger.Log(LogLevel.Information, "Unskipable prepairing before launch");
-    MinecraftServerManager.Prepare();
-    ConfigManager.GetApiKeys();
 
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
