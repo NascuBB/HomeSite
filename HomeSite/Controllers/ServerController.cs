@@ -4,6 +4,7 @@ using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -208,28 +209,35 @@ namespace HomeSite.Controllers
         }
 
         [Route("/server/see/{Id}")]
-        public IActionResult See(string Id)
+        public async Task<IActionResult> See(string Id)
         {
             if (HttpContext.User.Identity.Name == null)
             {
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            if (_usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId == Id ? false : !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name))
+
+            var userId = _userHelper.GetUserId(HttpContext.User.Identity.Name);
+            var userAccount = await _usersContext.UserAccounts.FindAsync(userId);
+
+            if ((userAccount.ServerId != Id) && !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name))
             {
                 return RedirectToAction("Index");
             }
+
             ViewBag.ThisId = Id;
+
             MinecraftServer? thisServer = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
             if (thisServer == null)
             {
-                Server specs = _serverContext.Servers.First(x => x.Id == Id);
+                var specs = await _serverContext.Servers.FirstAsync(x => x.Id == Id);
 
-                SharedRightsDBO rrr = _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId == Id
+                SharedRightsDBO rrr = (userAccount.ServerId == Id)
                     ? SharedAdministrationManager.allRightsDBO
                     : _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
                         ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)!
                         : SharedAdministrationManager.defaultRightsDBO;
+
                 return View(new ServerIdViewModel
                 {
                     SharedRights = rrr,
@@ -251,16 +259,21 @@ namespace HomeSite.Controllers
             }
             else
             {
-                string logs = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs
+                bool shortLogs = userAccount.ShortLogs;
+
+                string logs = shortLogs
                     ? "Сокращенные логи:\n" + Helper.GetTrimmedLogs(thisServer.ConsoleLogs)
                     : thisServer.ConsoleLogs;
-                return View(new ServerIdViewModel 
-                {
-                    SharedRights = _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId == Id
+
+                var rights = (userAccount.ServerId == Id)
                     ? SharedAdministrationManager.allRightsDBO
                     : _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
                         ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)!
-                        : SharedAdministrationManager.defaultRightsDBO,
+                        : SharedAdministrationManager.defaultRightsDBO;
+
+                return View(new ServerIdViewModel
+                {
+                    SharedRights = rights,
                     AllowedUsers = _sharedManager.GetAllowedUsernames(Id),
                     IsRunning = thisServer.IsRunning,
                     logs = logs,
@@ -275,7 +288,7 @@ namespace HomeSite.Controllers
                     Version = VersionHelperGenerated.GetVersionDBO(thisServer.Version),
                     Core = thisServer.ServerCore.ToString()!
                 });
-            }       
+            }
         }
         [Route("/server/see")]
         public IActionResult See()
