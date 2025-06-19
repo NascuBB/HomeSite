@@ -211,37 +211,43 @@ namespace HomeSite.Controllers
         [Route("/server/see/{Id}")]
         public async Task<IActionResult> See(string Id)
         {
-            if (HttpContext.User.Identity.Name == null)
+            var username = HttpContext.User.Identity?.Name;
+
+            if (username == null)
             {
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
 
-            var userId = _userHelper.GetUserId(HttpContext.User.Identity.Name);
+            var userId = _userHelper.GetUserId(username);
             var userAccount = await _usersContext.UserAccounts.FindAsync(userId);
 
-            if ((userAccount.ServerId != Id) && !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name))
-            {
+            bool isOwner = userAccount?.ServerId == Id;
+            bool isShared = _sharedManager.HasSharedThisServer(Id, username);
+
+            if (!isOwner && !isShared)
                 return RedirectToAction("Index");
-            }
 
             ViewBag.ThisId = Id;
 
             MinecraftServer? thisServer = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
+
+            SharedRightsDBO rights = isOwner
+                ? SharedAdministrationManager.allRightsDBO
+                : isShared
+                    ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(username, Id)!
+                    : SharedAdministrationManager.defaultRightsDBO;
+
+            List<string> allowedUsers = _sharedManager.GetAllowedUsernames(Id);
+
             if (thisServer == null)
             {
                 var specs = await _serverContext.Servers.FirstAsync(x => x.Id == Id);
 
-                SharedRightsDBO rrr = (userAccount.ServerId == Id)
-                    ? SharedAdministrationManager.allRightsDBO
-                    : _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
-                        ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)!
-                        : SharedAdministrationManager.defaultRightsDBO;
-
                 return View(new ServerIdViewModel
                 {
-                    SharedRights = rrr,
-                    AllowedUsers = _sharedManager.GetAllowedUsernames(Id),
+                    SharedRights = rights,
+                    AllowedUsers = allowedUsers,
                     IsRunning = false,
                     logs = "Последние 10 логов\n" + MinecraftServerManager.GetLastLogs(Id),
                     ServerDesc = new MinecraftServerWrap
@@ -252,29 +258,21 @@ namespace HomeSite.Controllers
                         ServerState = ServerState.stopped
                     },
                     ServerState = ServerState.stopped,
-                    PublicAddress = "just1x.hopto.org:" + specs.PublicPort,
+                    PublicAddress = ConfigManager.Domain + specs.PublicPort,
                     Version = VersionHelperGenerated.GetVersionDBO(specs.Version),
                     Core = specs.ServerCore.ToString()!
                 });
             }
             else
             {
-                bool shortLogs = userAccount.ShortLogs;
-
-                string logs = shortLogs
+                string logs = userAccount!.ShortLogs
                     ? "Сокращенные логи:\n" + Helper.GetTrimmedLogs(thisServer.ConsoleLogs)
                     : thisServer.ConsoleLogs;
-
-                var rights = (userAccount.ServerId == Id)
-                    ? SharedAdministrationManager.allRightsDBO
-                    : _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
-                        ? (SharedRightsDBO)_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)!
-                        : SharedAdministrationManager.defaultRightsDBO;
 
                 return View(new ServerIdViewModel
                 {
                     SharedRights = rights,
-                    AllowedUsers = _sharedManager.GetAllowedUsernames(Id),
+                    AllowedUsers = allowedUsers,
                     IsRunning = thisServer.IsRunning,
                     logs = logs,
                     ServerDesc = new MinecraftServerWrap
@@ -284,12 +282,13 @@ namespace HomeSite.Controllers
                         Id = thisServer.Id
                     },
                     ServerState = thisServer.ServerState,
-                    PublicAddress = "just1x.hopto.org:" + thisServer.PublicPort,
+                    PublicAddress = ConfigManager.Domain + thisServer.PublicPort,
                     Version = VersionHelperGenerated.GetVersionDBO(thisServer.Version),
                     Core = thisServer.ServerCore.ToString()!
                 });
             }
         }
+
         [Route("/server/see")]
         public IActionResult See()
         {
