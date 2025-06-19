@@ -3,6 +3,12 @@
 @{
     ViewData["Title"] = "Minecraft server";
 }
+@section Meta {
+    <meta property="og:title" content="@Model.ServerDesc.Name" />
+    <meta property="og:description" content="@Model.ServerDesc | @Model.Core @Model.Version" />
+    <meta property="og:type" content="website" />
+}
+
 <link rel="stylesheet" href="~/css/server.css?v=7" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 

@@ -259,7 +259,7 @@ namespace HomeSite.Controllers
                         ServerState = ServerState.stopped
                     },
                     ServerState = ServerState.stopped,
-                    PublicAddress = ConfigManager.Domain + specs.PublicPort,
+                    PublicAddress = ConfigManager.Domain + ":" + specs.PublicPort,
                     Version = VersionHelperGenerated.GetVersionDBO(specs.Version),
                     Core = specs.ServerCore.ToString()!
                 });
@@ -283,7 +283,7 @@ namespace HomeSite.Controllers
                         Id = thisServer.Id
                     },
                     ServerState = thisServer.ServerState,
-                    PublicAddress = ConfigManager.Domain + thisServer.PublicPort,
+                    PublicAddress = ConfigManager.Domain + ":" + thisServer.PublicPort,
                     Version = VersionHelperGenerated.GetVersionDBO(thisServer.Version),
                     Core = thisServer.ServerCore.ToString()!
                 });
