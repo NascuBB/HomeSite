@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace HomeSite.Controllers
 {
     [ApiController]
-    [Route("Server/See/{Id}/api")]
+    [Route("server/see/{Id}/api")]
     public class ServerApiController : ControllerBase
     {
         private readonly IMinecraftServerManager _minecraftServerManager;

@@ -1,9 +1,9 @@
 ﻿const serverId = window.location.pathname.split('/').reverse()[1];
 
 async function deleteFile(fileName) {
-    if (!confirm(`Удалить мод ${fileName}?`)) return;
+    if (!confirm(`Удалить плагин ${fileName}?`)) return;
 
-    const response = await fetch(`/Server/configure/${serverId}/deletemod?file=${fileName}`, {
+    const response = await fetch(`/server/configure/${serverId}/deleteplugin?file=${fileName}`, {
         method: "DELETE"
     });
 
@@ -25,7 +25,7 @@ async function uploadFile() {
     let formData = new FormData();
     formData.append("file", fileInput.files[0]);
 
-    const response = await fetch(`/Server/configure/${serverId}/uploadmod`, {
+    const response = await fetch(`/server/configure/${serverId}/uploadplugin`, {
         method: "POST",
         body: formData
     });
@@ -37,15 +37,3 @@ async function uploadFile() {
         alert("Ошибка загрузки");
     }
 }
-
-//var uploadbtn = document.getElementById('uploadButton');
-
-//if (uploadbtn != null) {
-//    uploadbtn.addEventListener('click', async () => {
-//        await uploadFile();
-//    });
-
-//    document.getElementById('deleteButton').addEventListener('click', async () => {
-
-//    });
-//}

@@ -63,6 +63,55 @@ namespace HomeSite.Controllers
 
             return Ok();
         }
+
+        [HttpDelete]
+        [Route("/server/configure/{Id}/deleteplugin")]
+        public IActionResult DeletePlugin(string Id, string file)
+        {
+            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.ServerId == Id))
+                if (HttpContext.User.Identity.Name == null || !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
+                    return Unauthorized();
+
+            string filePath = Path.Combine(MinecraftServerManager.folder, Id, "plugins", file);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+                return Ok();
+            }
+
+            return NotFound("Файл не найден");
+        }
+
+        [HttpPost]
+        [Route("/server/configure/{Id}/uploadplugin")]
+        public async Task<IActionResult> UploadPlugin(string Id, IFormFile file)
+        {
+            if (HttpContext.User.Identity.Name == null || !_usersContext.UserAccounts.Any(x => x.ServerId == Id))
+                if (HttpContext.User.Identity.Name == null || _sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name)
+                    || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id).EditMods)
+                    return Unauthorized();
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("Файл не выбран");
+            }
+
+            string pluginsFolder = Path.Combine(MinecraftServerManager.folder, Id, "plugins");
+            if (!Directory.Exists(pluginsFolder))
+            {
+                Directory.CreateDirectory(pluginsFolder);
+            }
+
+            string filePath = Path.Combine(pluginsFolder, file.FileName.Replace('+', ' '));
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return Ok();
+        }
     }
 
 }

@@ -467,7 +467,7 @@ namespace HomeSite.Controllers
             return View(new PluginsViewModel { ServerId = Id, Files = files, Name = _minecraftServerManager.GetServerSpecs(Id).Result.Name });
         }
 
-        [HttpGet("/server/See/{Id}/sti")]
+        [HttpGet("/server/see/{Id}/sti")]
         public IActionResult GetServerStats(string Id)
         {
             if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
