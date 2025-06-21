@@ -13,7 +13,8 @@ namespace HomeSite.Managers
             EditServerPreferences = false,
             SendCommands = false,
             UploadMods = false,
-            AddShareds = false
+            AddShareds = false,
+            SeeServerFiles = false,
         };
 
         public static SharedRightsDBO allRightsDBO = new SharedRightsDBO
@@ -23,7 +24,8 @@ namespace HomeSite.Managers
             EditServerPreferences = true,
             SendCommands = true,
             UploadMods = true,
-            AddShareds = true
+            AddShareds = true,
+            SeeServerFiles = true
         };
 
         public static SharedRights defaultRights(int userId, string serverId)
@@ -36,6 +38,7 @@ namespace HomeSite.Managers
                 SendCommands = false,
                 UploadServer = false,
                 AddShareds = false,
+                SeeServerFiles = false,
                 UserId = userId,
                 ServerId = serverId
             };
@@ -50,6 +53,7 @@ namespace HomeSite.Managers
                 SendCommands = true,
                 UploadServer = true,
                 AddShareds = true,
+                SeeServerFiles = true,
                 UserId = userId,
                 ServerId = serverId
             };
@@ -148,6 +152,7 @@ namespace HomeSite.Managers
 				right.SendCommands = rights.SendCommands;
 				right.StartStopServer = rights.StartStopServer;
 				right.UploadServer = rights.UploadServer;
+                right.SeeServerFiles = rights.SeeServerFiles;
 			}
             else
             {

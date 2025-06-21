@@ -9,7 +9,7 @@ function sleep(ms) {
 }
 
 document.getElementById('backBtn').addEventListener('click', () => {
-    window.location.href = '/Server/See/' + serverId;
+    window.location.href = '/server/see/' + serverId;
 });
 
 document.getElementById('deleteBtn').addEventListener('click', async () => {
@@ -39,11 +39,12 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
         StartStopServer: document.getElementById('StopStartServerSwitch').checked,
         UploadMods: document.getElementById('UploadModsSwitch').checked,
         SendCommands: document.getElementById('SendCommandsSwitch').checked,
-        AddShareds: document.getElementById('EditSharedsSwitch').checked
+        AddShareds: document.getElementById('EditSharedsSwitch').checked,
+        SeeServerFiles: document.getElementById('SeeServerFiles').checked
     };
     loaderC.className = "showFZ loader ms-1";
     try {
-        const response = await fetch('/Server/See/' + serverId + '/allow/save?user=' + username, {
+        const response = await fetch('/server/see/' + serverId + '/allow/save?user=' + username, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -1,0 +1,40 @@
+﻿@model string
+@{
+    var serverId = ViewBag.ServerId;
+    var path = ViewBag.RelativePath as string ?? "";
+    var fileName = ViewBag.FileName as string ?? "Файл";
+    var success = TempData["Message"] as string;
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<div class="container mt-4">
+    <h4 class="text-white mb-3">
+        <i class="bi bi-file-earmark-text"></i> @fileName
+    </h4>
+
+    @if (!string.IsNullOrEmpty(success))
+    {
+        <div class="alert alert-success">@success</div>
+    }
+
+    <form asp-action="EditFile" asp-controller="Server" asp-route-id="@serverId" method="post" class="d-flex flex-column">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="path" value="@path" />
+
+        <div class="mb-3">
+            <label for="content" class="form-label text-white">Содержимое файла:</label>
+            <textarea name="content" class="form-control bg-dark text-light" rows="18">@Model</textarea>
+        </div>
+
+        <div class="mx-sm-0 mx-auto">
+			<button type="submit" class="btn btn-green">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mb-1 bi bi-floppy" viewBox="0 0 16 16">
+					<path d="M11 2H9v3h2z" />
+					<path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
+				</svg> Сохранить изменения
+			</button>
+			<a href="@Url.Action("Files", "Server", new { id = serverId, path = System.IO.Path.GetDirectoryName(path)?.Replace("\\", "/") })" class="btn btn-secondary mt-sm-0 mt-2">
+				<i class="bi bi-arrow-left-circle"></i> Назад к списку файлов
+			</a>
+        </div>
+    </form>
+</div>

@@ -385,6 +385,7 @@ namespace HomeSite.Controllers
                 EditMods = rights.EditMods,
                 EditServerPreferences = rights.EditServerPreferences,
                 SendCommands = rights.SendCommands,
+                SeeServerFiles = rights.SeeServerFiles,
                 ServerId = Id,
                 StartStopServer = rights.StartStopServer,
                 UploadServer = rights.UploadMods,
@@ -466,6 +467,126 @@ namespace HomeSite.Controllers
 
             return View(new PluginsViewModel { ServerId = Id, Files = files, Name = _minecraftServerManager.GetServerSpecs(Id).Result.Name });
         }
+
+        private readonly string _serversBasePath = Path.Combine(Directory.GetCurrentDirectory(), "servers");
+
+        [HttpGet("/server/see/{id}/files")]
+        public IActionResult Files(string id, string? path)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var serverPath = Path.Combine(_serversBasePath, id);
+            var relativePath = path ?? "";
+            var fullPath = Path.Combine(serverPath, relativePath);
+
+            if (!Path.GetFullPath(fullPath).StartsWith(serverPath))
+                return BadRequest("Недопустимый путь.");
+
+            if (!Directory.Exists(fullPath))
+                return NotFound("Папка не найдена.");
+
+            var items = new List<DirectoryItem>();
+
+            foreach (var dir in Directory.GetDirectories(fullPath))
+            {
+                items.Add(new DirectoryItem
+                {
+                    Name = Path.GetFileName(dir),
+                    RelativePath = Path.Combine(relativePath, Path.GetFileName(dir)),
+                    IsDirectory = true
+                });
+            }
+
+            foreach (var file in Directory.GetFiles(fullPath))
+            {
+                items.Add(new DirectoryItem
+                {
+                    Name = Path.GetFileName(file),
+                    RelativePath = Path.Combine(relativePath, Path.GetFileName(file)),
+                    IsDirectory = false
+                });
+            }
+
+            ViewBag.ServerId = id;
+            ViewBag.ServerName = _serverContext.Servers.First(x => x.Id == id).Name;
+            ViewBag.CurrentPath = relativePath;
+            ViewBag.ParentPath = GetParentPath(relativePath);
+
+            return View("Files", items);
+        }
+
+        private string? GetParentPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return null;
+
+            var dir = Path.GetDirectoryName(path);
+            return dir?.Replace("\\", "/");
+        }
+
+        [HttpGet("/server/see/{id}/view")]
+        public IActionResult ViewFile(string id, string path)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var filePath = Path.Combine(_serversBasePath, id, path);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Файл не найден.");
+
+            var ext = Path.GetExtension(filePath).ToLower();
+            var supported = new[] { ".txt", ".log", ".json", ".yml", ".yaml", ".properties" };
+
+            if (!supported.Contains(ext))
+                return BadRequest("Формат файла не поддерживается для просмотра.");
+
+            var content = System.IO.File.ReadAllText(filePath);
+
+            ViewBag.ServerId = id;
+            ViewBag.RelativePath = path;
+            ViewBag.FileName = Path.GetFileName(filePath);
+
+            return View("ViewFile", content);
+        }
+
+        [HttpPost("/server/see/{id}/edit")]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditFile(string id, string path, string content)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var filePath = Path.Combine(_serversBasePath, id, path);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Файл не найден.");
+
+            System.IO.File.WriteAllText(filePath, content);
+
+            TempData["Message"] = "Файл успешно сохранён.";
+            return RedirectToAction("ViewFile", new { id = id, path = path });
+        }
+
 
         [HttpGet("/server/see/{Id}/sti")]
         public IActionResult GetServerStats(string Id)

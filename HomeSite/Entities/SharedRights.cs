@@ -21,5 +21,7 @@ namespace HomeSite.Entities
         public bool SendCommands { get; set; }
         [Column("addshareds")]
         public bool AddShareds { get; set; }
+        [Column("seeserverfiles")]
+        public bool SeeServerFiles { get; set; }
     }
 }

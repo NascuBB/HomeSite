@@ -1,0 +1,88 @@
+﻿@using HomeSite.Entities
+@model List<DirectoryItem>
+@{
+
+    var serverId = ViewBag.ServerId;
+    var serverName = ViewBag.ServerName;
+    var currentPath = ViewBag.CurrentPath as string ?? "";
+    var parentPath = ViewBag.ParentPath as string;
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<div class=" d-flex justify-content-center ">
+    <h1 class="text-white display-5">Файлы сервера @serverName</h1>
+</div>
+<div class="container mt-4">
+    <a href="/server/see/@serverId" class="btn btn-green mb-3">
+        <i class="bi bi-escape"></i> К серверу
+    </a>
+    @if (parentPath != null)
+    {
+        <a href="@Url.Action("Files", "server", new { id = serverId, path = parentPath })" class="btn btn-secondary mb-3">
+            <i class="bi bi-arrow-left-circle"></i> Назад
+        </a>
+    }
+    @if(Model.Count == 0)
+    {
+        <div class=" d-flex justify-content-center ">
+            <span style="font-size: 2rem" class="text-white">Папка пуста</span>
+        </div>
+    }
+    else
+    {
+        <table class="table table-dark table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Тип</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (item.IsDirectory)
+                            {
+                                <a href="@Url.Action("Files", "Server", new { id = serverId, path = item.RelativePath })">
+                                    <i class="bi bi-folder-fill text-warning"></i> @item.Name
+                                </a>
+                            }
+                            else
+                            {
+                                <i class="bi bi-file-earmark-text"></i> @item.Name
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsDirectory)
+                            {
+							    <span>Папка</span>
+                            }
+                            else
+                            {
+                                <span>Файл</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!item.IsDirectory && item.Name != "run.bat")
+                            {
+                                <a href="@Url.Action("DownloadFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-success">
+                                    <i class="bi bi-download"></i> Скачать
+                                </a>
+                                @if (item.Name.EndsWith(".json") || item.Name.EndsWith(".txt") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".log") || item.Name.EndsWith(".properties"))
+                                {
+                                    <a href="@Url.Action("ViewFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-primary mt-sm-0 mt-2">
+                                        <i class="bi bi-eye"></i> Просмотр
+                                    </a>
+                                }
+                                // <a href="@Url.Action("EditFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-warning">
+                                //     <i class="bi bi-pencil-square"></i> Редактировать
+                                // </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
