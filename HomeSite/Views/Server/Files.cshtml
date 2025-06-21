@@ -69,7 +69,7 @@
                                 <a href="@Url.Action("DownloadFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-success">
                                     <i class="bi bi-download"></i> Скачать
                                 </a>
-                                @if (item.Name.EndsWith(".json") || item.Name.EndsWith(".txt") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".log") || item.Name.EndsWith(".properties"))
+                                @if (item.Name.EndsWith(".json") || item.Name.EndsWith(".cfg") || item.Name.EndsWith(".ini") || item.Name.EndsWith(".toml") || item.Name.EndsWith(".yaml") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".txt") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".log") || item.Name.EndsWith(".properties"))
                                 {
                                     <a href="@Url.Action("ViewFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-primary mt-sm-0 mt-2">
                                         <i class="bi bi-eye"></i> Просмотр

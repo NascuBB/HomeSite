@@ -549,7 +549,7 @@ namespace HomeSite.Controllers
                 return NotFound("Файл не найден.");
 
             var ext = Path.GetExtension(filePath).ToLower();
-            var supported = new[] { ".txt", ".log", ".json", ".yml", ".yaml", ".properties" };
+            var supported = new[] { ".txt", ".cfg", ".ini", ".log", ".json", ".yml", ".yaml", ".toml", ".properties" };
 
             if (!supported.Contains(ext))
                 return BadRequest("Формат файла не поддерживается для просмотра.");
