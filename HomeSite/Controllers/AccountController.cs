@@ -271,7 +271,7 @@ namespace HomeSite.Controllers
 			return RedirectToAction("Index", "Home");
 		}
 
-		[HttpPost("account/setpref")]
+		[HttpPost("setpref")]
 		public IActionResult ChangeShortLogs([FromBody] PreferenceRequest request)
 		{
 			if(HttpContext.User.Identity.Name == null)

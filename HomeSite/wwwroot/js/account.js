@@ -8,7 +8,7 @@ const saveDescBtn = document.getElementById('descBtn');
 document.getElementById("ShortLogsSwitch").addEventListener("change", async (event) => {
     loaderShortlog.className = 'form-check-label loader-sm showFZ mt-1 ms-2';
     try {
-        const response = await fetch(`/Account/setpref`, {
+        const response = await fetch(`/account/setpref`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -17,7 +17,7 @@ document.getElementById("ShortLogsSwitch").addEventListener("change", async (eve
             }),
         });
 
-        //alert(await response.text());
+        //alert(await response.status);
     } catch (err) {
         console.error('Ошибка отправки команды:', err);
     } finally {
@@ -58,7 +58,7 @@ if (saveDescBtn != null) {
         var input = document.getElementById('nameInput');
         var v = input.value.toString() ? input.value.toString() : `${username}'s server`;
         try {
-            const response = await fetch(`/Server/configure/${serverId}/set`, {
+            const response = await fetch(`/server/configure/${serverId}/set`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,5 +1,6 @@
 ﻿@model string
 @{
+    ViewData["Title"] = "View file";
     var serverId = ViewBag.ServerId;
     var path = ViewBag.RelativePath as string ?? "";
     var fileName = ViewBag.FileName as string ?? "Файл";

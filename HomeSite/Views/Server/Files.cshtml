@@ -1,6 +1,7 @@
 ﻿@using HomeSite.Entities
 @model List<DirectoryItem>
 @{
+    ViewData["Title"] = "Server files";
     string[] forbiddenFolders = { "versions", "cache", "libraries" };
     var serverId = ViewBag.ServerId;
     // var serverName = ViewBag.ServerName;
