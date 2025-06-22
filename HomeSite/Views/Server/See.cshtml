@@ -117,11 +117,11 @@
                     {
                         @if(Model.SharedRights.StartStopServer)
                         {
-                            <button class="btn btn-green" id="start-server"><i class="bi bi-play"></i> Staaaaaaaaaaaart</button>
+                            <button class="btn btn-green" id="start-server"><i class="bi bi-play-circle"></i> Staaaaaaaaaaaart</button>
                         }
                         else
                         {
-                            <button class="btn btn-green" id="start-server" disabled><i class="bi bi-play"></i> Staaaaaaaaaaaart</button>
+                            <button class="btn btn-green" id="start-server" disabled><i class="bi bi-play-circle"></i> Staaaaaaaaaaaart</button>
                         }
 
                     }
@@ -130,17 +130,17 @@
                         @switch(Model.ServerState)
                         {
                             case ServerState.starting:
-                                <button class="btn btn-danger" id="stopServer" disabled>Выключить</button>
+                                <button class="btn btn-danger" id="stopServer" disabled><i class="bi bi-stop-circle"></i> Выключить</button>
                             break;
 
                             case ServerState.started:
                                 @if (Model.SharedRights.StartStopServer)
                                 {
-                                    <button class="btn btn-danger" id="stopServer">Выключить</button>
+                                    <button class="btn btn-danger" id="stopServer"><i class="bi bi-stop-circle"></i> Выключить</button>
                                 }
                                 else
                                 {
-                                    <button class="btn btn-danger" id="stopServer" disabled>Выключить</button>
+                                    <button class="btn btn-danger" id="stopServer" disabled><i class="bi bi-stop-circle"></i> Выключить</button>
                                 }
                             break;
                         }

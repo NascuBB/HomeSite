@@ -470,6 +470,7 @@ namespace HomeSite.Controllers
         }
 
         private readonly string _serversBasePath = Path.Combine(Directory.GetCurrentDirectory(), "servers");
+        private readonly string[] forbiddenFolders = { "versions", "cache", "libraries" };
 
         [HttpGet("/server/see/{id}/files")]
         public IActionResult Files(string id, string? path)
@@ -489,6 +490,9 @@ namespace HomeSite.Controllers
 
             if (!Path.GetFullPath(fullPath).StartsWith(serverPath))
                 return BadRequest("Недопустимый путь.");
+
+            if (Helper.IsForbiddenRootFolder(serverPath, fullPath, forbiddenFolders))
+                return BadRequest("Доступ к этой папке запрещён.");
 
             if (!Directory.Exists(fullPath))
                 return NotFound("Папка не найдена.");
@@ -516,7 +520,7 @@ namespace HomeSite.Controllers
             }
 
             ViewBag.ServerId = id;
-            ViewBag.ServerName = _serverContext.Servers.First(x => x.Id == id).Name;
+            //ViewBag.ServerName = _serverContext.Servers.First(x => x.Id == id).Name;
             ViewBag.CurrentPath = relativePath;
             ViewBag.ParentPath = GetParentPath(relativePath);
 
@@ -550,7 +554,7 @@ namespace HomeSite.Controllers
                 return NotFound("Файл не найден.");
 
             var ext = Path.GetExtension(filePath).ToLower();
-            var supported = new[] { ".txt", ".cfg", ".ini", ".log", ".json", ".yml", ".yaml", ".toml", ".properties" };
+            var supported = new[] { ".txt", ".cs", ".lua", ".md", ".xaml", ".xml", ".zs", ".cfg", ".ini", ".log", ".json", ".conf", ".yml", ".yaml", ".toml", ".properties" };
 
             if (!supported.Contains(ext))
                 return BadRequest("Формат файла не поддерживается для просмотра.");

@@ -32,6 +32,17 @@ namespace HomeSite.Helpers
             };
         }
 
+        public static bool IsForbiddenRootFolder(string serverRoot, string fullPath, string[] forbiddenRootFolders)
+        {
+            var relative = Path.GetRelativePath(serverRoot, fullPath)
+                               .Replace('\\', '/')
+                               .TrimEnd('/');
+
+            // Проверяем только первую часть пути
+            var firstSegment = relative.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            return firstSegment != null && forbiddenRootFolders.Contains(firstSegment, StringComparer.OrdinalIgnoreCase);
+        }
+
         public static string GetTrimmedLogs(string logs)
 		{
 			string[] lines = logs.Split('\n');
