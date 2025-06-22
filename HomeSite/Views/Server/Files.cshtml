@@ -7,33 +7,78 @@
     var currentPath = ViewBag.CurrentPath as string ?? "";
     var parentPath = ViewBag.ParentPath as string;
 }
+<style>
+    .path-width{
+        width: 100%;
+    }
+
+    @@media(min-width: 576px){
+        .path-width{
+            width: 50%;
+        }
+    }
+</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <div class=" d-flex justify-content-center ">
     <h1 class="text-white display-5">Файлы сервера @serverName</h1>
 </div>
 <div class="container mt-4">
-    <a href="/server/see/@serverId" class="btn btn-green mb-3">
-        <i class="bi bi-escape"></i> К серверу
-    </a>
-    @if (parentPath != null)
-    {
-        <a href="@Url.Action("Files", "server", new { id = serverId, path = parentPath })" class="btn btn-secondary mb-3">
-            <i class="bi bi-arrow-left-circle"></i> Назад
-        </a>
-    }
+    <div class="d-flex flex-column">
+        @if (TempData["Error"] is string error)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @error
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+            </div>
+            <script>
+                setTimeout(() => {
+                    const alert = document.getElementById("errorAlert");
+                    if (alert) {
+                        alert.classList.remove("show");
+                    }
+                    setTimeout(() => {
+                        if (alert) {
+                            alert.classList.add("d-none");
+                        }
+                    }, 300);
+                }, 5000);
+            </script>
+        }
+        <span class="alert alert-secondary path-width mx-auto p-2">/@currentPath.Replace("\\", "/")</span>
+        <div class="d-flex gap-2">
+            <a href="/server/see/@serverId" class="btn btn-green">
+                <i class="bi bi-escape"></i> К серверу
+            </a>
+            @if (parentPath != null)
+            {
+                <a href="@Url.Action("Files", "server", new { id = serverId, path = parentPath })" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left-circle"></i> Назад
+                </a>
+            }
+			<div class="d-inline ms-auto">
+                <button class="btn btn btn-outline-green" title="Новый файл" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                    <i class="bi bi-folder-plus"></i>
+                </button>
+                <button class="btn btn-outline-green" title="Новая папка" data-bs-toggle="modal" data-bs-target="#createFileModal">
+                    <i class="bi bi-file-earmark-plus"></i>
+                </button>
+            </div>
+
+		</div>
+	</div>
     @if(Model.Count == 0)
     {
         <div class=" d-flex justify-content-center ">
-            <span style="font-size: 2rem" class="text-white">Папка пуста</span>
+            <span style="font-size: 2rem" class="text-white"><i class="bi bi-folder-x"></i> Папка пуста</span>
         </div>
     }
     else
     {
-        <table class="table table-dark table-striped table-bordered">
+        <table class="table table-dark table-striped table-responsive">
             <thead>
                 <tr>
                     <th>Имя</th>
-                    <th>Тип</th>
+                    @*<th>Тип</th>*@
                     <th>Действия</th>
                 </tr>
             </thead>
@@ -41,10 +86,10 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>
+                        <td style="word-break: break-all;">
                             @if (item.IsDirectory)
                             {
-                                <a href="@Url.Action("Files", "Server", new { id = serverId, path = item.RelativePath })">
+                                <a  href="@Url.Action("Files", "Server", new { id = serverId, path = item.RelativePath })">
                                     <i class="bi bi-folder-fill text-warning"></i> @item.Name
                                 </a>
                             }
@@ -53,7 +98,7 @@
                                 <i class="bi bi-file-earmark-text"></i> @item.Name
                             }
                         </td>
-                        <td>
+                        @*<td>
                             @if (item.IsDirectory)
                             {
 							    <span>Папка</span>
@@ -62,22 +107,39 @@
                             {
                                 <span>Файл</span>
                             }
-                        </td>
+				        </td>*@
                         <td>
-                            @if (!item.IsDirectory && item.Name != "run.bat")
+                            @if (!item.IsDirectory)
                             {
-                                <a href="@Url.Action("DownloadFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-success">
-                                    <i class="bi bi-download"></i> Скачать
-                                </a>
-                                @if (item.Name.EndsWith(".json") || item.Name.EndsWith(".cfg") || item.Name.EndsWith(".ini") || item.Name.EndsWith(".toml") || item.Name.EndsWith(".yaml") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".txt") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".log") || item.Name.EndsWith(".properties"))
+                                @if (item.Name != "run.bat")
                                 {
-                                    <a href="@Url.Action("ViewFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-primary mt-sm-0 mt-2">
-                                        <i class="bi bi-eye"></i> Просмотр
+                                    <a href="@Url.Action("DownloadFile", "Server", new { id = serverId, path = item.RelativePath })"
+                                       class="btn btn-sm btn-outline-light" title="Скачать">
+                                        <i class="bi bi-download"></i>
                                     </a>
+                                    @if (item.Name.EndsWith(".json") || item.Name.EndsWith(".cfg") || item.Name.EndsWith(".ini") || item.Name.EndsWith(".toml") || item.Name.EndsWith(".yaml") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".txt") || item.Name.EndsWith(".yml") || item.Name.EndsWith(".log") || item.Name.EndsWith(".properties"))
+                                    {
+                                        <a href="@Url.Action("ViewFile", "Server", new { id = serverId, path = item.RelativePath })"
+                                           class="btn btn-sm btn-outline-primary" title="Посмотреть">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger" title="Удалить"
+                                            onclick="confirmDelete('@item.Name', '@Url.Action("DeleteFile", "Server", new { id = serverId, path = item.RelativePath })', false)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 }
-                                // <a href="@Url.Action("EditFile", "Server", new { id = serverId, path = item.RelativePath })" class="btn btn-sm btn-warning">
-                                //     <i class="bi bi-pencil-square"></i> Редактировать
-                                // </a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("DownloadFolder", "Server", new { id = serverId, path = item.RelativePath })"
+                                    class="btn btn-sm btn-outline-light" title="Скачать как ZIP">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Удалить"
+                                        onclick="confirmDelete('@item.Name', '@Url.Action("DeleteFile", "Server", new { id = serverId, path = item.RelativePath })', true)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             }
                         </td>
                     </tr>
@@ -86,3 +148,90 @@
         </table>
     }
 </div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <form method="post" id="deleteForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        Подтверждение удаления
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteModalBodyText">Вы уверены, что хотите удалить этот файл?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Модальное окно создания папки -->
+<div class="modal fade" id="createFolderModal" tabindex="-1" aria-labelledby="createFolderLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" asp-action="CreateFolder" asp-controller="Server"
+              asp-route-id="@ViewBag.ServerId" asp-route-path="@ViewBag.CurrentPath">
+            @Html.AntiForgeryToken()
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createFolderLabel">Создать новую папку</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="folderName" class="form-control" placeholder="Название папки" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-green">Создать</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Модальное окно создания файла -->
+<div class="modal fade" id="createFileModal" tabindex="-1" aria-labelledby="createFileLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="post" asp-action="CreateFile" asp-controller="Server"
+              asp-route-id="@ViewBag.ServerId" asp-route-path="@ViewBag.CurrentPath">
+            @Html.AntiForgeryToken()
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createFileLabel">Создать новый файл</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="fileName" class="form-control mb-3" placeholder="example.txt" pattern="^[a-zA-Z0-9_.\-]+$" title="Разрешены буквы, цифры, '-', '_', '.'" required />
+                    <textarea name="content" class="form-control" rows="10" placeholder="Содержимое файла (опционально)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-green">Создать</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    function confirmDelete(fileName, deleteUrl, isFolder) {
+        const form = document.getElementById('deleteForm');
+        const bodyText = document.getElementById('deleteModalBodyText');
+
+        form.action = deleteUrl;
+        if(isFolder){
+            bodyText.innerText = `Вы действительно хотите удалить папку"${fileName}"?\nВсе файлы внутри папки будут удалены`;
+        } else {
+            bodyText.innerText = `Вы действительно хотите удалить файл "${fileName}"?`;
+        }
+
+        
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>

@@ -12,7 +12,27 @@ namespace HomeSite.Helpers
             thisApp = application;
         }
 
-		public static string GetTrimmedLogs(string logs)
+        public static string GetHighlightClass(string extension)
+        {
+            return extension.ToLower() switch
+            {
+                ".json" => "language-json",
+                ".yml" or ".yaml" => "language-yaml",
+                ".toml" => "language-toml",
+                ".properties" => "language-properties",
+                ".cfg" or ".ini" => "language-ini",
+                ".txt" or ".log" => "language-plaintext",
+                ".xml" => "language-xml",
+                ".md" => "language-markdown",
+                ".lua" => "language-lua",
+                ".sh" => "language-bash",
+                ".bat" => "language-dos",
+                ".cs" => "language-cs",
+                _ => "language-plaintext"
+            };
+        }
+
+        public static string GetTrimmedLogs(string logs)
 		{
 			string[] lines = logs.Split('\n');
 

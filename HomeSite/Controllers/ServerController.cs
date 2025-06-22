@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO.Compression;
 
 namespace HomeSite.Controllers
 {
@@ -556,6 +557,8 @@ namespace HomeSite.Controllers
 
             var content = System.IO.File.ReadAllText(filePath);
 
+            ViewData["HighlightClass"] = Helper.GetHighlightClass(ext);
+
             ViewBag.ServerId = id;
             ViewBag.RelativePath = path;
             ViewBag.FileName = Path.GetFileName(filePath);
@@ -576,6 +579,9 @@ namespace HomeSite.Controllers
                 if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
                     return RedirectToAction("See", "Server", new { Id = id });
 
+            if(path.EndsWith(".log"))
+                return NotFound("Файл не найден.");
+
             var filePath = Path.Combine(_serversBasePath, id, path);
 
             if (!System.IO.File.Exists(filePath))
@@ -585,6 +591,172 @@ namespace HomeSite.Controllers
 
             TempData["Message"] = "Файл успешно сохранён.";
             return RedirectToAction("ViewFile", new { id = id, path = path });
+        }
+
+        [HttpGet("/server/see/{id}/download")]
+        public IActionResult DownloadFile(string id, string path)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), _serversBasePath, id);
+            var fullPath = Path.Combine(basePath, path);
+
+            // Безопасность — запрет на выход из папки сервера
+            if (!Path.GetFullPath(fullPath).StartsWith(basePath))
+                return BadRequest("Неверный путь");
+
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound("Файл не найден");
+
+            var fileName = Path.GetFileName(fullPath);
+            var contentType = "application/octet-stream"; // можно улучшить через MimeMapping
+
+            return PhysicalFile(fullPath, contentType, fileName);
+        }
+
+        [HttpGet("/server/see/{id}/download-folder")]
+        public IActionResult DownloadFolder(string id, string path)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var serverRoot = Path.Combine(Directory.GetCurrentDirectory(), _serversBasePath, id);
+            var targetFolder = Path.Combine(serverRoot, path ?? "");
+
+            if (!Path.GetFullPath(targetFolder).StartsWith(serverRoot))
+                return BadRequest("Недопустимый путь");
+
+            if (!Directory.Exists(targetFolder))
+                return NotFound("Папка не найдена");
+
+            // Временный путь к ZIP-файлу
+            var filename = Path.GetFileName(path ?? "root");
+            var tempZipName = $"{filename}_{DateTime.UtcNow.Ticks}.zip";
+            var tempZipPath = Path.Combine(Path.GetTempPath(), tempZipName);
+
+            ZipFile.CreateFromDirectory(targetFolder, tempZipPath, CompressionLevel.Fastest, includeBaseDirectory: false);
+
+            var stream = new FileStream(tempZipPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.DeleteOnClose);
+
+            return File(stream, "application/zip", filename+".zip");
+        }
+
+        [HttpPost("/server/see/{id}/delete")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteFile(string id, string path)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var serverRoot = Path.Combine(Directory.GetCurrentDirectory(), _serversBasePath, id);
+            var fullPath = Path.Combine(serverRoot, path);
+
+            if (!Path.GetFullPath(fullPath).StartsWith(serverRoot))
+                return BadRequest("Неверный путь");
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
+            else if (Directory.Exists(fullPath))
+            {
+                Directory.Delete(fullPath, recursive: true);
+            }
+            else
+            {
+                return NotFound("Файл или папка не найдены");
+            }
+
+            //TempData["Message"] = "Файл или папка удалены.";
+            var parentPath = Path.GetDirectoryName(path)?.Replace("\\", "/") ?? "";
+            return RedirectToAction("Files", new { id = id, path = parentPath });
+        }
+
+        [HttpPost("/server/see/{id}/create-folder")]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateFolder(string id, string path, string folderName)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var basePath = Path.Combine(_serversBasePath, id);
+            var targetPath = Path.Combine(basePath, path ?? "");
+            var fullFolderPath = Path.Combine(targetPath, folderName);
+
+            if (!Path.GetFullPath(fullFolderPath).StartsWith(basePath))
+            {
+                TempData["Error"] = "Недопустимый путь.";
+                return RedirectToAction("Files", new { id, path });
+            }
+
+            if (Directory.Exists(fullFolderPath) || System.IO.File.Exists(fullFolderPath))
+            {
+                TempData["Error"] = "Папка или файл с таким именем уже существует.";
+                return RedirectToAction("Files", new { id, path });
+            }
+
+            Directory.CreateDirectory(fullFolderPath);
+
+            return RedirectToAction("Files", new { id, path });
+        }
+
+        [HttpPost("/server/see/{id}/create-file")]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateFile(string id, string path, string fileName, string content)
+        {
+            if (HttpContext.User.Identity?.Name == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId != id)
+                if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
+                    return RedirectToAction("See", "Server", new { Id = id });
+
+            var basePath = Path.Combine(_serversBasePath, id);
+            var targetPath = Path.Combine(basePath, path ?? "");
+            var fullFilePath = Path.Combine(targetPath, fileName);
+
+            if (!Path.GetFullPath(fullFilePath).StartsWith(basePath))
+            {
+                TempData["Error"] = "Недопустимый путь.";
+                return RedirectToAction("Files", new { id, path });
+            }
+
+            if (System.IO.File.Exists(fullFilePath) || Directory.Exists(fullFilePath))
+            {
+                TempData["Error"] = "Папка с таким именем уже существует.";
+                return RedirectToAction("Files", new { id, path });
+            }
+
+            System.IO.File.WriteAllText(fullFilePath, content ?? "");
+
+            return RedirectToAction("Files", new { id, path });
         }
 
 

@@ -5,7 +5,19 @@
     var fileName = ViewBag.FileName as string ?? "Файл";
     var success = TempData["Message"] as string;
 }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+    .flex-adaptive{
+        flex-direction: column;
+    }
+
+    @@media(min-width: 576px){
+        .flex-adaptive {
+            flex-direction: row;
+        }
+    }
+</style>
 <div class="container mt-4">
     <h4 class="text-white mb-3">
         <i class="bi bi-file-earmark-text"></i> @fileName
@@ -15,26 +27,88 @@
     {
         <div class="alert alert-success">@success</div>
     }
+    <div class="d-flex mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 id="mainLabel" class="text-white">Просмотр файла</h5>
+        </div>
+        <div class="ms-auto d-block gap-2">
+            @if (!fileName.EndsWith(".log"))
+            {
+                <button id="viewModeBtn" type="button" class="btn btn-outline-green" onclick="switchToEdit()" title="Редактировать">
+				    <i class="bi bi-pencil-square"></i>
+			    </button>
+            }
+			<a href="@Url.Action("DownloadFile", "Server", new { id = serverId, path = path })"
+               class="btn btn-outline-light" title="Скачать">
+				<i class="bi bi-download"></i>
+			</a>
+			<button class="btn btn-outline-danger" title="Удалить"
+					onclick="confirmDelete('@fileName', '@Url.Action("DeleteFile", "Server", new { id = serverId, path = path })')">
+				<i class="bi bi-trash"></i>
+			</button>
+        </div>
 
+    </div>
     <form asp-action="EditFile" asp-controller="Server" asp-route-id="@serverId" method="post" class="d-flex flex-column">
         @Html.AntiForgeryToken()
         <input type="hidden" name="path" value="@path" />
+		<div class="mb-3">
+            <div id="viewMode">
+                <pre style="max-height: 315px; overflow: auto;"><code class="@ViewData["HighlightClass"]">@Html.Raw(Html.Encode(Model))</code></pre>
+            </div>
 
-        <div class="mb-3">
-            <label for="content" class="form-label text-white">Содержимое файла:</label>
-            <textarea name="content" class="form-control bg-dark text-light" rows="18">@Model</textarea>
-        </div>
-
-        <div class="mx-sm-0 mx-auto">
-			<button type="submit" class="btn btn-green">
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mb-1 bi bi-floppy" viewBox="0 0 16 16">
-					<path d="M11 2H9v3h2z" />
-					<path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
-				</svg> Сохранить изменения
-			</button>
-			<a href="@Url.Action("Files", "Server", new { id = serverId, path = System.IO.Path.GetDirectoryName(path)?.Replace("\\", "/") })" class="btn btn-secondary mt-sm-0 mt-2">
+            <div id="editMode" class="d-none">
+                <form method="post" asp-action="SaveFile" asp-controller="Server"
+                      asp-route-id="@ViewBag.ServerId" asp-route-path="@ViewBag.CurrentPath">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2 ms-auto align-items-center">
+                        @*<h5 class="text-white">Редактирование файла: @fileName</h5>*@
+                        <button type="submit" class="btn btn-green me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mb-1 bi bi-floppy" viewBox="0 0 16 16">
+                                <path d="M11 2H9v3h2z" />
+                                <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
+                            </svg> Сохранить
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                            Отмена
+                        </button>
+                    </div>
+                    <textarea name="content" class="form-control" rows="15">@Model</textarea>
+                </form>
+            </div>
+			@*<textarea name="content" class="form-control bg-dark text-light" rows="18">@Model</textarea>*@
+		</div>
+        <div class="d-flex mx-sm-0 mx-auto gap-2 flex-adaptive">
+           
+			<a href="@Url.Action("Files", "Server", new { id = serverId, path = System.IO.Path.GetDirectoryName(path)?.Replace("\\", "/") })" class="btn btn-secondary">
 				<i class="bi bi-arrow-left-circle"></i> Назад к списку файлов
 			</a>
         </div>
     </form>
 </div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <form method="post" id="deleteForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        Подтверждение удаления
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteModalBodyText">Вы уверены, что хотите удалить этот файл?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="/js/serverfileedit.js"></script>
