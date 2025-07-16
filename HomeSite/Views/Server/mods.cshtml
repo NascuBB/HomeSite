@@ -14,6 +14,7 @@
 </style>
 @if(Model.ModsInstalled)
 {
+    @Html.AntiForgeryToken()
     <div class=" d-flex justify-content-center ">
         <h1 class="text-white display-5">Моды сервера @Model.Name</h1>
     </div>

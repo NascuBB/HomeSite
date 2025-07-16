@@ -12,6 +12,7 @@
 	<h4 class="display-6">Управление аккаунтом</h4>
 
 	<form asp-action="Logout" method="post">
+		@Html.AntiForgeryToken()
 		<input type="submit" value="Выйти" class="btn btn-danger" />
 	</form>
 	<div class="d-flex flex-row justify-content-between text-end form-check form-switch form-switch-md mt-4">
@@ -57,6 +58,7 @@
 			else
 			{
 				<form asp-action="Delete" asp-controller="Server" asp-route-id="@Model.OwnServer.Id" method="post">
+					@Html.AntiForgeryToken()
 					<input type="submit" value="Удалить" class="btn btn-danger" />
 				</form>
 			}
@@ -64,4 +66,4 @@
 		<span class="d-none opacity-0" id="serverId">@Model.OwnServer.Id</span>
 	}
 </div>
-<script src="~/js/account.js?v=4"></script>
+<script src="~/js/account.js"></script>

@@ -22,7 +22,10 @@ document.getElementById("FlightSwitch").addEventListener("change", async (event)
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "allow-flight",
                 value: event.currentTarget.checked.toString()
@@ -43,7 +46,10 @@ document.getElementById("ForceGMSwitch").addEventListener("change", async (event
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "force-gamemode",
                 value: event.currentTarget.checked.toString()
@@ -64,7 +70,10 @@ document.getElementById("NetherSwitch").addEventListener("change", async (event)
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "allow-nether",
                 value: event.currentTarget.checked.toString()
@@ -85,7 +94,10 @@ document.getElementById("OnlineSwitch").addEventListener("change", async (event)
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "online-mode",
                 value: (!event.currentTarget.checked).toString()
@@ -106,7 +118,10 @@ document.getElementById("PvpSwitch").addEventListener("change", async (event) =>
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "pvp",
                 value: event.currentTarget.checked.toString()
@@ -127,7 +142,10 @@ document.getElementById("SpawnMonstersSwitch").addEventListener("change", async 
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "spawn-monsters",
                 value: event.currentTarget.checked.toString()
@@ -148,7 +166,10 @@ document.getElementById("WhiteListSwitch").addEventListener("change", async (eve
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "white-list",
                 value: event.currentTarget.checked.toString()
@@ -169,7 +190,10 @@ document.getElementById("CommandSwitch").addEventListener("change", async (event
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "enable-command-block",
                 value: event.currentTarget.checked.toString()
@@ -190,7 +214,10 @@ document.getElementById("gameModeSelect").addEventListener("change", async (even
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "gamemode",
                 value: event.target.value.toString()
@@ -211,7 +238,10 @@ document.getElementById("difficultySelect").addEventListener("change", async (ev
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "difficulty",
                 value: event.target.value.toString()
@@ -234,7 +264,10 @@ document.getElementById('playersButton').addEventListener('click', async () => {
     try {
         const response = await fetch(`/Server/configure/${serverId}/set`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
             body: JSON.stringify({
                 preference: "max-players",
                 value: v
@@ -257,7 +290,10 @@ document.getElementById('spawnButton').addEventListener('click', async () => {
     try {
             const response = await fetch(`/Server/configure/${serverId}/set`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
                 body: JSON.stringify({
                     preference: "spawn-protection",
                     value: v
@@ -300,6 +336,9 @@ if (sendBtn != null) {
         try {
             const response = await fetch(`/shared/uploadmods?Id=${serverId}`, {
                 method: 'POST',
+                headers: {
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
                 body: data
             });
 
@@ -331,7 +370,10 @@ if (finishbtn != null) {
 
             const response = await fetch(`/Server/configure/${serverId}/finish`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" }
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
             });
 
             if (!response.ok) {

@@ -1,9 +1,11 @@
 ﻿using HomeSite.Managers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.WebSockets;
 
 namespace HomeSite.Controllers
 {
+    [IgnoreAntiforgeryToken]
     [Route("ws/logs/{serverId}")]
     public class LogWebSocketController : ControllerBase
     {

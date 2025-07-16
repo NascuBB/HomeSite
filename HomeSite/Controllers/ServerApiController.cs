@@ -1,11 +1,13 @@
 ﻿using HomeSite.Entities;
 using HomeSite.Helpers;
 using HomeSite.Managers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace HomeSite.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("server/see/{Id}/api")]
     public class ServerApiController : ControllerBase

@@ -4,6 +4,9 @@ async function deleteFile(fileName) {
     if (!confirm(`Удалить мод ${fileName}?`)) return;
 
     const response = await fetch(`/Server/configure/${serverId}/deletemod?file=${fileName}`, {
+        headers: {
+            "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+        },
         method: "DELETE"
     });
 
@@ -27,6 +30,9 @@ async function uploadFile() {
 
     const response = await fetch(`/Server/configure/${serverId}/uploadmod`, {
         method: "POST",
+        headers: {
+            "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+        },
         body: formData
     });
 

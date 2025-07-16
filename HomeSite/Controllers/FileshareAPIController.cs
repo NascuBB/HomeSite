@@ -1,12 +1,14 @@
 ﻿using HomeSite.Entities;
 using HomeSite.Helpers;
 using HomeSite.Managers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace HomeSite.Controllers
 {
+    [Authorize]
     [Route("shared/")]
     [ApiController]
     public class FileshareAPIController : ControllerBase

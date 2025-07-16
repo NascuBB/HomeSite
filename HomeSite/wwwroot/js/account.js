@@ -10,7 +10,9 @@ document.getElementById("ShortLogsSwitch").addEventListener("change", async (eve
     try {
         const response = await fetch(`/account/setpref`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
             body: JSON.stringify({
                 preference: '',
                 value: event.currentTarget.checked.toString()
@@ -38,7 +40,9 @@ if (saveDescBtn != null) {
         try {
             const response = await fetch(`/Server/configure/${serverId}/set`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
                 body: JSON.stringify({
                     preference: "motd",
                     value: v
@@ -60,7 +64,9 @@ if (saveDescBtn != null) {
         try {
             const response = await fetch(`/server/configure/${serverId}/set`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
                 body: JSON.stringify({
                     preference: "name",
                     value: v

@@ -33,7 +33,7 @@
     </div>
 }
 <div class="m-2 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly">
-
+    @Html.AntiForgeryToken()
     <div class="gap-2 d-flex flex-column mb-2 a-div-sm">
         <div class="d-flex flex-row w-100 justify-content-between">
             <div class="input-group w-50">
@@ -251,4 +251,4 @@ else
         <div id="loadingCreating" class="loader hideFZ"></div>
     </div>
 }
-<script src="~/js/serverconf.js?v=2"></script>
+<script src="~/js/serverconf.js"></script>

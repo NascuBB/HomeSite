@@ -1,11 +1,13 @@
 ﻿using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeSite.Controllers
 {
+    [Authorize]
     [Route("fileshare")]
     public class FileshareController : Controller
     {

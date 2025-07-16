@@ -1,9 +1,11 @@
 ﻿using HomeSite.Entities;
 using HomeSite.Managers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeSite.Controllers
 {
+    [Authorize]
     [ApiController]
     public class ServerModsController : ControllerBase
     {

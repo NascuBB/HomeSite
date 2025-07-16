@@ -13,6 +13,7 @@
 	</div>
 
     <form class="d-flex flex-column gap-2" asp-action="verification" method="post">
+        @Html.AntiForgeryToken()
         <div class="form-group">
             <label class="control-label">Код</label>
             <input asp-for="Code" type="number" class="form-control" />

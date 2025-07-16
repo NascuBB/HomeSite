@@ -28,12 +28,9 @@ namespace HomeSite.Controllers
 			_userPasswordManager = passwordManager;
 			_minecraftServerManager = minecraftServerManager;
 		}
-		public IActionResult Index()
+        [Authorize]
+        public IActionResult Index()
 		{
-			if(HttpContext.User.Identity.Name == null)
-			{
-				return RedirectToAction("Login");
-			}
             if (_accountVerificationManager.RequiresVerification(HttpContext.User.Identity.Name))
             {
                 return RedirectToAction("Verification", "Account");
@@ -220,7 +217,7 @@ namespace HomeSite.Controllers
 			}
             return RedirectToAction("Login");
         }
-
+        [Authorize]
         [Route("verification")]
 		public IActionResult Verification()
 		{
@@ -234,14 +231,10 @@ namespace HomeSite.Controllers
             }
             return View();
 		}
-
+        [Authorize]
         [HttpPost("verification")]
         public IActionResult Verification(VerificationViewModel model)
         {
-            if (HttpContext.User.Identity.Name == null)
-            {
-                return RedirectToAction("Login");
-            }
             if(!_accountVerificationManager.RequiresVerification(HttpContext.User.Identity.Name))
             {
                 return RedirectToAction("Index");
@@ -270,14 +263,10 @@ namespace HomeSite.Controllers
 			HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 			return RedirectToAction("Index", "Home");
 		}
-
-		[HttpPost("setpref")]
+        [Authorize]
+        [HttpPost("setpref")]
 		public IActionResult ChangeShortLogs([FromBody] PreferenceRequest request)
 		{
-			if(HttpContext.User.Identity.Name == null)
-			{
-				return RedirectToAction("Login");
-			}
 			_usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name).ShortLogs = request.Value == "true" ? true : false;
 			_usersContext.SaveChanges();
 			return Ok();

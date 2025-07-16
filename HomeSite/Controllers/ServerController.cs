@@ -3,6 +3,7 @@ using HomeSite.Generated;
 using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -11,6 +12,7 @@ using System.IO.Compression;
 
 namespace HomeSite.Controllers
 {
+    [Authorize]
     [Route("server")]
     public class ServerController : Controller
     {

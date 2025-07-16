@@ -36,7 +36,9 @@ window.addEventListener('DOMContentLoaded', function () {
         const selectedValue = event.target.value;
         const response = await fetch("/shared/changeshare?id=" + currentFileId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
             body: JSON.stringify(selectedValue),
         });
         if (response.status !== 200) {
@@ -66,7 +68,9 @@ window.addEventListener('DOMContentLoaded', function () {
         if (!newname) return;
         const response = await fetch('/shared/rename?id=' + currentFileId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
             body: JSON.stringify(newname)
         });
         const span = document.getElementById('renameSpan');
@@ -141,7 +145,9 @@ window.addEventListener('DOMContentLoaded', function () {
 
         const response = await fetch('/shared/feature?id=' + currentFileId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
             body: JSON.stringify(selectedElement.getAttribute('data-feat'))
         });
         if (response.status !== 200) {
@@ -241,7 +247,9 @@ sendBtn.addEventListener('click', async () => {
     // Сначала проверка доступного места
     const checkResponse = await fetch('/shared/checkupload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value },
         body: JSON.stringify(file.size)
     });
 
@@ -259,6 +267,7 @@ sendBtn.addEventListener('click', async () => {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/shared/uploadfile');
+    xhr.setRequestHeader('RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
 
     xhr.upload.addEventListener('progress', function (e) {
         if (e.lengthComputable) {

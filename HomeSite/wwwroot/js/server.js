@@ -20,6 +20,10 @@ if (startBtn != null) {
     startBtn.addEventListener("click", async () => {
         const response = await fetch("/Server/See/" + serverId + "/api/start", {
             method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
         });
         const result = await response.text();
         if (result == "Сервер запускается.") {
@@ -291,7 +295,10 @@ if (stopBtn != null) {
         //if (!pass) return alert('Введите пароль');
         const response = await fetch("/Server/See/" + serverId + "/api/stop", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
             //body: //JSON.stringify(pass),
         });
         const result = await response.text();
@@ -328,7 +335,10 @@ if (stopBtn != null) {
         try {
             const response = await fetch("/Server/See/" + serverId + "/api/command", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
                 body: JSON.stringify(command),
             });
             alert(await response.text());

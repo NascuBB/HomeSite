@@ -19,7 +19,7 @@ namespace HomeSite.Migrations
                 .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder); 
 
             modelBuilder.Entity("HomeSite.Entities.UserAccount", b =>
                 {

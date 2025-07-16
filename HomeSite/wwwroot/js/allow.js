@@ -16,6 +16,10 @@ document.getElementById('deleteBtn').addEventListener('click', async () => {
     try {
         const response = await fetch('/Server/See/' + serverId + '/allow/delete?user=' + username, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
         });
 
         if (!response.ok) {
@@ -47,7 +51,8 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
         const response = await fetch('/server/see/' + serverId + '/allow/save?user=' + username, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
             },
             body: JSON.stringify(sharedRights)
         });

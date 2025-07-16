@@ -12,6 +12,7 @@
 <div class="m-2 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly">
     <div class="gap-2 d-flex flex-column mb-2 a-div-sm">
         <div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto">
+            @Html.AntiForgeryToken()
             @if (Model.SendCommands)
             {
                 <input class="form-check-input" type="checkbox" role="switch" id="SendCommandsSwitch" checked>
@@ -101,4 +102,4 @@
 <div class="mt-4 d-flex justify-content-center gap-2">
     <button class="btn btn-green" id="backBtn">Назад</button>
 </div>
-<script src="~/js/allow.js?v=4"></script>
+<script src="~/js/allow.js?v=1"></script>
