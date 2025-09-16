@@ -32,9 +32,9 @@
                 </div>
                 <div class="form-group">
                     <label class="control-label">Версия</label>
-                    <select class="form-select" asp-for="Version" aria-label="Select version">
+                    <select id="version-select" class="form-select" asp-for="Version" aria-label="Select version">
                         <option value="_1_12_2">1.12.2</option>
-                        <option value="_1_16_5">1.16.5</option>
+                        @* <option value="_1_16_5">1.16.5</option> *@
                         <option value="_1_19_2">1.19.2</option>
                         <option value="_1_20_1">1.20.1</option>
                         <option value="_1_21_4">1.21.4</option>
@@ -52,6 +52,7 @@
         <a asp-action="Index" class="btn btn-primary">Назад</a>
     </div>
 </div>
+<script src="~/js/serverCreate.js"></script>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

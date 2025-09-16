@@ -48,6 +48,7 @@ namespace HomeSite.Controllers
             return View(model);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult GetFile(long id)
         {
