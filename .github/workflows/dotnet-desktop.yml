@@ -39,5 +39,5 @@ jobs:
 
       - name: Start HomeSite
         run: |
-          cd "E:\homesite server"; cmd /c start "HomeSite.exe"
+          cd "E:\homesite server"; ./start.bat
         shell: powershell
