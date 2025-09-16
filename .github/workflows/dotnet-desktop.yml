@@ -1,0 +1,37 @@
+name: Build and Deploy HomeSite
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build project
+        run: dotnet publish -c Release -o publish
+
+      - name: Stop old process if running
+        run: |
+          Stop-Process -Name "HomeSite" -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Copy build to app folder
+        run: |
+          $src = "$(Get-Location)\publish\*"
+          $dst = "E:\homesite server"
+          Copy-Item $src $dst -Recurse -Force
+        shell: pwsh
+
+      - name: Copy wwwroot to app folder
+        run: |
+          Copy-Item -Path "$(Get-Location)\publish\wwwroot" -Destination "E:\homesite server" -Recurse -Force
+        shell: pwsh
+
+      - name: Start HomeSite
+        run: |
+          Start-Process "E:\homesite server\HomeSite.exe"
+        shell: pwsh
