@@ -39,5 +39,5 @@ jobs:
 
       - name: Start HomeSite
         run: |
-          E:; cd "homesite server"; Start-Process "E:\homesite server\HomeSite.exe"
+          cd "/homesite server"; Start-Process "E:\homesite server\HomeSite.exe"
         shell: powershell
