@@ -16,13 +16,7 @@ jobs:
 
       - name: Stop old process if running
         run: |
-          $proc = Get-Process -Name "HomeSite" -ErrorAction SilentlyContinue
-          if ($proc) {
-              $proc | Stop-Process -Force
-              Write-Host "Old process stopped."
-          } else {
-              Write-Host "No process to stop."
-          }
+          Stop-Service -Name "HomeSite"
         shell: powershell
 
       - name: Copy build to app folder
@@ -39,5 +33,5 @@ jobs:
 
       - name: Start HomeSite
         run: |
-          cd "E:\homesite server"; ./start.bat
+          Start-Service -Name "HomeSite"
         shell: powershell
