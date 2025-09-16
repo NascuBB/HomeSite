@@ -23,21 +23,21 @@ jobs:
           } else {
               Write-Host "No process to stop."
           }
-        shell: pwsh
+        shell: powershell
 
       - name: Copy build to app folder
         run: |
           $src = "$(Get-Location)\publish\*"
           $dst = "E:\homesite server"
           Copy-Item $src $dst -Recurse -Force
-        shell: pwsh
+        shell: powershell
 
       - name: Copy wwwroot to app folder
         run: |
           Copy-Item -Path "$(Get-Location)\publish\wwwroot" -Destination "E:\homesite server" -Recurse -Force
-        shell: pwsh
+        shell: powershell
 
       - name: Start HomeSite
         run: |
           Start-Process "E:\homesite server\HomeSite.exe"
-        shell: pwsh
+        shell: powershell
