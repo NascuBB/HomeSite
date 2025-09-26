@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using System.Security.Cryptography.X509Certificates;
 
 try
@@ -88,6 +89,23 @@ try
     app.UseHsts();
 #endif
 
+#if DEBUG
+    // static files from .well-known
+    var wellKnownPath = Path.Combine(app.Environment.WebRootPath, ".well-known");
+    if (!Directory.Exists(wellKnownPath))
+    {
+        Directory.CreateDirectory(wellKnownPath);
+    }
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(wellKnownPath),
+        RequestPath = "/.well-known",
+        ServeUnknownFileTypes = true,
+        DefaultContentType = "text/plain"
+    });
+#endif
+
     //app.MapHub<MinecraftLogHub>("/minecraftHub");
 
     app.UseStaticFiles();
@@ -126,3 +144,31 @@ finally
 {
     Console.ReadKey();
 }
+
+/*
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <security>
+        <requestFiltering>
+          <hiddenSegments>
+            <remove segment="acme-challenge" />
+          </hiddenSegments>
+        </requestFiltering>
+      </security>
+      <staticContent>
+        <!-- Разрешаем отдачу файлов без расширения -->
+        <remove fileExtension="" />
+        <mimeMap fileExtension="" mimeType="text/plain" />
+      </staticContent>
+      <handlers>
+        <add name="ACMEChallenge" path=".well-known/acme-challenge/*" verb="*" modules="StaticFileModule" resourceType="File" requireAccess="Read" />
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\HomeSite.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+    </system.webServer>
+  </location>
+</configuration>
+<!--ProjectGuid: d6149a90-8631-4572-8143-73790364d619-->
+ */
