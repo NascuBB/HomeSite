@@ -372,3 +372,6 @@ FodyWeavers.xsd
 /HomeSite/wwwroot/.well-known/pki-validation
 /HomeSite/Сonfig/config.json
 /HomeSite/Сonfig
+/config.json
+/HomeSite/Config
+/hs_data

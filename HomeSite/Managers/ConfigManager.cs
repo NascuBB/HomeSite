@@ -9,7 +9,7 @@ namespace HomeSite.Managers
         public static string? RealEmail { get; private set; }
         public static string? RCONPassword { get; private set; }
         public static string? LocalAddress { get; private set; }
-        private static readonly string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Сonfig");
+        private static readonly string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Config");
         private static readonly string path = Path.Combine(configPath, "config.json");
 
         public static void GetConfiguration()

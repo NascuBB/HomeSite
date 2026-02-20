@@ -9,6 +9,10 @@ services:
     restart: always
     depends_on:
       - db
+    user: root
+    volumes:
+      - ./config.json:/app/Config/config.json
+      - ./hs_data/UserStorage:/app/Share
     ports: []
 
 

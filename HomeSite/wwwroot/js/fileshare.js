@@ -170,7 +170,10 @@ window.addEventListener('DOMContentLoaded', function () {
     document.getElementById('delete-div').addEventListener('click', async function () {
         console.log("Удалить файл с ID:", currentFileId);
         const response = await fetch('/shared/deletefile?id=' + currentFileId, {
-                method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
         });
         if (response.status != 200) {
             alert('Ошибка удаления');

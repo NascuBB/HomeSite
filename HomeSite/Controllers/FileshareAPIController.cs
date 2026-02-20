@@ -74,7 +74,7 @@ namespace HomeSite.Controllers
 
         [HttpDelete]
         [Route("deletefile")]
-        public async Task<IActionResult> DeleteFile(string id)
+        public async Task<IActionResult> DeleteFile([FromQuery]string id)
         {
             if (HttpContext.User.Identity.Name == null)
             {

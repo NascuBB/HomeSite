@@ -3,12 +3,14 @@ using HomeSite.Helpers;
 using HomeSite.Managers;
 using HomeSite.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System;
+using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 
 try
@@ -54,6 +56,13 @@ try
     {
         options.MultipartBodyLengthLimit = 1073741824; // if don't set default value is: 128 MB
     });
+
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(@"/app/Config/Keys"));
+
+    var cultureInfo = new CultureInfo("ru-RU");
+    CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+    CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 #if !DEBUG
     builder.WebHost.UseKestrel();
