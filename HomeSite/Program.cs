@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System;
 using System.Security.Cryptography.X509Certificates;
 
 try
@@ -76,6 +77,34 @@ try
 #endif
     logger.Log(LogLevel.Information, "Unskipable prepairing before launch");
 
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        // Список всех твоих контекстов
+        var contextTypes = new[]
+        {
+            typeof(UserDBContext),
+            typeof(ServerDBContext),
+            typeof(SharedRightsDBContext),
+            typeof(ShareFileInfoDBContext)
+        };
+
+        foreach (var type in contextTypes)
+        {
+            try
+            {
+                var context = (DbContext)services.GetRequiredService(type);
+                context.Database.Migrate();
+                logger.LogInformation($"Migration for {type.Name} successful.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error while migrating {type.Name}.");
+                throw;
+            }
+        }
+    }
+
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())
     {
@@ -134,7 +163,7 @@ try
     thread.Start();
 
 
-    Console.ReadKey();
+    //Console.ReadKey();
 }
 catch(Exception ex)
 {
@@ -142,7 +171,7 @@ catch(Exception ex)
 }
 finally
 {
-    Console.ReadKey();
+    //Console.ReadKey();
 }
 
 /*

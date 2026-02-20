@@ -1,0 +1,29 @@
+name: homesite-compose
+
+services:
+  homesite:
+    image: ${DOCKER_REGISTRY-}homesite
+    build:
+      context: .
+      dockerfile: HomeSite/Dockerfile
+    restart: always
+    depends_on:
+      - db
+    ports: []
+
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - hs_pg_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  hs_pg_data:
