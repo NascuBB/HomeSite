@@ -1,9 +1,11 @@
-﻿using HomeSite.Helpers;
-using HomeSite.Models;
-using Newtonsoft.Json;
+﻿using Docker.DotNet;
+using Docker.DotNet.Models;
 using HomeSite.Entities;
 using HomeSite.Generated;
+using HomeSite.Helpers;
+using HomeSite.Models;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace HomeSite.Managers
 {
@@ -15,43 +17,45 @@ namespace HomeSite.Managers
 
         private readonly LogConnectionManager _logConnectionManager;
         private readonly IDbContextFactory<ServerDBContext> _contextFactory;
+        private readonly IDockerClient _dockerClient;
 
         // Состояния без контекста
         public static List<MinecraftServer> serversOnline { get; } = new();
         public static Dictionary<string, ServerCreation> inCreation { get; } = new();
-        private static Dictionary<int, int> availablePorts = new Dictionary<int, int>
-        {
-            { 25550, 5000 }, { 25551, 5001 }, { 25552, 5002 }, { 25553, 5003 }, { 25554, 5004 },
-            { 25555, 5005 }, { 25556, 5006 }, { 25557, 5007 }, { 25558, 5008 }, { 25559, 5009 },
-            { 25560, 5010 }, { 25561, 5011 }, { 25562, 5012 }, { 25563, 5013 }, { 25564, 5014 },
-            { 25565, 5015 }, { 25566, 5016 }, { 25567, 5017 }, { 25568, 5018 }, { 25569, 5019 },
-            { 25570, 5020 }
-        };
+        //private static Dictionary<int, int> availablePorts = new Dictionary<int, int>
+        //{
+        //    { 25550, 5000 }, { 25551, 5001 }, { 25552, 5002 }, { 25553, 5003 }, { 25554, 5004 },
+        //    { 25555, 5005 }, { 25556, 5006 }, { 25557, 5007 }, { 25558, 5008 }, { 25559, 5009 },
+        //    { 25560, 5010 }, { 25561, 5011 }, { 25562, 5012 }, { 25563, 5013 }, { 25564, 5014 },
+        //    { 25565, 5015 }, { 25566, 5016 }, { 25567, 5017 }, { 25568, 5018 }, { 25569, 5019 },
+        //    { 25570, 5020 }
+        //};
         public static readonly string Folder = Path.Combine(Environment.CurrentDirectory, "servers");
-        private static readonly string VersionsFolder = Path.Combine(Environment.CurrentDirectory, "versions");
         private static readonly string CreatingsPath = Path.Combine(Folder, "creatings.json");
 
         public MinecraftServerManager(
             LogConnectionManager logConnectionManager,
-            IDbContextFactory<ServerDBContext> contextFactory)
+            IDbContextFactory<ServerDBContext> contextFactory,
+            IDockerClient dockerClient)
         {
+            _dockerClient = dockerClient;
             _logConnectionManager = logConnectionManager;
             _contextFactory = contextFactory;
 
             // Загружаем порты без скоупа
-            _ = Task.Run(UpdateAvailablePortsAsync);
+            //_ = Task.Run(UpdateAvailablePortsAsync);
             _ = Task.Run(LoadServersInCreationAsync);
         }
 
-        private async Task UpdateAvailablePortsAsync()
-        {
-            await using var context = _contextFactory.CreateDbContext();
-            var servers = await context.Servers.AsNoTracking().ToListAsync();
-            foreach (var serverSpec in servers)
-            {
-                availablePorts.Remove(serverSpec.PublicPort);
-            }
-        }
+        //private async Task UpdateAvailablePortsAsync()
+        //{
+        //    await using var context = _contextFactory.CreateDbContext();
+        //    var servers = await context.Servers.AsNoTracking().ToListAsync();
+        //    foreach (var serverSpec in servers)
+        //    {
+        //        availablePorts.Remove(serverSpec.PublicPort);
+        //    }
+        //}
 
         private async Task LoadServersInCreationAsync()
         {
@@ -71,42 +75,90 @@ namespace HomeSite.Managers
                 inCreation[kv.Key] = kv.Value;
         }
 
-        public async Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null)
+
+        public async Task<string> CreateServer(string name, string ownerName, string serverCore, string version, string? description = null)
         {
             string genId = Guid.NewGuid().ToString();
 
+            // 1. Ставим статус "В процессе создания"
             inCreation[genId] = ServerCreation.AddingMods;
             await SaveServersInCreationAsync();
 
+            // 2. Бронируем порты (логика остается твоя)
             Random r = new();
-            int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
-            int rconP = availablePorts[port];
-            availablePorts.Remove(port);
+            //int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
+            //int rconP = availablePorts[port];
+            //availablePorts.Remove(port);
 
+            // 3. Создаем запись в базе данных
             var serverSpecs = new Server
             {
                 Id = genId,
                 Description = description,
                 Name = name,
                 Version = version,
-                PublicPort = port,
-                RCONPort = rconP,
-                ServerCore = serverCore
+                PublicPort = 25565,
+                RCONPort = 5015,
+                ServerCore = serverCore.ToUpper()
             };
 
             await using var context = _contextFactory.CreateDbContext();
             context.Servers.Add(serverSpecs);
             await context.SaveChangesAsync();
 
-            Helper.Copy(
-                Path.Combine(VersionsFolder, serverCore.ToString(), VersionHelperGenerated.GetVersion(version)),
-                Path.Combine(Folder, genId));
+            // 4. Создаем физическую папку сервера (пустую)
+            // Благодаря тому, что эта папка проброшена в Docker через Volume, 
+            // твой файловый менеджер сразу её увидит, и юзер сможет закидывать моды.
+            string serverPath = Path.Combine(Folder, genId);
+            if (!Directory.Exists(serverPath))
+            {
+                Directory.CreateDirectory(serverPath);
+                Directory.CreateDirectory(Path.Combine(serverPath, "mods")); // Сразу создадим папку для модов
+            }
+
+            // 5. Создаем базовый конфиг (опционально, т.к. itzg может это сам через Env)
             File.WriteAllText(
-                Path.Combine(Folder, genId, "server.properties"),
-                ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
+                Path.Combine(serverPath, "server.properties"),
+                ServerPropertiesManager.DefaultServerProperties(25565, 5015, description ?? "A Minecraft server"));
 
             return genId;
         }
+        //public async Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null)
+        //{
+        //    string genId = Guid.NewGuid().ToString();
+
+        //    inCreation[genId] = ServerCreation.AddingMods;
+        //    await SaveServersInCreationAsync();
+
+        //    Random r = new();
+        //    int port = availablePorts.Keys.ElementAt(r.Next(availablePorts.Count));
+        //    int rconP = availablePorts[port];
+        //    availablePorts.Remove(port);
+
+        //    var serverSpecs = new Server
+        //    {
+        //        Id = genId,
+        //        Description = description,
+        //        Name = name,
+        //        Version = version,
+        //        PublicPort = port,
+        //        RCONPort = rconP,
+        //        ServerCore = serverCore
+        //    };
+
+        //    await using var context = _contextFactory.CreateDbContext();
+        //    context.Servers.Add(serverSpecs);
+        //    await context.SaveChangesAsync();
+
+        //    Helper.Copy(
+        //        Path.Combine(VersionsFolder, serverCore.ToString(), VersionHelperGenerated.GetVersion(version)),
+        //        Path.Combine(Folder, genId));
+        //    File.WriteAllText(
+        //        Path.Combine(Folder, genId, "server.properties"),
+        //        ServerPropertiesManager.DefaultServerProperties(port, rconP, description ?? "A Minecraft server"));
+
+        //    return genId;
+        //}
 
         public async Task<bool> DeleteServer(string id)
         {
@@ -175,13 +227,65 @@ namespace HomeSite.Managers
             return await context.Servers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public void LaunchServer(string id)
+
+        public async Task LaunchServer(string id)
         {
-            var minecraftServer = new MinecraftServer(id, _logConnectionManager, _contextFactory);
-            // MinecraftServer больше не получает context — он сам обращается при надобности через менеджер
-            serversOnline.Add(minecraftServer);
-            minecraftServer.StartServer();
+            // 1. Получаем данные о сервере из БД
+            var specs = await GetServerSpecs(id);
+            if (specs == null) return;
+
+            // 2. Параметры для контейнера itzg/minecraft-server
+            var createParams = new CreateContainerParameters
+            {
+                Image = "itzg/minecraft-server",
+                Name = $"mc-{id}",
+                Env = new List<string>
+                {
+                    "EULA=TRUE",
+                    $"TYPE={specs.ServerCore.ToString().ToUpper()}", // FORGE, PAPER, и т.д.
+                    $"VERSION={specs.Version}",
+                    "ENABLE_RCON=true",
+                    $"RCON_PASSWORD={ConfigManager.RCONPassword}",
+                    "MEMORY=2G" // Можно добавить в БД и брать оттуда
+                },
+                HostConfig = new HostConfig
+                {
+                    //PortBindings = new Dictionary<string, IList<PortBinding>>
+                    //{
+                    //    { "25565/tcp", new List<PortBinding> { new PortBinding { HostPort = specs.PublicPort.ToString() } } }
+                    //},
+                    // Маунтим папку, которую юзер подготовил на этапе CreateServer
+                    // /app/servers/{id} на хосте станет /data внутри контейнера
+                    Binds = new List<string> { $"{Path.Combine(Folder, id)}:/data" },
+                    //NetworkMode = "mc_network", // Твоя общая сеть для сайта и серверов
+                    RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.Always }
+                }
+            };
+
+            // 3. Создаем и запускаем
+            try
+            {
+                var response = await _dockerClient.Containers.CreateContainerAsync(createParams);
+                await _dockerClient.Containers.StartContainerAsync(response.ID, null);
+
+                // Добавляем в список онлайн серверов (твоя старая логика)
+                // Теперь MinecraftServer будет просто оберткой над Docker API
+                var minecraftServer = new MinecraftServer(id, _logConnectionManager, _contextFactory, _dockerClient);
+                serversOnline.Add(minecraftServer);
+            }
+            catch (Exception ex)
+            {
+                // Если контейнер уже существует, просто стартуем его
+                await _dockerClient.Containers.StartContainerAsync($"mc-{id}", null);
+            }
         }
+        //public void LaunchServer(string id)
+        //{
+        //    var minecraftServer = new MinecraftServer(id, _logConnectionManager, _contextFactory);
+        //    // MinecraftServer больше не получает context — он сам обращается при надобности через менеджер
+        //    serversOnline.Add(minecraftServer);
+        //    minecraftServer.StartServer();
+        //}
 
         public static async Task ServerEnded(MinecraftServer server)
         {
@@ -234,6 +338,8 @@ namespace HomeSite.Managers
         }
         public static string GetLastLogs(string Id)
         {
+            if (!File.Exists(Path.Combine(folder, Id, "logs", "latest.log")))
+                return "логов нет";
             Queue<string> recentLines = new Queue<string>(10);
 
             using (StreamReader reader = new StreamReader(Path.Combine(folder, Id, "logs", "latest.log")))

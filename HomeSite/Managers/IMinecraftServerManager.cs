@@ -16,7 +16,7 @@ namespace HomeSite.Managers
         /// <param name="version">version of server</param>
         /// <param name="description">description to server</param>
         /// <returns></returns>
-        public Task<string> CreateServer(string name, string ownerName, ServerCore serverCore, MinecraftVersion version, string? description = null);
+        public Task<string> CreateServer(string name, string ownerName, string serverCore, string version, string? description = null);
 
         /// <summary>
         /// Deletes minecraft server
@@ -55,7 +55,7 @@ namespace HomeSite.Managers
         /// <returns><see cref="bool"/> true if server exists, oterwise false</returns>
         public Task<bool> ServerExists(string Id);
 
-        public void LaunchServer(string Id);
+        public Task LaunchServer(string Id);
 
     }
 }

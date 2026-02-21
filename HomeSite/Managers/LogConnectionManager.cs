@@ -18,7 +18,6 @@ namespace HomeSite.Managers
                     _connections[serverId] = new List<WebSocket>();
 
                 _connections[serverId].Add(socket);
-                //Console.WriteLine($"🔗 Пользователь подключился к логам сервера {serverId}");
 
                 var buffer = new byte[1024 * 4];
                 while (socket.State == WebSocketState.Open)

@@ -8,7 +8,7 @@ namespace HomeSite.Models
         public int MaxPlayers { get; set; }
         public GameMode GameMode { get; set; }
         public Difficulty Difficulty { get; set; }
-        public ServerCore ServerCore { get; set; }
+        public required string ServerCore { get; set; }
         public bool Whitelist { get; set; }
         public bool OnlineMode { get; set; }
         public bool Pvp { get; set; }

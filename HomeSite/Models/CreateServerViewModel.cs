@@ -23,9 +23,9 @@ namespace HomeSite.Models
                 });
 
         [Required(ErrorMessage = "Версия обязательна")]
-        public MinecraftVersion Version { get; set; }
+        public string Version { get; set; }
         [Required(ErrorMessage = "Выберите ядро")]
-        public ServerCore ServerCore { get; set; }
+        public string ServerCore { get; set; }
     }
 
 

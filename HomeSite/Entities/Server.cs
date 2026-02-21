@@ -17,9 +17,9 @@ namespace HomeSite.Entities
         [MaxLength(50)]
         public string? Description { get; set; }
         [Column("version")]
-        public MinecraftVersion Version { get; set; }
+        public string Version { get; set; }
         [Column("core")]
-        public ServerCore ServerCore { get; set; }
+        public string ServerCore { get; set; }
         [Column("publicport")]
         public int PublicPort { get; set; }
         [Column("rconport")]

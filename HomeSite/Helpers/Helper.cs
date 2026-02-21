@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Docker.DotNet;
+using Docker.DotNet.Models;
+using System.Diagnostics;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HomeSite.Helpers
@@ -30,6 +32,37 @@ namespace HomeSite.Helpers
                 ".cs" => "language-cs",
                 _ => "language-plaintext"
             };
+        }
+
+        public static async Task EnsureMinecraftImageExists(DockerClient client)
+        {
+            const string imageName = "itzg/minecraft-server";
+            const string tag = "latest";
+
+            // 1. Проверяем, есть ли образ
+            var images = await client.Images.ListImagesAsync(new ImagesListParameters());
+            bool exists = images.Any(i => i.RepoTags != null && i.RepoTags.Contains($"{imageName}:{tag}"));
+
+            if (!exists)
+            {
+                Console.WriteLine(">>> Образ Minecraft не найден. Начинаю скачивание...");
+
+                // 2. Скачиваем образ
+                await client.Images.CreateImageAsync(
+                    new ImagesCreateParameters
+                    {
+                        FromImage = imageName,
+                        Tag = tag
+                    },
+                    null,
+                    new Progress<JSONMessage>(m =>
+                    {
+                        if (!string.IsNullOrEmpty(m.Status))
+                            Console.WriteLine($"> Docker: {m.Status} {m.ProgressMessage}");
+                    }));
+
+                Console.WriteLine(">>> Образ успешно скачан.");
+            }
         }
 
         public static bool IsForbiddenRootFolder(string serverRoot, string fullPath, string[] forbiddenRootFolders)

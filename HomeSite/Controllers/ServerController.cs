@@ -139,7 +139,7 @@ namespace HomeSite.Controllers
                 ?? (_usersContext.UserAccounts.Any(x => x.ServerId == Id)
                     ? SharedAdministrationManager.allRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id)
                     : SharedAdministrationManager.defaultRights(_userHelper.GetUserId(HttpContext.User.Identity.Name), Id))).UploadServer,
-                ServerCore = _minecraftServerManager.GetServerSpecs(Id).Result.ServerCore
+                ServerCore = _minecraftServerManager.GetServerSpecs(Id).Result!.ServerCore
             });
         }
 
@@ -263,7 +263,7 @@ namespace HomeSite.Controllers
                     },
                     ServerState = ServerState.stopped,
                     PublicAddress = ConfigManager.Domain + ":" + specs.PublicPort,
-                    Version = VersionHelperGenerated.GetVersionDBO(specs.Version),
+                    Version = specs.Version,
                     Core = specs.ServerCore.ToString()!
                 });
             }
@@ -277,7 +277,7 @@ namespace HomeSite.Controllers
                 {
                     SharedRights = rights,
                     AllowedUsers = allowedUsers,
-                    IsRunning = thisServer.IsRunning,
+                    IsRunning = true, //TODO!
                     logs = logs,
                     ServerDesc = new MinecraftServerWrap
                     {
@@ -287,7 +287,7 @@ namespace HomeSite.Controllers
                     },
                     ServerState = thisServer.ServerState,
                     PublicAddress = ConfigManager.Domain + ":" + thisServer.PublicPort,
-                    Version = VersionHelperGenerated.GetVersionDBO(thisServer.Version),
+                    Version = thisServer.Version,
                     Core = thisServer.ServerCore.ToString()!
                 });
             }
@@ -407,7 +407,7 @@ namespace HomeSite.Controllers
                 return RedirectToAction("Login");
             }
             var server = _minecraftServerManager.GetServerSpecs(Id).Result;
-            if (server.ServerCore == ServerCore.Paper)
+            if (server.ServerCore == "PAPER")
             {
                 return RedirectToAction("See", "Server", new { Id = Id });
             }
@@ -443,7 +443,7 @@ namespace HomeSite.Controllers
                 return RedirectToAction("Login");
             }
             var server = _minecraftServerManager.GetServerSpecs(Id).Result;
-            if(server.ServerCore != ServerCore.Paper)
+            if(server.ServerCore != "PAPER")
             {
                 return RedirectToAction("See", "Server", new { Id = Id });
             }

@@ -1,3 +1,4 @@
+using Docker.DotNet;
 using HomeSite.Entities;
 using HomeSite.Helpers;
 using HomeSite.Managers;
@@ -42,6 +43,7 @@ try
     builder.Services.AddSingleton<UserPasswordManager>();
 	builder.Services.AddSingleton<LogConnectionManager>();
 
+    builder.Services.AddSingleton<IDockerClient>(new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient());
     builder.Services.AddMemoryCache();
 
     builder.Services.Configure<FormOptions>(options =>
@@ -66,6 +68,15 @@ try
 
     using (var scope = app.Services.CreateScope())
     {
+        var dockerClient = scope.ServiceProvider.GetRequiredService<IDockerClient>();
+        try
+        {
+            await Helper.EnsureMinecraftImageExists((DockerClient)dockerClient);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Docker Init Error]: {ex.Message}");
+        }
         var services = scope.ServiceProvider;
         var contextTypes = new[]
         {
