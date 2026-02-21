@@ -1,0 +1,5 @@
+:80 {
+    handle {
+        reverse_proxy homesite:8080
+    }
+}

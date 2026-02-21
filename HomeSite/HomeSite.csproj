@@ -11,9 +11,13 @@
 
   <ItemGroup>
     <Compile Remove="Share\**" />
+    <Compile Remove="Сonfig\**" />
     <Content Remove="Share\**" />
+    <Content Remove="Сonfig\**" />
     <EmbeddedResource Remove="Share\**" />
+    <EmbeddedResource Remove="Сonfig\**" />
     <None Remove="Share\**" />
+    <None Remove="Сonfig\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +43,6 @@
 
   <ItemGroup>
     <Folder Include="Generated\" />
-    <Folder Include="Сonfig\" />
   </ItemGroup>
 
 </Project>

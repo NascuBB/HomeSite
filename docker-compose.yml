@@ -3,12 +3,14 @@ name: homesite-compose
 services:
   homesite:
     image: ${DOCKER_REGISTRY-}homesite
+    container_name: homesite
     build:
       context: .
       dockerfile: HomeSite/Dockerfile
     restart: always
     depends_on:
       - db
+      - proxy
     user: root
     volumes:
       - ./config.json:/app/Config/config.json
@@ -29,5 +31,20 @@ services:
       - hs_pg_data:/var/lib/postgresql/data
     restart: always
 
+  proxy:
+    image: caddy:2.11
+    container_name: proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+
 volumes:
   hs_pg_data:
+  caddy_data:
+  caddy_config:
