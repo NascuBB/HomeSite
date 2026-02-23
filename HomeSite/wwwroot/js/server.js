@@ -13,8 +13,12 @@ let IsShuttingDown = true;
 
 let statsId;
 
-let loaderC = document.getElementById('loading');
+let loaderC = document.getElementById('loading');;
 let textIndicator = document.getElementById('text-top');
+
+document.addEventListener("DOMContentLoaded", () => {
+    loaderC = document.getElementById('loading');
+});
 
 if (startBtn != null) {
     startBtn.addEventListener("click", async () => {
@@ -185,7 +189,7 @@ async function fetchServerStats() {
             }
             document.getElementById('players-online').textContent = `Онлайн: ${data.players}`;
             document.getElementById('ram-free').textContent = `Занято: ${data.memoryUsage} MB`;
-            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 6000) * 100)).toFixed(2)}%`;
+            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 2000) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
             document.getElementById('timerSpan').className = 'hideFZ';
@@ -227,6 +231,7 @@ if (getLogsBtn != null) {
 
 if (stopBtn != null) {
     if (!document.getElementById('check').classList.contains('showFZ')) {
+        if (!loaderC) loaderC = document.getElementById('loading');
         loaderC.className = "showFZ loader ms-1";
         textIndicator.textContent = 'Сервер запускаеться';
     }
@@ -246,7 +251,7 @@ if (stopBtn != null) {
         const logsContainer = document.getElementById('logs');
 
         socket.onmessage = (event) => {
-            logsContainer.innerText += `\n${event.data}`;
+            logsContainer.innerText += `${event.data}`;
             logsContainer.scrollTop = logsContainer.scrollHeight;
         };
 
@@ -293,6 +298,11 @@ if (stopBtn != null) {
     stopBtn.addEventListener("click", async () => {
         //const pass = document.getElementById('passInput').value;
         //if (!pass) return alert('Введите пароль');
+        stopBtn.setAttribute('disabled', '');
+        sendCommandBtn.setAttribute('disabled', '');
+        textIndicator.textContent = 'Выключение';
+        document.getElementById('check').className = 'hideFZ checkmark ms-3';
+        loaderC.className = 'showFZ loader ms-1';
         const response = await fetch("/Server/See/" + serverId + "/api/stop", {
             method: 'POST',
             headers: {
@@ -303,13 +313,15 @@ if (stopBtn != null) {
         });
         const result = await response.text();
         if (result == "Выключение.") {
-            textIndicator.textContent = result;
-            document.getElementById('check').className = 'hideFZ checkmark ms-3';
-            loaderC.className = 'showFZ loader ms-1';
-            stopBtn.setAttribute('disabled', '');
-            sendCommandBtn.setAttribute('disabled', '');
+            //stopBtn.setAttribute('disabled', '');
+            //sendCommandBtn.setAttribute('disabled', '');
         }
         else {
+            stopBtn.removeAttribute('disabled', '');
+            sendCommandBtn.removeAttribute('disabled', '');
+            textIndicator.textContent = 'Сервер запущен';
+            document.getElementById('check').className = 'showFZ checkmark ms-3';
+            loaderC.className = 'hideFZ loader ms-1';
             return alert(result);
         }
     });

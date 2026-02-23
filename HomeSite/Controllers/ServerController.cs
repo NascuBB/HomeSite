@@ -1,4 +1,5 @@
-﻿using HomeSite.Entities;
+﻿using Docker.DotNet.Models;
+using HomeSite.Entities;
 using HomeSite.Generated;
 using HomeSite.Helpers;
 using HomeSite.Managers;
@@ -80,7 +81,7 @@ namespace HomeSite.Controllers
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId != "no")
+            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId != null)
             {
                 return RedirectToAction("Index");
             }
@@ -96,7 +97,7 @@ namespace HomeSite.Controllers
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
-            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId != "no")
+            if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId != null)
             {
                 return RedirectToAction("Index");
             }
@@ -262,7 +263,7 @@ namespace HomeSite.Controllers
                         ServerState = ServerState.stopped
                     },
                     ServerState = ServerState.stopped,
-                    PublicAddress = ConfigManager.Domain + ":" + specs.PublicPort,
+                    PublicAddress = specs.DomainName + "." + ConfigManager.Domain,
                     Version = specs.Version,
                     Core = specs.ServerCore.ToString()!
                 });
@@ -286,7 +287,7 @@ namespace HomeSite.Controllers
                         Id = thisServer.Id
                     },
                     ServerState = thisServer.ServerState,
-                    PublicAddress = ConfigManager.Domain + ":" + thisServer.PublicPort,
+                    PublicAddress = thisServer.DomainName + "." + ConfigManager.Domain,
                     Version = thisServer.Version,
                     Core = thisServer.ServerCore.ToString()!
                 });

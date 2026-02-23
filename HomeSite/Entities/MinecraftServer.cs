@@ -179,27 +179,25 @@ namespace HomeSite.Entities
         //public string TempLogPath { get; }
         public int PublicPort { get; }
         public int RCONPort { get; }
+        public string DomainName { get; }
         public ServerCreation ServerCreation { get; }
 
-        public MinecraftServer(string id, LogConnectionManager manager, IDbContextFactory<ServerDBContext> contextFactory, IDockerClient dockerClient)
+        public MinecraftServer(Server specs, LogConnectionManager manager, IDockerClient dockerClient)
         {
             _logConnectionManager = manager;
-            _contextFactory = contextFactory;
             _cts = new CancellationTokenSource();
-            Id = id;
 
-            using var context = _contextFactory.CreateDbContext();
-            Server specs = context.Servers.First(x => x.Id == id);
-
+            Id = specs.Id;
             Name = specs.Name;
             Description = specs.Description;
             Version = specs.Version;
             ServerCore = specs.ServerCore;
             PublicPort = specs.PublicPort;
             RCONPort = specs.RCONPort;
+            DomainName = specs.DomainName;
             //OwnerUsername = specs.OwnerName;
 
-            _containerName = $"mc-{id}";
+            _containerName = $"mc-{specs.Id}";
             _dockerClient = dockerClient;
 
             ServerState = ServerState.starting;
@@ -317,6 +315,7 @@ namespace HomeSite.Entities
         {
             try
             {
+                bool rconStarted = false;
                 // 1. Подписываемся на логи Docker вместо чтения файла
                 var logParams = new ContainerLogsParameters
                 {
@@ -356,8 +355,10 @@ namespace HomeSite.Entities
                                 await _logConnectionManager.BroadcastLogAsync(Id, line);
                                 _consoleLogs.Append(line);
 
-                                if (line.Contains("RCON", StringComparison.OrdinalIgnoreCase))
+                                if (line.Contains("RCON", StringComparison.OrdinalIgnoreCase) && !rconStarted)
                                 {
+                                    rconStarted = true;
+
                                     await OnServerStarted();
                                 }
                             }
@@ -485,7 +486,10 @@ namespace HomeSite.Entities
             shutdownTimer = new Timer(TimerCallback, null, 1000, 1000);
             await ServerController.NotifyServerStarted(Id);
             Task.Run(() => StartClock(_cts.Token));
-            _rcon = new RCON(new IPEndPoint(IPAddress.Parse(_containerName), 5015), ConfigManager.RCONPassword);
+            var addresses = await Dns.GetHostAddressesAsync(_containerName);
+            var ipAddress = addresses.First();
+
+            _rcon = new RCON(new IPEndPoint(ipAddress, 25575), ConfigManager.RCONPassword);
         }
 
         private async Task UpdateStatsAsync(CancellationToken token)
@@ -512,10 +516,38 @@ namespace HomeSite.Entities
 
         public async Task StopServer()
         {
-            if (_rcon != null) await _rcon.SendCommandAsync("stop");
+            try
+            {
+                if (_rcon != null)
+                {
+                    await _rcon.SendCommandAsync("stop");
+                    await Task.Delay(5000);
+                }
+                _cts.Cancel();
+                await _dockerClient.Containers.StopContainerAsync(_containerName, new ContainerStopParameters
+                {
+                    WaitBeforeKillSeconds = 10
+                });
+                await _dockerClient.Containers.RemoveContainerAsync(_containerName, new ContainerRemoveParameters
+                {
+                    Force = true
+                });
+                //if (ServerState == ServerState.starting)
+                //    await ServerController.NotifyServerCrashed(Id);
+                //await MinecraftServerManager.ServerEnded(this);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при удалении контейнера: {ex.Message}");
+            }
+        }
+
+        public async void OnContainerExited()
+        {
             _cts.Cancel();
-            await _dockerClient.Containers.StopContainerAsync(_containerName, new ContainerStopParameters());
-            ServerState = ServerState.stopped;
+            if (ServerState == ServerState.starting)
+                await ServerController.NotifyServerCrashed(Id);
+            await MinecraftServerManager.ServerEnded(this);
         }
 
         //private async void CheckStartedServer(CancellationToken token)

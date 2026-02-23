@@ -17,12 +17,14 @@ namespace HomeSite.Entities
         [MaxLength(50)]
         public string? Description { get; set; }
         [Column("version")]
-        public string Version { get; set; }
+        public required string Version { get; set; }
         [Column("core")]
-        public string ServerCore { get; set; }
+        public required string ServerCore { get; set; }
         [Column("publicport")]
         public int PublicPort { get; set; }
         [Column("rconport")]
         public int RCONPort { get; set; }
+        [Column("domainname")]
+        public required string DomainName { get; set; }
     }
 }

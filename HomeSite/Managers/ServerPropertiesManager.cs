@@ -2,10 +2,10 @@
 {
     public class ServerPropertiesManager
     {
-        public static string DefaultServerProperties(int port, int rconport, string description = "A Minecraft Server")
+        public static string DefaultServerProperties(string description = "A Minecraft Server")
         {
             return $"enable-jmx-monitoring=false\r\n" +
-                $"rcon.port={rconport}\r\n" +
+                $"rcon.port=25575\r\n" +
                 $"level-seed=\r\n" +
                 $"gamemode=survival\r\n" +
                 $"enable-command-block=false\r\n" +
@@ -14,7 +14,6 @@
                 $"enforce-secure-profile=true\r\n" +
                 $"level-name=world\r\n" +
                 $"motd={description}\r\n" +
-                $"query.port={port}\r\n" +
                 $"pvp=true\r\n" +
                 $"generate-structures=true\r\n" +
                 $"max-chained-neighbor-updates=1000000\r\n" +
@@ -30,10 +29,10 @@
                 $"initial-disabled-packs=\r\n" +
                 $"broadcast-rcon-to-ops=true\r\n" +
                 $"view-distance=10\r\n" +
-                $"server-ip={ConfigManager.LocalAddress!}\r\n" +
+                $"server-ip=0.0.0.0\r\n" +
                 $"resource-pack-prompt=\r\n" +
                 $"allow-nether=true\r\n" +
-                $"server-port={port}\r\n" +
+                $"server-port=25565\r\n" +
                 $"enable-rcon=true\r\n" +
                 $"sync-chunk-writes=true\r\n" +
                 $"op-permission-level=4\r\n" +

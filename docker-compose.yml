@@ -8,10 +8,17 @@ services:
       context: .
       dockerfile: HomeSite/Dockerfile
     restart: always
+    environment:
+      - HOST_SERVERS_PATH=${PWD}/hs_data/servers
     depends_on:
       - db
-      - proxy
     user: root
+    labels:
+      - caddy=localhost
+      - caddy.reverse_proxy={{upstreams 8080}}
+    networks:
+      - default
+      - mc_network
     volumes:
       - ./config.json:/app/Config/config.json
       - ./hs_data/UserStorage:/app/Share
@@ -33,18 +40,43 @@ services:
       - hs_pg_data:/var/lib/postgresql/data
     restart: always
 
+  mc_proxy:
+    image: itzg/mc-router
+    container_name: mc_proxy
+    environment:
+      - IN_DOCKER=true
+    ports:
+      - "25565:25565"
+    networks:
+      - mc_network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
   proxy:
-    image: caddy:2.11
+    image: lucaslorentz/caddy-docker-proxy:latest
     container_name: proxy
     restart: always
+    depends_on:
+      - homesite
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - CADDY_INGRESS_NETWORKS=mc_network
+    networks:
+      - mc_network
+      - default
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - /var/run/docker.sock:/var/run/docker.sock
       - caddy_data:/data
       - caddy_config:/config
 
+networks:
+  mc_network:
+    name: mc_network
+    driver: bridge
 
 volumes:
   hs_pg_data:

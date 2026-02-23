@@ -45,6 +45,7 @@ namespace HomeSite.Managers
             // Загружаем порты без скоупа
             //_ = Task.Run(UpdateAvailablePortsAsync);
             _ = Task.Run(LoadServersInCreationAsync);
+            Task.Run(StartGlobalEventMonitoring);
         }
 
         //private async Task UpdateAvailablePortsAsync()
@@ -98,8 +99,9 @@ namespace HomeSite.Managers
                 Name = name,
                 Version = version,
                 PublicPort = 25565,
-                RCONPort = 5015,
-                ServerCore = serverCore.ToUpper()
+                RCONPort = 25575,
+                ServerCore = serverCore.ToUpper(),
+                DomainName = ownerName.ToLower()
             };
 
             await using var context = _contextFactory.CreateDbContext();
@@ -119,7 +121,7 @@ namespace HomeSite.Managers
             // 5. Создаем базовый конфиг (опционально, т.к. itzg может это сам через Env)
             File.WriteAllText(
                 Path.Combine(serverPath, "server.properties"),
-                ServerPropertiesManager.DefaultServerProperties(25565, 5015, description ?? "A Minecraft server"));
+                ServerPropertiesManager.DefaultServerProperties(description ?? "A Minecraft server"));
 
             return genId;
         }
@@ -227,38 +229,112 @@ namespace HomeSite.Managers
             return await context.Servers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        private async Task StartGlobalEventMonitoring()
+        {
+            try
+            {
+                var progress = new Progress<Message>(async m =>
+                {
+                    // Проверяем тип объекта и действие
+                    if (m.Type == "container" && (m.Action == "die" || m.Action == "stop"))
+                    {
+                        // Docker в m.Actor.Attributes["name"] обычно пишет имя с косой чертой в начале, например "/mc-myserver"
+                        if (m.Actor.Attributes.TryGetValue("name", out string? fullContainerName))
+                        {
+                            // Убираем лишние символы, чтобы получить чистое имя (mc-myserver)
+                            string cleanName = fullContainerName.TrimStart('/');
+
+                            // Ищем сервер в твоем List. Твой ID — это имя без "mc-", значит:
+                            var server = serversOnline.FirstOrDefault(s => $"mc-{s.Id}" == cleanName);
+
+                            if (server != null && server.ServerState != ServerState.stopped)
+                            {
+                                server.OnContainerExited();
+
+                                // Если нужно удалить контейнер сразу после того как он "умер" или "остановился"
+                                try
+                                {
+                                    await _dockerClient.Containers.RemoveContainerAsync(m.Actor.ID,
+                                        new ContainerRemoveParameters { Force = true });
+                                }
+                                catch { /* Контейнер уже может быть удален */ }
+                            }
+                        }
+                    }
+                });
+
+                var eventsParams = new ContainerEventsParameters
+                {
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        { "type", new Dictionary<string, bool> { { "container", true } } },
+                        { "event", new Dictionary<string, bool>
+                            {
+                                { "die", true },
+                                { "stop", true }
+                            }
+                        },
+                        // Рекомендую добавить фильтр по лейблу твоего проекта, 
+                        // чтобы не дергать этот код при остановке БД или Графаны
+                        { "label", new Dictionary<string, bool> { { "com.docker.compose.project=mc-servers-farm", true } } }
+                    }
+                };
+
+                await _dockerClient.System.MonitorEventsAsync(eventsParams, progress);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EventMonitor Error]: {ex.Message}");
+                await Task.Delay(5000);
+                StartGlobalEventMonitoring();
+            }
+        }
+
 
         public async Task LaunchServer(string id)
         {
-            // 1. Получаем данные о сервере из БД
             var specs = await GetServerSpecs(id);
             if (specs == null) return;
 
-            // 2. Параметры для контейнера itzg/minecraft-server
+            string hostRoot = Environment.GetEnvironmentVariable("HOST_SERVERS_PATH") ?? "/app/servers";
+            string realPathOnDisk = Path.Combine(hostRoot, id);
+
             var createParams = new CreateContainerParameters
             {
                 Image = "itzg/minecraft-server",
                 Name = $"mc-{id}",
+                User = "root",
+                Labels = new Dictionary<string, string>
+                {
+                    { "com.docker.compose.project", "mc-servers-farm" },
+                    { "com.docker.compose.service", "minecraft-instance" },
+                    { "com.docker.compose.version", "1.0.0" },
+#if DEBUG
+                    { "caddy", $"http://{specs.DomainName}.vcap.me" },
+                    { "mc-router.host", $"{specs.DomainName}.vcap.me" },
+#else
+                    { "caddy", $"http://{specs.DomainName}.{ConfigManager.Domain}" },
+                    { "mc-router.host", $"{specs.DomainName}.{ConfigManager.Domain}" },
+#endif                    
+                    { "mc-router.port", "25565" },
+                    { "caddy.reverse_proxy", "{{upstreams 8080}}" }
+                },
                 Env = new List<string>
                 {
                     "EULA=TRUE",
-                    $"TYPE={specs.ServerCore.ToString().ToUpper()}", // FORGE, PAPER, и т.д.
+                    $"TYPE={specs.ServerCore.ToString().ToUpper()}",
                     $"VERSION={specs.Version}",
                     "ENABLE_RCON=true",
                     $"RCON_PASSWORD={ConfigManager.RCONPassword}",
-                    "MEMORY=2G" // Можно добавить в БД и брать оттуда
+                    "MEMORY=2G"
                 },
                 HostConfig = new HostConfig
                 {
-                    //PortBindings = new Dictionary<string, IList<PortBinding>>
-                    //{
-                    //    { "25565/tcp", new List<PortBinding> { new PortBinding { HostPort = specs.PublicPort.ToString() } } }
-                    //},
-                    // Маунтим папку, которую юзер подготовил на этапе CreateServer
-                    // /app/servers/{id} на хосте станет /data внутри контейнера
-                    Binds = new List<string> { $"{Path.Combine(Folder, id)}:/data" },
-                    //NetworkMode = "mc_network", // Твоя общая сеть для сайта и серверов
-                    RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.Always }
+
+                    NetworkMode = "mc_network",
+                    Binds = new List<string> { $"{realPathOnDisk}:/data" },
+                    RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
+                    Memory = 2147483648
                 }
             };
 
@@ -270,7 +346,7 @@ namespace HomeSite.Managers
 
                 // Добавляем в список онлайн серверов (твоя старая логика)
                 // Теперь MinecraftServer будет просто оберткой над Docker API
-                var minecraftServer = new MinecraftServer(id, _logConnectionManager, _contextFactory, _dockerClient);
+                var minecraftServer = new MinecraftServer(specs, _logConnectionManager, _dockerClient);
                 serversOnline.Add(minecraftServer);
             }
             catch (Exception ex)
@@ -289,7 +365,8 @@ namespace HomeSite.Managers
 
         public static async Task ServerEnded(MinecraftServer server)
         {
-            serversOnline.Remove(server);
+            if(serversOnline.Contains(server))
+                serversOnline.Remove(server);
             await Task.CompletedTask;
         }
 

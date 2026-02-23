@@ -131,12 +131,7 @@ try
 
     Helper.SetThisApp(app);
     //EnumGenerator.GenerateEnums("versions", "Generated/VersionEnums.cs");
-
-    Thread thread = new Thread(() =>
-    {
-        app.Run();
-    });
-    thread.Start();
+    app.Run();
 }
 catch(Exception ex)
 {
