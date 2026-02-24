@@ -54,7 +54,7 @@ namespace HomeSite.Controllers
 				{
 					Description = allowedSpecs.Description,
 					Id = allowedServer.ServerId,
-					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == allowedServer.ServerId) ? MinecraftServerManager.serversOnline.First(x => x.Id == allowedServer.ServerId).ServerState : ServerState.stopped,
+					ServerState = _minecraftServerManager.ServersOnline.Any(x => x.Id == allowedServer.ServerId) ? _minecraftServerManager.ServersOnline.First(x => x.Id == allowedServer.ServerId).ServerState : ServerState.stopped,
 					Name = allowedSpecs.Name
 				});
 			}
@@ -64,12 +64,12 @@ namespace HomeSite.Controllers
                 return View(new ServerViewModel { ServerCreation = ServerCreation.notCreated, AllowedServers = allowedWraps });
             }
             var specs = _serverContext.Servers.First(x => x.Id == user.ServerId);
-            if (MinecraftServerManager.inCreation.ContainsKey(user.ServerId))
+            if (_minecraftServerManager.InCreation.ContainsKey(user.ServerId))
             {
                 return View(new ServerViewModel { AllowedServers = allowedWraps, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerId, ServerState = ServerState.stopped, Name = specs.Name}, ServerCreation = ServerCreation.AddingMods });
             }
             //string logis = MinecraftServerManager.GetInstance().ConsoleLogs;
-            MinecraftServer? server = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == user.ServerId);
+            MinecraftServer? server = _minecraftServerManager.ServersOnline.FirstOrDefault(x => x.Id == user.ServerId);
             return View(new ServerViewModel { AllowedServers = allowedWraps, OwnServer = new MinecraftServerWrap { Description = specs.Description, Id = user.ServerId, ServerState = server == null ? ServerState.stopped : server.ServerState, Name = specs.Name }, ServerCreation = ServerCreation.Created });
             //return View(new ServerViewModel { IsRunning = MinecraftServerManager.GetInstance().IsRunning, ServerState = MinecraftServerManager.GetInstance().ServerProcess == null ? ServerState.starting : ServerState.started, logs = logis});
         }
@@ -134,7 +134,7 @@ namespace HomeSite.Controllers
                 SpawnMonsters = await ServerPropertiesManager.GetProperty<bool>(filepath, "spawn-monsters"),
                 SpawnProtection = await ServerPropertiesManager.GetProperty<int>(filepath, "spawn-protection"),
                 Whitelist = await ServerPropertiesManager.GetProperty<bool>(filepath, "white-list"),
-                IsConfigured = MinecraftServerManager.inCreation.Any(x => x.Key == Id),
+                IsConfigured = _minecraftServerManager.InCreation.Any(x => x.Key == Id),
                 ModsInstalled = Directory.Exists(modsPath) ? Directory.GetFiles(modsPath).Length > 0 : false,
                 UploadMods = (_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, Id)
                 ?? (_usersContext.UserAccounts.Any(x => x.ServerId == Id)
@@ -181,7 +181,9 @@ namespace HomeSite.Controllers
                 return Unauthorized("Вы не авторизованы");
             }
 
-            bool isCreated = await  MinecraftServerManager.FinishServerCreation(Id);
+
+
+            bool isCreated = await  _minecraftServerManager.FinishServerCreation(Id);
 
             return Ok(isCreated); // Возвращает true или false
         }
@@ -235,7 +237,7 @@ namespace HomeSite.Controllers
 
             ViewBag.ThisId = Id;
 
-            MinecraftServer? thisServer = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
+            MinecraftServer? thisServer = _minecraftServerManager.ServersOnline.FirstOrDefault(x => x.Id == Id);
 
             SharedRightsDBO rights = isOwner
                 ? SharedAdministrationManager.allRightsDBO
@@ -773,7 +775,7 @@ namespace HomeSite.Controllers
             if (HttpContext.User.Identity.Name == null || _usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
                 if (HttpContext.User.Identity.Name == null || !_sharedManager.HasSharedThisServer(Id, HttpContext.User.Identity.Name))
                     return Unauthorized();
-            MinecraftServer? server = MinecraftServerManager.serversOnline.FirstOrDefault(x => x.Id == Id);
+            MinecraftServer? server = _minecraftServerManager.ServersOnline.FirstOrDefault(x => x.Id == Id);
             if (server == null)
             {
                 return Ok(new

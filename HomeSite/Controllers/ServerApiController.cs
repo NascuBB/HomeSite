@@ -51,7 +51,7 @@ namespace HomeSite.Controllers
                     return Unauthorized();
             try
             {
-                await MinecraftServerManager.serversOnline.First(x => x.Id == Id).StopServer();
+                await _minecraftServerManager.ServersOnline.First(x => x.Id == Id).StopServer();
                 return Ok("Выключение.");
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace HomeSite.Controllers
                     return Unauthorized();
             try
             {
-                string res = await MinecraftServerManager.serversOnline.First(x => x.Id == Id).SendCommandAsync(command);
+                string res = await _minecraftServerManager.ServersOnline.First(x => x.Id == Id).SendCommandAsync(command);
                 //string res = "Ok";//await MinecraftServerManager.GetInstance().SendCommand(command); // Ваш метод для отправки команды
                 return Ok(res);
             }
@@ -82,8 +82,8 @@ namespace HomeSite.Controllers
         [HttpGet("remaining-time")]
         public IActionResult GetRemainingTime(string Id)
         {
-            if (!MinecraftServerManager.serversOnline.Any(x => x.Id == Id)) return NotFound("Сервер не найден");
-            return Ok(new { remainingTime = MinecraftServerManager.serversOnline.First(x => x.Id == Id).RemainingTime });
+            if (!_minecraftServerManager.ServersOnline.Any(x => x.Id == Id)) return NotFound("Сервер не найден");
+            return Ok(new { remainingTime = _minecraftServerManager.ServersOnline.First(x => x.Id == Id).RemainingTime });
         }
     }
 }

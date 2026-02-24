@@ -37,8 +37,8 @@ try
     builder.Services.AddScoped<IUserHelper, UserHelper>();
 	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();
     builder.Services.AddScoped<IFileShareManager, FileShareManager>();
-    builder.Services.AddScoped<IMinecraftServerManager ,MinecraftServerManager>();
 
+    builder.Services.AddSingleton<IMinecraftServerManager, MinecraftServerManager>();
     builder.Services.AddSingleton<AccountVerificationManager>();
     builder.Services.AddSingleton<UserPasswordManager>();
 	builder.Services.AddSingleton<LogConnectionManager>();

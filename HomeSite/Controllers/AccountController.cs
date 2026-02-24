@@ -45,8 +45,8 @@ namespace HomeSite.Controllers
 				var server = _minecraftServerManager.GetServerSpecs(userServerId).Result;
 				wrap = new MinecraftServerWrap
 				{
-					ServerState = MinecraftServerManager.serversOnline.Any(x => x.Id == userServerId)
-					? MinecraftServerManager.serversOnline.First(x => x.Id == userServerId).ServerState
+					ServerState = _minecraftServerManager.ServersOnline.Any(x => x.Id == userServerId)
+					? _minecraftServerManager.ServersOnline.First(x => x.Id == userServerId).ServerState
 					: ServerState.stopped,
 					Description = server.Description,
 					Id = userServerId,

@@ -9,6 +9,15 @@ namespace HomeSite.Managers
     public interface IMinecraftServerManager
     {
         /// <summary>
+        /// Gets the collection of servers that are currently in the process of being created, keyed by their unique identifiers.
+        /// </summary>
+        public Dictionary<string, ServerCreation> InCreation { get; }
+        /// <summary>
+        /// Gets the list of Minecraft servers that are currently online.
+        /// </summary>
+        public List<MinecraftServer> ServersOnline { get; }
+
+        /// <summary>
         /// creates server folder and returns id of new created server
         /// </summary>
         /// <param name="name">name of server</param>
@@ -17,7 +26,6 @@ namespace HomeSite.Managers
         /// <param name="description">description to server</param>
         /// <returns></returns>
         public Task<string> CreateServer(string name, string ownerName, string serverCore, string version, string? description = null);
-
         /// <summary>
         /// Deletes minecraft server
         /// </summary>
@@ -39,8 +47,6 @@ namespace HomeSite.Managers
         /// <param name="newValue">new name</param>
         /// <returns></returns>
         public Task SetServerName(string Id, string newValue);
-
-
         /// <summary>
         /// Get server specifications
         /// </summary>
@@ -54,8 +60,25 @@ namespace HomeSite.Managers
         /// <param name="Id">Id of server</param>
         /// <returns><see cref="bool"/> true if server exists, oterwise false</returns>
         public Task<bool> ServerExists(string Id);
-
+        /// <summary>
+        /// Start minecraft server container
+        /// </summary>
+        /// <param name="Id">Id of server</param>
+        /// <returns></returns>
         public Task LaunchServer(string Id);
+        /// <summary>
+        /// Finish server creation.
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
+        public Task<bool> FinishServerCreation(string Id);
+        /// <summary>
+        /// Retrieves the server creation details for the specified server identifier.
+        /// </summary>
+        /// <param name="Id">The unique identifier of the server whose creation details are to be retrieved. Cannot be null or empty.</param>
+        /// <returns>A <see cref="ServerCreation"/> object containing the creation details of the specified server, or
+        /// <c>null</c> if no server with the given identifier exists.</returns>
+        public ServerCreation GetServerCreation(string Id);
 
     }
 }

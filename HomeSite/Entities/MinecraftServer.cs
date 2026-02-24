@@ -124,8 +124,10 @@ using HomeSite.Generated;
 using HomeSite.Managers;
 using HomeSite.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using NuGet.Common;
+using System;
 using System.Diagnostics;
 using System.Management;
 using System.Net;
@@ -310,13 +312,42 @@ namespace HomeSite.Entities
         //    await MinecraftServerManager.ServerEnded(this);
         //}
 
+        //public async Task Restore()
+        //{
+        //    var parameters = new ContainerLogsParameters
+        //    {
+        //        ShowStdout = true,
+        //        ShowStderr = true,
+        //        Follow = false,
+        //        Tail = "100"
+        //    };
+
+        //    byte[] buffer = new byte[8192];
+
+        //    using (var stream = await _dockerClient.Containers.GetContainerLogsAsync(_containerName, false, parameters))
+        //    {
+        //        while (true)
+        //        {
+        //            var readResult = await stream.ReadOutputAsync(buffer, 0, buffer.Length, default);
+
+        //            if (readResult.EOF)
+        //                break;
+
+        //            string part = Encoding.UTF8.GetString(buffer, 0, readResult.Count);
+        //            _consoleLogs.Append(part);
+        //        }
+        //    }
+
+        //    bool isRconReady = _consoleLogs.ToString().Contains("rcon", StringComparison.OrdinalIgnoreCase);
+        //    ServerState = isRconReady ? ServerState.started : ServerState.starting;
+        //}
+
 
         private async Task MonitorContainerLogAsync(CancellationToken token)
         {
             try
             {
                 bool rconStarted = false;
-                // 1. Подписываемся на логи Docker вместо чтения файла
                 var logParams = new ContainerLogsParameters
                 {
                     ShowStdout = true,
@@ -327,12 +358,10 @@ namespace HomeSite.Entities
 
                 var multiplexedStream = await _dockerClient.Containers.GetContainerLogsAsync(
                 _containerName,
-                false, // tty
+                false,
                 logParams,
                 token);
 
-                // 2. В фоновом режиме читаем кадры
-                // 1. Создаем буфер заранее
                 byte[] buffer = new byte[8192];
 
                 _ = Task.Run(async () =>
@@ -341,13 +370,10 @@ namespace HomeSite.Entities
                     {
                         while (!token.IsCancellationRequested)
                         {
-                            // Вот правильная сигнатура: буфер, отступ, длина, токен
                             var readResult = await multiplexedStream.ReadOutputAsync(buffer, 0, buffer.Length, token);
 
                             if (readResult.EOF) break;
 
-                            // Конвертируем только то количество байт, которое реально прочитали
-                            // readResult.Count — это сколько байт Docker положил в буфер (уже без заголовков)
                             string line = Encoding.UTF8.GetString(buffer, 0, readResult.Count);
 
                             if (!string.IsNullOrWhiteSpace(line))
@@ -443,19 +469,15 @@ namespace HomeSite.Entities
             }
 
             remainingTime--;
-            //Console.WriteLine($"Оставшееся время: {remainingTime / 60}:{remainingTime % 60:D2}");
         }
 
         private async Task<float> GetDockerRamUsage(CancellationToken token)
         {
             try
             {
-                // Нам нужно реализовать IProgress, чтобы метод сработал.
-                // Так как Stream = false, прогресс вызовется всего один раз.
                 var progress = new Progress<ContainerStatsResponse>();
                 ContainerStatsResponse? stats = null;
 
-                // Используем обертку, чтобы поймать результат из события Progress
                 progress.ProgressChanged += (s, e) => stats = e;
 
                 await _dockerClient.Containers.GetContainerStatsAsync(
@@ -466,10 +488,8 @@ namespace HomeSite.Entities
 
                 if (stats != null)
                 {
-                    // Формула для вычисления использования памяти в МБ
-                    // Docker отдает использование в байтах (MemoryStats.Usage)
                     float usedBytes = stats.MemoryStats.Usage;
-                    return usedBytes / 1024 / 1024; // Возвращаем в Мегабайтах
+                    return usedBytes / 1024 / 1024;
                 }
             }
             catch (Exception ex)
@@ -496,10 +516,8 @@ namespace HomeSite.Entities
         {
             if (ServerState != ServerState.started) return;
 
-            // Обновляем память
             ramUsage = await GetDockerRamUsage(token);
 
-            // Обновляем игроков (через твой RCON)
             if (_rcon != null)
             {
                 try
@@ -510,7 +528,7 @@ namespace HomeSite.Entities
                         .TakeWhile(x => char.IsDigit(x))
                         .ToArray()), out players);
                 }
-                catch { /* RCON может быть временно недоступен при лагах */ }
+                catch { }
             }
         }
 
@@ -532,9 +550,6 @@ namespace HomeSite.Entities
                 {
                     Force = true
                 });
-                //if (ServerState == ServerState.starting)
-                //    await ServerController.NotifyServerCrashed(Id);
-                //await MinecraftServerManager.ServerEnded(this);
             }
             catch (Exception ex)
             {
@@ -542,12 +557,11 @@ namespace HomeSite.Entities
             }
         }
 
-        public async void OnContainerExited()
+        public async Task OnContainerExited()
         {
             _cts.Cancel();
             if (ServerState == ServerState.starting)
                 await ServerController.NotifyServerCrashed(Id);
-            await MinecraftServerManager.ServerEnded(this);
         }
 
         //private async void CheckStartedServer(CancellationToken token)
@@ -638,9 +652,6 @@ namespace HomeSite.Entities
 
         public void Dispose()
         {
-            // Dispose of unmanaged resources.
-            //Dispose(true);
-            // Suppress finalization.
             GC.SuppressFinalize(this);
         }
 
