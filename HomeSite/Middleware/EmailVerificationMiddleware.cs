@@ -25,6 +25,28 @@ namespace HomeSite.Middleware
             var path = context.Request.Path.ToString().ToLower();
             bool isPublic = publicPaths.Any(publicPath =>
                 path == publicPath || path.StartsWith(publicPath + "/"));
+
+
+            if (path == "/metrics")
+            {
+                var connection = context.Connection;
+                var remoteIp = connection.RemoteIpAddress;
+
+                string ipStr = remoteIp?.IsIPv4MappedToIPv6 == true
+                               ? remoteIp.MapToIPv4().ToString()
+                               : remoteIp?.ToString() ?? "";
+
+                bool isFromProxy = context.Request.Headers.ContainsKey("X-Forwarded-For");
+
+                if (ipStr.StartsWith("172.") && !isFromProxy)
+                {
+                    await _next(context);
+                    return;
+                }
+
+                context.Response.StatusCode = 403;
+                return;
+            }
             if (isPublic)
             {
                 await _next(context);

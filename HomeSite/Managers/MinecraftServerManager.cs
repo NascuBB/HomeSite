@@ -186,14 +186,13 @@ namespace HomeSite.Managers
                             if (server != null && server.ServerState != ServerState.stopped)
                             {
                                 await server.OnContainerExited();
-                                await ServerEnded(server);
-
-                                try
-                                {
-                                    await _dockerClient.Containers.RemoveContainerAsync(m.Actor.ID,
-                                        new ContainerRemoveParameters { Force = true });
-                                }
-                                catch { }
+                                ServersOnline.Remove(server);
+                                //try
+                                //{
+                                //    //await _dockerClient.Containers.RemoveContainerAsync(m.Actor.ID,
+                                //        new ContainerRemoveParameters { Force = true });
+                                //}
+                                //catch { }
                             }
                         }
                     }
@@ -251,6 +250,7 @@ namespace HomeSite.Managers
                     { "mc-router.host", $"{specs.DomainName}.{ConfigManager.Domain}" },
 #endif                    
                     { "mc-router.port", "25565" },
+                    { "mc-router.bedrock-port", "19132" },
                     { "caddy.reverse_proxy", "{{upstreams 8080}}" }
                 },
                 Env = new List<string>
@@ -260,7 +260,7 @@ namespace HomeSite.Managers
                     $"VERSION={specs.Version}",
                     "ENABLE_RCON=true",
                     $"RCON_PASSWORD={ConfigManager.RCONPassword}",
-                    "MEMORY=3G"
+                    "MEMORY=2G"
                 },
                 HostConfig = new HostConfig
                 {
@@ -268,7 +268,7 @@ namespace HomeSite.Managers
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
-                    Memory = 3221225472
+                    Memory = 2684354560
                 }
             };
 
@@ -307,12 +307,10 @@ namespace HomeSite.Managers
             }
         }
 
-        private async Task ServerEnded(MinecraftServer server)
-        {
-            if(ServersOnline.Contains(server))
-                ServersOnline.Remove(server);
-            await Task.CompletedTask;
-        }
+        //private async Task ServerEnded(MinecraftServer server)
+        //{
+
+        //}
 
         private async Task SaveServersInCreation()
         {

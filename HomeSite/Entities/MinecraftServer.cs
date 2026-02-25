@@ -542,19 +542,43 @@ namespace HomeSite.Entities
                     await Task.Delay(5000);
                 }
                 _cts.Cancel();
-                await _dockerClient.Containers.StopContainerAsync(_containerName, new ContainerStopParameters
+                var id = await GetContainerIdByName(_containerName);
+                if (id is null) return;
+                await _dockerClient.Containers.StopContainerAsync(id, new ContainerStopParameters
                 {
                     WaitBeforeKillSeconds = 10
                 });
-                await _dockerClient.Containers.RemoveContainerAsync(_containerName, new ContainerRemoveParameters
-                {
-                    Force = true
-                });
+                await _dockerClient.Containers.RemoveContainerAsync(id,
+                    new ContainerRemoveParameters { Force = true });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при удалении контейнера: {ex.Message}");
+                Console.WriteLine($"[{DateTime.Now}]Stop server error {ex.Message}");
             }
+        }
+
+        private async Task<string?> GetContainerIdByName(string containerName)
+        {
+            var filters = new ContainersListParameters
+            {
+                All = true,
+                Filters = new Dictionary<string, IDictionary<string, bool>>
+                {
+                    {
+                        "name", new Dictionary<string, bool>
+                        {
+                            { containerName, true }
+                        }
+                    }
+                }
+            };
+
+            var containers = await _dockerClient.Containers.ListContainersAsync(filters);
+
+            var container = containers.FirstOrDefault(c =>
+                c.Names.Any(n => n.Equals("/" + containerName) || n.Equals(containerName)));
+
+            return container?.ID;
         }
 
         public async Task OnContainerExited()

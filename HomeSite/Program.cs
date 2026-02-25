@@ -11,8 +11,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Prometheus;
 using System;
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
 
 try
@@ -128,6 +130,9 @@ try
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
     app.MapControllers();
+
+    app.UseHttpMetrics();
+    app.MapMetrics();
 
     Helper.SetThisApp(app);
     //EnumGenerator.GenerateEnums("versions", "Generated/VersionEnums.cs");
