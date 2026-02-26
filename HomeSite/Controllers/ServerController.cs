@@ -204,7 +204,7 @@ namespace HomeSite.Controllers
 
             if (await _minecraftServerManager.DeleteServer(Id))
             {
-                user.ServerId = "no";
+                user.ServerId = null;
                 _usersContext.SaveChanges();
                 _sharedManager.DeleteServer(Id);
 				return RedirectToAction("Index");
@@ -642,6 +642,9 @@ namespace HomeSite.Controllers
                 if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
                     return RedirectToAction("See", "Server", new { Id = id });
 
+            if(_minecraftServerManager.ServersOnline.Any(x => x.Id == id))
+                return BadRequest("Сервер должен быть остановлен перед скачиванием");
+
             var serverRoot = Path.Combine(Directory.GetCurrentDirectory(), _serversBasePath, id);
             var targetFolder = Path.Combine(serverRoot, path ?? "");
 
@@ -675,6 +678,9 @@ namespace HomeSite.Controllers
             if (user.ServerId != id)
                 if (!_sharedManager.HasSharedThisServer(id, user.Username) || !_sharedManager.GetUserSharedRights(HttpContext.User.Identity.Name, id).SeeServerFiles)
                     return RedirectToAction("See", "Server", new { Id = id });
+
+            if (_minecraftServerManager.ServersOnline.Any(x => x.Id == id))
+                return BadRequest("Сервер должен быть остановлен перед скачиванием");
 
             var serverRoot = Path.Combine(Directory.GetCurrentDirectory(), _serversBasePath, id);
             var fullPath = Path.Combine(serverRoot, path);
