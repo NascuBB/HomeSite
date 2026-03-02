@@ -17,18 +17,17 @@ namespace HomeSite.Managers
             if (!Directory.Exists(configPath))
                 Directory.CreateDirectory(configPath);
 
-            Dictionary<string, string> data;
+            Dictionary<string, string> data = new Dictionary<string, string>
+            {
+                { "SMTPkey", "key" },
+                { "Domain", "domain"},
+                { "RealEmail", "mail" },
+                { "RCONPassword", "youshallnotpass" },
+                { "LocalAddress", "192.168.31.204" }
+            };
 
             if (!File.Exists(path))
             {
-                data = new Dictionary<string, string>
-                {
-                    { "SMTPkey", "key" },
-                    { "Domain", "domain"},
-                    { "RealEmail", "mail" },
-                    { "RCONPassword", "youshallnotpass" },
-                    { "LocalAddress", "192.168.31.204" }
-                };
                 string json = JsonConvert.SerializeObject(data, Formatting.Indented);
                 File.WriteAllText(path, json);
 

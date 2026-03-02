@@ -3,6 +3,7 @@ using HomeSite.Entities;
 using HomeSite.Generated;
 using HomeSite.Helpers;
 using HomeSite.Managers;
+using HomeSite.Migrations.ServerMigrations;
 using HomeSite.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -111,6 +112,12 @@ namespace HomeSite.Controllers
             return View(model);
         }
 
+        [HttpGet("/server/configure")]
+        public IActionResult Configure()
+        {
+            return RedirectToAction("Index");
+        }
+
         [Route("/server/configure/{Id}")]
         public async Task<IActionResult> Configure(string Id)
         {
@@ -185,7 +192,7 @@ namespace HomeSite.Controllers
 
             bool isCreated = await  _minecraftServerManager.FinishServerCreation(Id);
 
-            return Ok(isCreated); // Возвращает true или false
+            return Ok(isCreated);
         }
 
         [HttpPost]
@@ -197,7 +204,7 @@ namespace HomeSite.Controllers
                 return RedirectToAction("Index", "Home");
             }
             var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
-            if(user.ServerId != Id)
+            if(user.ServerId == null || user.ServerId != Id)
             {
 				return RedirectToAction("Index", "Home");
 			}
@@ -213,6 +220,73 @@ namespace HomeSite.Controllers
             {
                 return RedirectToAction("Index", "Account");
             }
+        }
+
+        [HttpGet("/server/settings")]
+        public IActionResult Settings()
+        {
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet("/server/settings/{Id}")]
+        public async Task<IActionResult> Settings(string Id)
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId == null || user.ServerId != Id)
+            {
+                return RedirectToAction("Index", "Server");
+            }
+            var server = await _minecraftServerManager.GetServerSpecs(Id);
+            if(server == null) return RedirectToAction("Index", "Server");
+
+            return View(new ServerSettingsViewModel
+            {
+                Server = server,
+                ServerState = _minecraftServerManager.ServersOnline.Any(x => x.Id == Id) ? ServerState.started : ServerState.stopped,
+                Domain = ConfigManager.Domain!
+            });
+        }
+
+        [HttpPost("/server/settings/{Id}/portmaps")]
+        public async Task<IActionResult> SetPortMaps(string Id, [FromBody] List<PortMapping>? mappings)
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return NotFound();
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId == null || user.ServerId != Id)
+            {
+                return BadRequest("Только владелец может менять настройки");
+            }
+            if (mappings == null) return BadRequest("маппинг не может быть пустым");
+            mappings.ForEach(x => {
+                if (x.Path == "/" || string.IsNullOrEmpty(x.Path)) x.Path = null;
+                else x.Path = x.Path!.TrimStart('/', '*').TrimEnd('/', '*');
+                });
+            await _minecraftServerManager.SetServerMappings(Id, mappings);
+            return Ok();
+        }
+
+        [HttpPost("/server/settings/{Id}/domain")]
+        public async Task<IActionResult> SetDomainName(string Id, [FromBody] string newDomainName)
+        {
+            if (HttpContext.User.Identity.Name == null)
+            {
+                return NotFound();
+            }
+            var user = _usersContext.UserAccounts.First(x => x.Username == HttpContext.User.Identity.Name);
+            if (user.ServerId == null || user.ServerId != Id)
+            {
+                return BadRequest("Только владелец может менять настройки");
+            }
+            if(string.IsNullOrEmpty(newDomainName)) return BadRequest("Домен не может быть пустым");
+            await _minecraftServerManager.SetServerDomain(Id, newDomainName.ToLower().Trim('/', '*', '\\'));
+            return Ok();
         }
 
         [Route("/server/see/{Id}")]
@@ -305,7 +379,6 @@ namespace HomeSite.Controllers
         [Route("/server/see/{Id}/allow")]
         public IActionResult Allow(string Id,[FromQuery] string user)
         {
-          
             if (HttpContext.User.Identity.Name == null || !_minecraftServerManager.ServerExists(Id).Result)
                 return RedirectToAction("Index");
             if(_usersContext.UserAccounts.Find(_userHelper.GetUserId(HttpContext.User.Identity.Name)).ServerId != Id)
@@ -342,7 +415,7 @@ namespace HomeSite.Controllers
                     result = "usernotfound"
                 });
             }
-            if(_sharedManager.HasSharedThisServer(Id, user))
+            if(_sharedManager.HasSharedThisServer(Id, user) || _usersContext.UserAccounts.Find(_userHelper.GetUserId(user)).ServerId == Id)
             {
                 return Ok(new
                 {

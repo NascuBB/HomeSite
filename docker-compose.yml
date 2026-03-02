@@ -25,6 +25,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./hs_data/servers:/app/servers
     ports: []
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 
   db:
@@ -34,11 +39,18 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    ports:
+      - 5432:5432
     networks:
       - hs_network
     volumes:
       - hs_pg_data:/var/lib/postgresql/data
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   mc_proxy:
     image: itzg/mc-router
@@ -53,6 +65,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   proxy:
     image: lucaslorentz/caddy-docker-proxy:latest
@@ -73,6 +90,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - caddy_data:/data
       - caddy_config:/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
 
   prometheus:
     image: prom/prometheus:latest
@@ -82,6 +104,13 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     restart: unless-stopped
+    depends_on:
+      - cadvisor
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -95,23 +124,39 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   grafana:
     image: grafana/grafana-oss:latest
     container_name: grafana
     environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SERVER_PROTOCOL=http
       - GF_SERVER_HTTP_PORT=3000
       - GF_SERVER_ROOT_URL=https://localhost/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     networks:
       - hs_network
+    user: "472"
+    volumes:
+      - ./grafana_data:/var/lib/grafana
     labels:
       - "caddy=localhost"
       - "caddy.redir=/grafana /grafana/ 308"
       - "caddy.handle=/grafana*"
       - "caddy.handle.reverse_proxy={{upstreams 3000}}"
     restart: unless-stopped
+    depends_on:
+      - prometheus
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
 
 networks:
   mc_network:

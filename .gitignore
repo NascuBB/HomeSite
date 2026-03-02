@@ -375,3 +375,4 @@ FodyWeavers.xsd
 /config.json
 /HomeSite/Config
 /hs_data
+/grafana_data

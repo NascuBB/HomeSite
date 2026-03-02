@@ -1,12 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace HomeSite.Entities
 {
     public class ServerDBContext : DbContext
     {
-        //DbContextOptions<UserDBContext> options
-
-        //options
         public ServerDBContext() : base()
         {
 
@@ -16,16 +15,20 @@ namespace HomeSite.Entities
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //#if DEBUG
-            //            optionsBuilder.UseNpgsql("Host=localhost;Port=5008;Database=just1x;Username=postgres;Password=postgres");
-            //#else
-            //            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=just1x;Username=postgres;Password=postgres");
-            //#endif
-            optionsBuilder.UseNpgsql("Host=db;Port=5432;Database=hs_db;Username=postgres;Password=postgres");
+            var connectionString = "Host=db;Port=5432;Database=hs_db;Username=postgres;Password=postgres";
+
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+            dataSourceBuilder.EnableDynamicJson();
+            var dataSource = dataSourceBuilder.Build();
+
+            optionsBuilder.UseNpgsql(dataSource);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Server>()
+                .Property(b => b.PortMappings)
+                .HasColumnType("jsonb");
             base.OnModelCreating(modelBuilder);
         }
     }

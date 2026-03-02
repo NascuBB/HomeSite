@@ -15,6 +15,7 @@ namespace HomeSite.Managers
             UploadMods = false,
             AddShareds = false,
             SeeServerFiles = false,
+            EditServerSettings = false
         };
 
         public static SharedRightsDBO allRightsDBO = new SharedRightsDBO
@@ -25,7 +26,8 @@ namespace HomeSite.Managers
             SendCommands = true,
             UploadMods = true,
             AddShareds = true,
-            SeeServerFiles = true
+            SeeServerFiles = true,
+            EditServerSettings = true
         };
 
         public static SharedRights defaultRights(int userId, string serverId)

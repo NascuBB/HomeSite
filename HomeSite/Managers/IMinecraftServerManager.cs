@@ -32,6 +32,19 @@ namespace HomeSite.Managers
         /// <param name="Id">Id of server</param>
         /// <returns></returns>
         public Task<bool> DeleteServer(string Id);
+        /// <summary>
+        /// Sets the domain name for the server identified by the specified ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the server whose domain is to be updated. Cannot be null or empty.</param>
+        /// <param name="newDomain">The new domain name to assign to the server. Cannot be null or empty.</param>
+        public Task SetServerDomain(string id, string newDomain);
+        /// <summary>
+        /// Updates the port mappings for the server identified by the specified ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the server whose port mappings are to be updated. Cannot be null or empty.</param>
+        /// <param name="portMappings">A list of <see cref="PortMapping"/> objects representing the new port mappings to assign to the server.
+        /// Cannot be null.</param>
+        public Task SetServerMappings(string id, List<PortMapping> portMappings);
 
         /// <summary>
         /// Sets new description to server

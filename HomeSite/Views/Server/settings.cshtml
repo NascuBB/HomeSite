@@ -1,0 +1,138 @@
+﻿@model ServerSettingsViewModel
+@{
+	ViewData["Title"] = "Server Settings";
+}
+<link rel="stylesheet" href="~/css/serverconf.css" />
+<style>
+	.text-truncate-group {
+		flex: 0 1 auto !important;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.input-group > .text-truncate-group {
+		display: block !important;
+	}
+
+	.rounded-end{
+		border-radius: 0 5px 5px 0;
+	}
+
+	@@media (max-width: 500px){
+		.text-truncate-group{
+			max-width: 60px;
+		}
+		.domain-input{
+			max-width: 150px !important;
+		}
+	}
+</style>
+<div class=" d-flex justify-content-center">
+	<h1 class="text-white display-5">Настройки</h1>
+</div>
+<div class="m-2 mb-3 flex-wrap d-flex text-center align-items-center align-content-center justify-content-evenly gap-2">
+	<div class="d-flex flex-column gap-1" style="">
+		<h4 class="display-6 fs-3">Управление сервером @Model.Server.Name</h4>
+		<div id="namedescError" class="alert alert-danger d-none py-2 fs-6 mb-2 text-start"></div>
+		<div class="d-flex">
+			<div class="input-group">
+				<label class="input-group-text">Имя</label>
+				<input class="form-control" id="nameInput" value="@Model.Server.Name" />
+				<button id="nameBtn" class="btn btn-green">Сохранить</button>
+			</div>
+			<div id="loadingName" class="ms-2 my-auto loader hideFZ"></div>
+		</div>
+		<div class="d-flex">
+			<div class="input-group">
+				<label class="input-group-text">Описание</label>
+				<textarea class="form-control" id="descInput" rows="3">@Model.Server.Description</textarea>
+				<button id="descBtn" class="btn btn-green">Сохранить</button>
+			</div>
+			<div id="loadingDesc" class="ms-2 my-auto loader hideFZ"></div>
+		</div>
+		<br />
+		<h4 class="display-6 fs-3">Сетевые настройки</h4>
+		@if (Model.ServerState != ServerState.stopped)
+		{
+			<span class="text-warning">Сетевые найстройки вступят в силу только после перезапуска сервера</span>
+		}
+		<div id="domainError" class="alert alert-danger d-none py-2 fs-6 mb-2 text-start"></div>
+		<div class="d-flex">
+			<div class="input-group">
+				<label class="input-group-text">Адрес</label>
+				<input class="form-control domain-input text-end" id="domnInput" value="@Model.Server.DomainName" />
+				<span class="input-group-text text-truncate-group"
+					  style="flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+					  title=".just1x.hopto.org">
+					.@Model.Domain
+				</span>
+				<button id="domnBtn" class="btn btn-green">Сохранить</button>
+			</div>
+			<div id="loadingDomn" class="ms-2 my-auto loader hideFZ"></div>
+		</div>
+		<label class="display-6 fs-4">Маппинг портов</label>
+		<div id="mappingError" class="alert alert-danger d-none py-2 fs-6 mb-2 text-start"></div>
+
+	
+		<div id="portMappingsContainer" class="d-flex flex-column gap-2">
+			@for (int i = 0; i < Model.Server.PortMappings.Count; i++)
+			{
+				<div class="input-group port-mapping-item">
+					<span class="input-group-text text-white border-secondary">Порт</span>
+					<input type="number" class="form-control port-val" value="@Model.Server.PortMappings[i].Port" placeholder="8080" />
+					<span class="input-group-text text-white border-secondary">Путь</span>
+					<input type="text" class="form-control path-val" value="@Model.Server.PortMappings[i].Path" placeholder="map" />
+					<button type="button" class="btn btn-danger remove-port">×</button>
+				</div>
+			}
+		</div>
+
+		<div class="d-flex align-items-center gap-3 mt-3 ms-5 justify-content-center">
+			<button id="addPortBtn" type="button" class="btn btn-primary @(Model.Server.PortMappings.Count >= 3 ? "d-none" : "")">
+				+ Добавить
+			</button>
+			<div class="d-flex align-items-center">
+				<button id="saveMappingsBtn" class="btn btn-green">Сохранить</button>
+				<div id="loadingMappings" class="ms-2 loader hideFZ"></div>
+			</div>
+		</div>
+		<div class="mb-2" style="max-width: 500px; margin: 0 auto;">
+			<a class="btn btn-link btn-sm p-0 text-decoration-none" data-bs-toggle="collapse" href="#mappingHelp" role="button">
+				Как это работает? ↓
+			</a>
+			<div class="collapse mt-2" id="mappingHelp">
+				<div class="card card-body fs-6 py-2 shadow-sm">
+					<div id="emailHelp" class="form-text">Некоторые плагины или моды используют браузер.<br />Чтобы вы могли попасть через браузер к плагину можете воспользоваться мапингом портов,<br />позже переходя по адресу вашего сервера сможете попасть на сайт плагина/мода.<br />Вы можете добавить до 3х портов<br />Пример: Ваш плагин, с картой в браузере, запущен на порту 8080.<br />Создаете бинд 8080 /map и на пути @(Model.Server.DomainName).just1x.hopto.org/map<br />будет доступна ваша карта мира.<br />Если оставить поле пути пустым порт будет доступен адресу сервера.</div>
+
+					@* 					<ul class="mb-0">
+						<li><strong>Порт:</strong> Внутренний порт вашего приложения.</li>
+						<li><strong>Путь:</strong> Относительный путь (например, <code>/api</code>).</li>
+						<li>Максимум можно добавить 3 правила.</li>
+					</ul> *@
+				</div>
+			</div>
+		</div>
+		<br />
+		<div class=" d-flex justify-content-center">
+			<button class="btn-green btn" id="backBtn">К серверу</button>
+		</div>
+		<br />
+		<br />
+		<h4 class="display-6 fs-3 text-danger">Опасная зона</h4>
+		@if (Model.ServerState != ServerState.stopped)
+		{
+			<span>Перед удалением сервера его нужно остановить</span>
+		}
+		else
+		{
+			<form asp-action="Delete" asp-controller="Server" asp-route-id="@Model.Server.Id" method="post">
+				@Html.AntiForgeryToken()
+				<input type="submit" value="Удалить сервер" class="btn btn-danger" />
+			</form>
+		}
+	</div>
+</div>
+@Html.AntiForgeryToken()
+<script src="~/js/serverSettings.js?v=4"></script>

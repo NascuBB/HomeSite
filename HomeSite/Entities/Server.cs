@@ -14,16 +14,14 @@ namespace HomeSite.Entities
         [MaxLength(20)]
         public string Name { get; set; }
         [Column("description")]
-        [MaxLength(50)]
+        [MaxLength(100)]
         public string? Description { get; set; }
         [Column("version")]
         public required string Version { get; set; }
         [Column("core")]
         public required string ServerCore { get; set; }
-        [Column("publicport")]
-        public int PublicPort { get; set; }
-        [Column("rconport")]
-        public int RCONPort { get; set; }
+        [Column("portmappings")]
+        public required List<PortMapping> PortMappings { get; set; } = [new PortMapping { Port = 8080, Path = null }];
         [Column("domainname")]
         public required string DomainName { get; set; }
     }

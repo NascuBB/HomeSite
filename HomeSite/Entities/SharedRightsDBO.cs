@@ -9,6 +9,7 @@
         public bool SendCommands { get; set; }
         public bool AddShareds { get; set; }
         public bool SeeServerFiles { get; set; }
+        public bool EditServerSettings { get; set; }
 
         public static explicit operator SharedRightsDBO?(SharedRights? rights)
         {
@@ -22,6 +23,7 @@
                 SendCommands = rights.SendCommands,
                 AddShareds = rights.AddShareds,
                 SeeServerFiles = rights.SeeServerFiles,
+                EditServerSettings = false
             };
         }
     }

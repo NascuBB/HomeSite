@@ -77,8 +77,14 @@ namespace HomeSite.Managers
                 Description = description,
                 Name = name,
                 Version = version,
-                PublicPort = 25565,
-                RCONPort = 25575,
+                PortMappings = new List<PortMapping>
+                {
+                    new PortMapping
+                    {
+                        Port = 8080,
+                        Path = null
+                    }
+                },
                 ServerCore = serverCore.ToUpper(),
                 DomainName = ownerName.ToLower()
             };
@@ -125,6 +131,24 @@ namespace HomeSite.Managers
                 return false;
             }
             return true;
+        }
+
+        public async Task SetServerDomain(string id, string newDomain)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            var server = await context.Servers.FirstOrDefaultAsync(x => x.Id == id);
+            if (server == null) return;
+            server.DomainName = newDomain;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task SetServerMappings(string id, List<PortMapping> portMappings)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            var server = await context.Servers.FirstOrDefaultAsync(x => x.Id == id);
+            if (server == null) return;
+            server.PortMappings = portMappings;
+            await context.SaveChangesAsync();
         }
 
         public async Task SetServerDesc(string id, string newDesc)
@@ -175,24 +199,26 @@ namespace HomeSite.Managers
             {
                 var progress = new Progress<Message>(async m =>
                 {
-                    if (m.Type == "container" && (m.Action == "die" || m.Action == "stop"))
+                    // Добавляем логирование, чтобы увидеть, что вообще прилетает от Docker
+                    // Console.WriteLine($"Event: {m.Action} for {m.Actor.ID}");
+
+                    if (m.Type == "container" && (m.Action == "die" || m.Action == "stop" || m.Action == "destroy"))
                     {
+                        // В событиях Destroy имени может не быть в Attributes["name"], 
+                        // но оно всегда есть в Actor.Attributes
                         if (m.Actor.Attributes.TryGetValue("name", out string? fullContainerName))
                         {
                             string cleanName = fullContainerName.TrimStart('/');
 
+                            // Важно: работаем со списком аккуратно
                             var server = ServersOnline.FirstOrDefault(s => $"mc-{s.Id}" == cleanName);
 
-                            if (server != null && server.ServerState != ServerState.stopped)
+                            if (server != null)
                             {
+                                // Убираем лишнюю проверку state, если контейнер умер - значит умер
                                 await server.OnContainerExited();
                                 ServersOnline.Remove(server);
-                                //try
-                                //{
-                                //    //await _dockerClient.Containers.RemoveContainerAsync(m.Actor.ID,
-                                //        new ContainerRemoveParameters { Force = true });
-                                //}
-                                //catch { }
+                                _logger.LogInformation($"Server {cleanName} removed from Online list.");
                             }
                         }
                     }
@@ -206,10 +232,11 @@ namespace HomeSite.Managers
                         { "event", new Dictionary<string, bool>
                             {
                                 { "die", true },
-                                { "stop", true }
+                                { "stop", true },
+                                { "destroy", true } // ОБЯЗАТЕЛЬНО ДОБАВЬ
                             }
-                        },
-                        { "label", new Dictionary<string, bool> { { "com.docker.compose.project=mc-servers-farm", true } } }
+                        }
+                        // На время теста убери фильтр по label, чтобы исключить его влияние
                     }
                 };
 
@@ -232,27 +259,54 @@ namespace HomeSite.Managers
             string hostRoot = Environment.GetEnvironmentVariable("HOST_SERVERS_PATH") ?? "/app/servers";
             string realPathOnDisk = Path.Combine(hostRoot, id);
 
+            specs.PortMappings.Sort((x, y) =>
+            {
+                if (x.Path == y.Path) return 0;
+                if (x.Path == null) return 1;
+                if (y.Path == null) return -1;
+                return string.Compare(x.Path, y.Path, StringComparison.Ordinal);
+            });
+
+            var labels = new Dictionary<string, string>
+            {
+                    { "com.docker.compose.project", "mc-servers-farm" },
+                    { "com.docker.compose.service", "minecraft-instance" },
+                    { "com.docker.compose.version", "1.0.0" },
+                    { "mc-router.port", "25565" },
+                    { "mc-router.bedrock-port", "19132" },
+                                
+#if DEBUG
+                    { "caddy", $"http://{specs.DomainName}.vcap.me" },
+                    { "mc-router.host", $"{specs.DomainName}.vcap.me" }
+#else
+                    { "caddy", $"{specs.DomainName}.{ConfigManager.Domain}" },
+                    { "mc-router.host", $"{specs.DomainName}.{ConfigManager.Domain}" }
+#endif    
+            };
+            int i = 0;
+            foreach(var portmapping in specs.PortMappings)
+            {
+                var cleanPath = portmapping.Path?.Trim('/', '*');
+                if (portmapping.Path != null)
+                {
+                    labels.Add($"caddy.redir_"+ i, $"/{portmapping.Path} /{portmapping.Path}/ 308");
+                    labels.Add("caddy.handle_path_" + i, '/' + portmapping.Path + '*');
+                    labels.Add($"caddy.handle_path_{i}.reverse_proxy", "{{upstreams " + portmapping.Port + "}}");
+                    i++;
+                }
+                else
+                {
+                    labels.Add("caddy.handle", "*" );
+                    labels.Add($"caddy.handle.reverse_proxy", "{{upstreams " + portmapping.Port + "}}");
+                }
+            }
+
             var createParams = new CreateContainerParameters
             {
                 Image = "itzg/minecraft-server",
                 Name = $"mc-{id}",
                 User = "root",
-                Labels = new Dictionary<string, string>
-                {
-                    { "com.docker.compose.project", "mc-servers-farm" },
-                    { "com.docker.compose.service", "minecraft-instance" },
-                    { "com.docker.compose.version", "1.0.0" },
-#if DEBUG
-                    { "caddy", $"http://{specs.DomainName}.vcap.me" },
-                    { "mc-router.host", $"{specs.DomainName}.vcap.me" },
-#else
-                    { "caddy", $"{specs.DomainName}.{ConfigManager.Domain}" },
-                    { "mc-router.host", $"{specs.DomainName}.{ConfigManager.Domain}" },
-#endif                    
-                    { "mc-router.port", "25565" },
-                    { "mc-router.bedrock-port", "19132" },
-                    { "caddy.reverse_proxy", "{{upstreams 8080}}" }
-                },
+                Labels = labels,
                 Env = new List<string>
                 {
                     "EULA=TRUE",

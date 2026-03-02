@@ -168,7 +168,6 @@ namespace HomeSite.Entities
         private readonly string RconStartedMessage;
 
         private readonly LogConnectionManager _logConnectionManager;
-        private readonly IDbContextFactory<ServerDBContext> _contextFactory;
 
         //public event Action<string> OnServerShutdown; // Событие для уведомления об остановке сервера
         //public event Action<string, int> OnTimerUpdate; // Отправка оставшегося времени на клиент
@@ -179,8 +178,6 @@ namespace HomeSite.Entities
         //public string ServerPath { get; }
         //public string LogPath { get; }
         //public string TempLogPath { get; }
-        public int PublicPort { get; }
-        public int RCONPort { get; }
         public string DomainName { get; }
         public ServerCreation ServerCreation { get; }
 
@@ -194,8 +191,7 @@ namespace HomeSite.Entities
             Description = specs.Description;
             Version = specs.Version;
             ServerCore = specs.ServerCore;
-            PublicPort = specs.PublicPort;
-            RCONPort = specs.RCONPort;
+
             DomainName = specs.DomainName;
             //OwnerUsername = specs.OwnerName;
 
