@@ -3,6 +3,7 @@
 	ViewData["Title"] = "Server Settings";
 }
 <link rel="stylesheet" href="~/css/serverconf.css" />
+<link rel="stylesheet" href="~/css/descriptionPreview.css" />
 <style>
 	.text-truncate-group {
 		flex: 0 1 auto !important;
@@ -46,12 +47,20 @@
 		</div>
 		<div class="d-flex">
 			<div class="input-group">
-				<label class="input-group-text">Описание</label>
-				<textarea class="form-control" id="descInput" rows="3">@Model.Server.Description</textarea>
+				<span class="input-group-text">Описание</span>
+				<textarea class="form-control mc-input"
+						  id="descInput"
+						  data-preview="descPreview"
+						  rows="3">@Model.Server.Description</textarea>
 				<button id="descBtn" class="btn btn-green">Сохранить</button>
 			</div>
 			<div id="loadingDesc" class="ms-2 my-auto loader hideFZ"></div>
 		</div>
+		<div class="mt-2 p-2 rounded bg-dark border text-start" style="min-height: 50px; font-family: 'Courier New', Courier, monospace;">
+			<small class="text-secondary d-block mb-1 text-center">Предпросмотр:</small>
+			<div id="descPreview" style="white-space: pre-wrap; word-break: break-all;"></div>
+		</div>
+		<div class="form-text">Встроенного генератора красивых описаний нет,<br /> но можете воспользоваться другим сайтом, например <a href="https://mctools.org/motd-creator">mctools.org</a></div>
 		<br />
 		<h4 class="display-6 fs-3">Сетевые настройки</h4>
 		@if (Model.ServerState != ServerState.stopped)
@@ -104,13 +113,15 @@
 			</a>
 			<div class="collapse mt-2" id="mappingHelp">
 				<div class="card card-body fs-6 py-2 shadow-sm">
-					<div id="emailHelp" class="form-text">Некоторые плагины или моды используют браузер.<br />Чтобы вы могли попасть через браузер к плагину можете воспользоваться мапингом портов,<br />позже переходя по адресу вашего сервера сможете попасть на сайт плагина/мода.<br />Вы можете добавить до 3х портов<br />Пример: Ваш плагин, с картой в браузере, запущен на порту 8080.<br />Создаете бинд 8080 /map и на пути @(Model.Server.DomainName).just1x.hopto.org/map<br />будет доступна ваша карта мира.<br />Если оставить поле пути пустым порт будет доступен адресу сервера.</div>
-
-					@* 					<ul class="mb-0">
-						<li><strong>Порт:</strong> Внутренний порт вашего приложения.</li>
-						<li><strong>Путь:</strong> Относительный путь (например, <code>/api</code>).</li>
-						<li>Максимум можно добавить 3 правила.</li>
-					</ul> *@
+					<div class="form-text">Некоторые плагины или моды используют браузер.
+						<br />Чтобы вы могли попасть через браузер к плагину можете воспользоваться мапингом портов,
+						<br />позже переходя по адресу вашего сервера сможете попасть на сайт плагина/мода.
+						<br />Вы можете добавить до 3х портов
+						<br />Пример: Ваш плагин, с картой в браузере, запущен на порту 8080.
+						<br />Создаете бинд 8080 /map и на пути @(Model.Server.DomainName).just1x.hopto.org/map
+						<br />будет доступна ваша карта мира.
+						<br />Если оставить поле пути пустым порт будет доступен адресу сервера.
+					</div>
 				</div>
 			</div>
 		</div>
@@ -135,4 +146,5 @@
 	</div>
 </div>
 @Html.AntiForgeryToken()
-<script src="~/js/serverSettings.js?v=4"></script>
+<script src="~/js/serverSettings.js?v=5"></script>
+<script src="~/js/descriptionPreview.js"></script>

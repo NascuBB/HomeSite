@@ -94,11 +94,11 @@ namespace HomeSite.Managers
             await context.SaveChangesAsync();
 
             string serverPath = Path.Combine(folder, genId);
-            //if (!Directory.Exists(serverPath))
-            //{
-            //    Directory.CreateDirectory(serverPath);
-            //    Directory.CreateDirectory(Path.Combine(serverPath, "mods"));
-            //}
+            if (!Directory.Exists(serverPath))
+            {
+                Directory.CreateDirectory(serverPath);
+                //Directory.CreateDirectory(Path.Combine(serverPath, "mods"));
+            }
 
             File.WriteAllText(
                 Path.Combine(serverPath, "server.properties"),

@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Minecraft server";
 }
+<link rel="stylesheet" href="~/css/descriptionPreview.css" />
 <div class=" d-flex text-center align-items-center align-content-center justify-content-center flex-column">
     <div class="text-muted">
         <h1 class="text-white display-4">Сервер</h1>
@@ -25,7 +26,7 @@
             <a class="list-group-item d-flex list-group-item-action align-items-start" asp-controller="Server" asp-action="configure" asp-route-id="@Model.OwnServer.Id">
                 <div class="me-1 ms-auto me-auto">
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
-                    @Model.OwnServer!.Description
+                    <span class="mc-parse mc-trim" style="white-space: pre-wrap;">@Model.OwnServer!.Description</span>
                 </div>
                 <span class="my-auto badge bg-primary text-primary rounded-pill">-</span>
             </a>
@@ -37,7 +38,7 @@
             <a class="list-group-item d-flex list-group-item-action justify-content-between align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@Model.OwnServer.Id">
                 <div class="ms-2 ms-auto me-auto">
                     <div class="fw-bold">@Model.OwnServer!.Name</div>
-                    @Model.OwnServer!.Description
+                    <span class="mc-parse mc-trim" style="white-space: pre-wrap;">@Model.OwnServer!.Description</span>
                 </div>
                 @switch(Model.OwnServer.ServerState)
                 {
@@ -49,7 +50,7 @@
                         break;
                     case ServerState.starting:
                         <span class="my-auto badge bg-warning text-warning rounded-pill">-</span>
-                        break;
+                         break;
                 }
             </a>
         </div>
@@ -58,7 +59,7 @@
     @if(Model.AllowedServers.Count == 0)
     {
         <p id="text-top">
-            Разрешенных серверов нет :(
+            С вами пока никто не делился своим сервером.
         </p>
     }
     else
@@ -69,7 +70,7 @@
                 <a class="list-group-item d-flex justify-content-between list-group-item-action align-items-start" asp-controller="Server" asp-action="See" asp-route-id="@server.Id">
                     <div class="ms-2 me-auto ms-auto">
                         <div class="text-center fw-bold">@server.Name</div>
-                        <span class="text-center">@server.Description</span>
+                        <span class="mc-parse mc-trim" style="white-space: pre-wrap;">@server.Description.Trim()</span>
                     </div>
                     @switch (server.ServerState)
                     {
@@ -89,3 +90,4 @@
         </div>
     }
 </div>
+<script src="~/js/descriptionPreview.js"></script>

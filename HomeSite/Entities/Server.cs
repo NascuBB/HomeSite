@@ -14,7 +14,7 @@ namespace HomeSite.Entities
         [MaxLength(20)]
         public string Name { get; set; }
         [Column("description")]
-        [MaxLength(100)]
+        [MaxLength(255)]
         public string? Description { get; set; }
         [Column("version")]
         public required string Version { get; set; }

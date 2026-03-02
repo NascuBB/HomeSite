@@ -1,0 +1,22 @@
+﻿.mc-underline {
+    text-decoration: underline;
+}
+
+.mc-strikethrough {
+    text-decoration: line-through;
+}
+
+.mc-underline.mc-strikethrough {
+    text-decoration: underline line-through;
+}
+
+.mc-obfuscated {
+    filter: blur(3px);      /*A simplified version of text obfuscation, since there can be many lines*/           
+    opacity: 0.9;           /*and many descriptions in total, all this can load the page,*/
+    display: inline-block;  /*so I simplified the rendering*/
+    user-select: none;
+}
+
+.mc-parse {
+    font-family: 'Courier New'
+}

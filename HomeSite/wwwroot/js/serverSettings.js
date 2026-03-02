@@ -20,12 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('descBtn').addEventListener('click', async () => {
         var input = document.getElementById('descInput');
         const descRegex = /^[a-zA-Z0-9 \\-]+$/;
-        var v = input.value.toString().trim();
+        var v = input.value.toString();
         if (!v) {
             v = 'A Minecraft server';
-        } else if (!descRegex.test(v)) {
-            showError("Описание может содержать только латинские буквы, цифры и дефис", "namedesc");
-            return;
+        } else if (v.length > 255) {
+            showError("Описание слишком длинное (" + v.length + " символов из 255)", "namedesc");
         }
         try {
             loaderDesc.className = 'showFZ loader ms-2 my-auto';
@@ -167,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const paths = new Set();
 
         let hasError = false;
-        const regex = /^[a-zA-Z0-9-]+$/;
+        const regex = /^[a-zA-Z0-9/-]+$/;
 
         items.forEach((el) => {
             const port = el.querySelector('.port-val').value.trim();
@@ -188,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             ports.add(port);
 
-            if (regex.test(v)) {
+            if (!regex.test(path)) { 
                 showError("Путь может содержать только латинские буквы, цифры и дефис", 'mapping');
                 hasError = true;
                 return;
