@@ -279,7 +279,7 @@ namespace HomeSite.Managers
                     { "caddy", $"http://{specs.DomainName}.vcap.me" },
                     { "mc-router.host", $"{specs.DomainName}.vcap.me" }
 #else
-                    { "caddy", $"{specs.DomainName}.{ConfigManager.Domain}" },
+                    { "caddy", $"http://{specs.DomainName}.{ConfigManager.Domain}" },
                     { "mc-router.host", $"{specs.DomainName}.{ConfigManager.Domain}" }
 #endif    
             };

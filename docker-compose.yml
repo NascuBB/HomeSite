@@ -9,12 +9,14 @@ services:
       dockerfile: HomeSite/Dockerfile
     restart: always
     environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
       - HOST_SERVERS_PATH=${PWD}/hs_data/servers
     depends_on:
       - db
     user: root
     labels:
-      - caddy=localhost
+      - caddy=${DOMAIN_NAME}
       - caddy.reverse_proxy={{upstreams 8080}}
     networks:
       - hs_network
@@ -39,8 +41,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - 5432:5432
     networks:
       - hs_network
     volumes:
@@ -134,10 +134,10 @@ services:
     image: grafana/grafana-oss:latest
     container_name: grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
       - GF_SERVER_PROTOCOL=http
       - GF_SERVER_HTTP_PORT=3000
-      - GF_SERVER_ROOT_URL=https://localhost/grafana/
+      - GF_SERVER_ROOT_URL=https://${DOMAIN_NAME}/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     networks:
       - hs_network
@@ -145,7 +145,7 @@ services:
     volumes:
       - ./grafana_data:/var/lib/grafana
     labels:
-      - "caddy=localhost"
+      - "caddy=${DOMAIN_NAME}"
       - "caddy.redir=/grafana /grafana/ 308"
       - "caddy.handle=/grafana*"
       - "caddy.handle.reverse_proxy={{upstreams 3000}}"

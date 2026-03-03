@@ -31,20 +31,11 @@
             <p>avg: 60</p>
         </div> *@
     </section>
-    <p class="display-5" id="firstZero">(первое всегда 0)</p>
-    @if (Context.User.Identity.Name == null)
-    {
-        <h1 class="display-6 fs-3">Теперь чтобы зайти на сервер нужно войти в свой аккаунт</h1>
-        <a asp-action="Login" asp-controller="Account" class="btn btn-green text-white">Войти</a>
-    }
-    else
-    {
-        <h1 class="display-6 fs-3">Теперь сервер не один. Теперь ты сам можешь создать свой сервер</h1>
-        <a asp-action="Index" asp-controller="Server" class="btn btn-green text-white">Создать</a>
-    }
+    <p class="display-5">Добро пожаловать на экспериментальную сборку!</p>
+    <h1 class="display-6 fs-3">Багов много не пугайтесь, эта страница вообще не работает, но остальное функционально</h1>
     <br />
     <br />
     <br />
-    <h1 class="display-6 fs-3">На сайт была добавлена политика пользования</h1>
+    <h1 class="display-6 fs-4">В разработке, но в открытом тесте, если интересует что сейчас опять упало и запуститься ли сервер вам <a href="https://t.me/just1xreports">сюда</a></h1>
 
 </div>
