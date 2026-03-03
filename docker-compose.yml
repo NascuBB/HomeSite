@@ -22,8 +22,9 @@ services:
       - hs_network
       - mc_network
     volumes:
-      - ./config.json:/app/Config/config.json
-      - ./hs_data/UserStorage:/app/Share
+      - ./hs_data/config:/app/Config
+      - ./config.json:/app/config/config.json
+      - ./hs_data/userStorage:/app/Share
       - /var/run/docker.sock:/var/run/docker.sock
       - ./hs_data/servers:/app/servers
     ports: []
