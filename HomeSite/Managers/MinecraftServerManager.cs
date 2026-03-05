@@ -273,7 +273,6 @@ namespace HomeSite.Managers
                     { "com.docker.compose.service", "minecraft-instance" },
                     { "com.docker.compose.version", "1.0.0" },
                     { "mc-router.port", "25565" },
-                    { "mc-router.bedrock-port", "19132" },
                                 
 #if DEBUG
                     { "caddy", $"http://{specs.DomainName}.vcap.me" },
@@ -318,7 +317,7 @@ namespace HomeSite.Managers
                 },
                 HostConfig = new HostConfig
                 {
-
+                    AutoRemove = true,
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
@@ -328,6 +327,12 @@ namespace HomeSite.Managers
 
             try
             {
+                try
+                {
+                    await _dockerClient.Containers.RemoveContainerAsync($"mc-{id}", new ContainerRemoveParameters { Force = true });
+                }
+                catch (DockerContainerNotFoundException)
+                { } 
                 var response = await _dockerClient.Containers.CreateContainerAsync(createParams);
                 await _dockerClient.Containers.StartContainerAsync(response.ID, null);
 

@@ -377,7 +377,7 @@ namespace HomeSite.Entities
                                 await _logConnectionManager.BroadcastLogAsync(Id, line);
                                 _consoleLogs.Append(line);
 
-                                if (line.Contains("RCON", StringComparison.OrdinalIgnoreCase) && !rconStarted)
+                                if (line.Contains("RCON ", StringComparison.OrdinalIgnoreCase) && !rconStarted)
                                 {
                                     rconStarted = true;
 
@@ -544,8 +544,8 @@ namespace HomeSite.Entities
                 {
                     WaitBeforeKillSeconds = 10
                 });
-                await _dockerClient.Containers.RemoveContainerAsync(id,
-                    new ContainerRemoveParameters { Force = true });
+                //await _dockerClient.Containers.RemoveContainerAsync(id,
+                //    new ContainerRemoveParameters { Force = true });
             }
             catch (Exception ex)
             {
