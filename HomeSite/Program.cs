@@ -33,6 +33,7 @@ try
     builder.Services.AddDbContext<UserDBContext>();
     builder.Services.AddDbContext<SharedRightsDBContext>();
     builder.Services.AddDbContext<ShareFileInfoDBContext>();
+    builder.Services.AddDbContext<MinecraftVersionDBContext>();
 
     builder.Services.AddDbContextFactory<ServerDBContext>();
 
@@ -40,10 +41,13 @@ try
 	builder.Services.AddScoped<ISharedAdministrationManager, SharedAdministrationManager>();
     builder.Services.AddScoped<IFileShareManager, FileShareManager>();
 
+    builder.Services.AddHttpClient<MinecraftVersionsManager>();
+
     builder.Services.AddSingleton<IMinecraftServerManager, MinecraftServerManager>();
     builder.Services.AddSingleton<AccountVerificationManager>();
     builder.Services.AddSingleton<UserPasswordManager>();
 	builder.Services.AddSingleton<LogConnectionManager>();
+	builder.Services.AddSingleton<MinecraftVersionsManager>();
 
     builder.Services.AddSingleton<IDockerClient>(new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient());
     builder.Services.AddMemoryCache();
@@ -73,7 +77,7 @@ try
         var dockerClient = scope.ServiceProvider.GetRequiredService<IDockerClient>();
         try
         {
-            await Helper.EnsureMinecraftImageExists((DockerClient)dockerClient);
+            await Helper.EnsureMinecraftImagesExists((DockerClient)dockerClient);
         }
         catch (Exception ex)
         {
@@ -85,7 +89,8 @@ try
             typeof(UserDBContext),
             typeof(ServerDBContext),
             typeof(SharedRightsDBContext),
-            typeof(ShareFileInfoDBContext)
+            typeof(ShareFileInfoDBContext),
+            typeof(MinecraftVersionDBContext)
         };
 
         foreach (var type in contextTypes)

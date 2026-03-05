@@ -151,10 +151,11 @@
                     
                     @if(Model.SharedRights.EditMods)
                     {
-                        if (Model.Core != "PAPER")
+                        if (Model.Core != "PAPER" && Model.Core != "FABRIC" && Model.Core != "VANILLA")
                         {
                             <a class="btn btn-green" href="/server/configure/@Model.ServerDesc.Id/mods"><i class="bi bi-puzzle"></i> Управление модами</a>
                         }
+                        else if (Model.Core == "VANILLA") { }
                         else
                         {
                             <a class="btn btn-green" href="/server/configure/@Model.ServerDesc.Id/plugins"><i class="bi bi-puzzle"></i> Управление плагинами</a>

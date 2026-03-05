@@ -199,23 +199,16 @@ namespace HomeSite.Managers
             {
                 var progress = new Progress<Message>(async m =>
                 {
-                    // Добавляем логирование, чтобы увидеть, что вообще прилетает от Docker
-                    // Console.WriteLine($"Event: {m.Action} for {m.Actor.ID}");
-
                     if (m.Type == "container" && (m.Action == "die" || m.Action == "stop" || m.Action == "destroy"))
                     {
-                        // В событиях Destroy имени может не быть в Attributes["name"], 
-                        // но оно всегда есть в Actor.Attributes
                         if (m.Actor.Attributes.TryGetValue("name", out string? fullContainerName))
                         {
                             string cleanName = fullContainerName.TrimStart('/');
 
-                            // Важно: работаем со списком аккуратно
                             var server = ServersOnline.FirstOrDefault(s => $"mc-{s.Id}" == cleanName);
 
                             if (server != null)
                             {
-                                // Убираем лишнюю проверку state, если контейнер умер - значит умер
                                 await server.OnContainerExited();
                                 ServersOnline.Remove(server);
                                 _logger.LogInformation($"Server {cleanName} removed from Online list.");
@@ -233,10 +226,9 @@ namespace HomeSite.Managers
                             {
                                 { "die", true },
                                 { "stop", true },
-                                { "destroy", true } // ОБЯЗАТЕЛЬНО ДОБАВЬ
+                                { "destroy", true } 
                             }
                         }
-                        // На время теста убери фильтр по label, чтобы исключить его влияние
                     }
                 };
 
@@ -266,6 +258,9 @@ namespace HomeSite.Managers
                 if (y.Path == null) return -1;
                 return string.Compare(x.Path, y.Path, StringComparison.Ordinal);
             });
+            string filepath = Path.Combine(folder, id, "server.properties");
+            await ServerPropertiesManager.EditProperty(filepath, "rcon.password", ConfigManager.RCONPassword!);
+            await ServerPropertiesManager.EditProperty(filepath, "enable-rcon", true);
 
             var labels = new Dictionary<string, string>
             {
@@ -300,9 +295,9 @@ namespace HomeSite.Managers
                 }
             }
 
-            var createParams = new CreateContainerParameters
+        var createParams = new CreateContainerParameters
             {
-                Image = "itzg/minecraft-server",
+                Image = $"itzg/minecraft-server:{Helper.GetDockerImageTag(specs.Version)}",
                 Name = $"mc-{id}",
                 User = "root",
                 Labels = labels,
@@ -311,9 +306,9 @@ namespace HomeSite.Managers
                     "EULA=TRUE",
                     $"TYPE={specs.ServerCore.ToString().ToUpper()}",
                     $"VERSION={specs.Version}",
-                    "ENABLE_RCON=true",
-                    $"RCON_PASSWORD={ConfigManager.RCONPassword}",
-                    "MEMORY=2G"
+                    "MEMORY=2G",
+                    "ENABLE_RCON=false",
+                    "OVERRIDE_SERVER_PROPERTIES=false"
                 },
                 HostConfig = new HostConfig
                 {
@@ -321,7 +316,7 @@ namespace HomeSite.Managers
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
-                    Memory = 2684354560
+                    Memory = 3221225472
                 }
             };
 

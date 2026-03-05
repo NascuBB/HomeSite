@@ -23,7 +23,7 @@ services:
       - mc_network
     volumes:
       - ./hs_data/config:/app/Config
-      - ./config.json:/app/config/config.json
+      - ./hs_data/config/config.json:/app/config/config.json
       - ./hs_data/userStorage:/app/Share
       - /var/run/docker.sock:/var/run/docker.sock
       - ./hs_data/servers:/app/servers

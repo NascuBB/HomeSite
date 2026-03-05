@@ -19,28 +19,24 @@
                 </div>
                 <div class="form-group">
                     <label class="control-label">Описание</label>
-                    <br />
-                    <label style="margin-top: -5px;"><u class="text-warning">(только латинница)</u></label>
                     <input asp-for="Description" class="form-control" />
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label class="control-label">Ядро</label>
-                    <select class="form-select" asp-for="ServerCore" aria-label="Select version">
-                        <option value="Vanilla">Vanilla</option>
-                        <option value="Vanilla">Forge</option>
-                        <option value="Paper">Paper</option>
-						<option value="Purpur">Purpur</option>
+                    <select class="form-select" asp-for="ServerCore" id="serverCore" aria-label="Select version">
+                        <option value="" selected>Выберите ядро</option>
+                        <option value="VANILLA">Vanilla</option>
+                        <option value="PAPER">Paper</option>
+                        <option value="PURPUR">Purpur</option>
+                        <option value="FORGE">Forge</option>
+                        <option value="FABRIC">Fabric</option>
                     </select>
                     <span asp-validation-for="ServerCore" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label class="control-label">Версия</label>
-                    <select id="version-select" class="form-select" asp-for="Version" aria-label="Select version">
-                        <option value="1.12.2">1.12.2</option>
-                        <option value="1.19.2">1.19.2</option>
-                        <option value="1.20.1">1.20.1</option>
-                        <option value="1.21.4">1.21.4</option>
+                    <select id="serverVersion" class="form-select" asp-for="Version" aria-label="Select version">
                     </select>
                     <span asp-validation-for="Version" class="text-danger"></span>
                 </div>

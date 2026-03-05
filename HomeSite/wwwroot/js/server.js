@@ -189,7 +189,7 @@ async function fetchServerStats() {
             }
             document.getElementById('players-online').textContent = `Онлайн: ${data.players}`;
             document.getElementById('ram-free').textContent = `Занято: ${data.memoryUsage} MB`;
-            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 2000) * 100)).toFixed(2)}%`;
+            document.getElementById('ram-usage').textContent = `Использование: ${parseFloat(((data.memoryUsage / 3222) * 100)).toFixed(2)}%`;
         }
         else if (data.type == "Stop") {
             document.getElementById('timerSpan').className = 'hideFZ';
@@ -239,7 +239,7 @@ if (stopBtn != null) {
 
     document.addEventListener('DOMContentLoaded', () => {
 
-        const serverId = window.location.pathname.split('/').pop(); // Берём ID из URL
+        const serverId = window.location.pathname.split('/').pop();
         const socket = new WebSocket(`wss://${window.location.host}/ws/logs/${serverId}`, [], {
             credentials: 'include'
         });

@@ -20,18 +20,22 @@ namespace HomeSite.Controllers
     {
         private readonly UserDBContext _usersContext;
         private readonly ServerDBContext _serverContext;
+        private readonly MinecraftVersionsManager _versionProvider;
         private readonly ISharedAdministrationManager _sharedManager;
         private readonly IUserHelper _userHelper;
         private readonly IMinecraftServerManager _minecraftServerManager;
         private static readonly ConcurrentDictionary<string, List<HttpResponse>> _subscribers = new();
 
-        public ServerController(UserDBContext userDBContext, ServerDBContext serverContext, ISharedAdministrationManager sharedAdministration, IUserHelper userHelper, IMinecraftServerManager minecraftServerManager)
+        public ServerController(UserDBContext userDBContext, ServerDBContext serverContext, 
+            ISharedAdministrationManager sharedAdministration, IUserHelper userHelper, 
+            IMinecraftServerManager minecraftServerManager, MinecraftVersionsManager minecraftVersionsManager)
         {
             _usersContext = userDBContext;
             _serverContext = serverContext;
             _sharedManager = sharedAdministration;
             _userHelper = userHelper;
             _minecraftServerManager = minecraftServerManager;
+            _versionProvider = minecraftVersionsManager;
         }
 
         public IActionResult Index()
@@ -110,6 +114,15 @@ namespace HomeSite.Controllers
                 return RedirectToAction($"configure", new { Id = id});
             }
             return View(model);
+        }
+
+        [HttpGet("/create/versions")]
+        public IActionResult GetVersions([FromQuery] string type)
+        {
+            if (type != "PAPER" && type != "PURPUR" && type != "VANILLA" && type != "FABRIC" && type != "FORGE") return NotFound();
+            var versions = _versionProvider.GetVersions(type);
+            if (!versions.Any()) return NotFound();
+            return Ok(versions);
         }
 
         [HttpGet("/server/configure")]

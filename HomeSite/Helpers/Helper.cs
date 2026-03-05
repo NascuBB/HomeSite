@@ -34,34 +34,61 @@ namespace HomeSite.Helpers
             };
         }
 
-        public static async Task EnsureMinecraftImageExists(DockerClient client)
+        public static string GetDockerImageTag(string version)
+        {
+            if (version.Equals("LATEST", StringComparison.OrdinalIgnoreCase)) return "latest";
+
+            if (System.Version.TryParse((version), out var v))
+            {
+                if (v >= new System.Version(1, 20, 5)) return "java21";
+                if (v >= new System.Version(1, 18)) return "java17";
+                if (v >= new System.Version(1, 17)) return "java17";
+                if (v >= new System.Version(1, 12)) return "java11";
+                return "java8";
+            }
+
+            return "latest";
+        }
+
+        public static async Task EnsureMinecraftImagesExists(DockerClient client)
         {
             const string imageName = "itzg/minecraft-server";
-            const string tag = "latest";
+            string[] tagsToEnsure = { "java21", "java17", "java11", "java8" };
 
-            // 1. Проверяем, есть ли образ
-            var images = await client.Images.ListImagesAsync(new ImagesListParameters());
-            bool exists = images.Any(i => i.RepoTags != null && i.RepoTags.Contains($"{imageName}:{tag}"));
+           
 
-            if (!exists)
+            var localImages = await client.Images.ListImagesAsync(new ImagesListParameters());
+
+            var existingTags = localImages
+                .Where(i => i.RepoTags != null)
+                .SelectMany(i => i.RepoTags)
+                .ToHashSet();
+
+            foreach (var tag in tagsToEnsure)
             {
-                Console.WriteLine(">>> Образ Minecraft не найден. Начинаю скачивание...");
+                string fullImageName = $"{imageName}:{tag}";
 
-                // 2. Скачиваем образ
-                await client.Images.CreateImageAsync(
-                    new ImagesCreateParameters
-                    {
-                        FromImage = imageName,
-                        Tag = tag
-                    },
-                    null,
-                    new Progress<JSONMessage>(m =>
-                    {
-                        if (!string.IsNullOrEmpty(m.Status))
-                            Console.WriteLine($"> Docker: {m.Status} {m.ProgressMessage}");
-                    }));
+                if (!existingTags.Contains(fullImageName))
+                {
+                    Console.WriteLine($">>> Image {fullImageName} not found. Installing...");
 
-                Console.WriteLine(">>> Образ успешно скачан.");
+                    await client.Images.CreateImageAsync(
+                        new ImagesCreateParameters
+                        {
+                            FromImage = imageName,
+                            Tag = tag
+                        },
+                        null,
+                        new Progress<JSONMessage>(m =>
+                        {
+                            if (!string.IsNullOrEmpty(m.Status))
+                            {
+                                Console.WriteLine($"> Docker [{tag}]: {m.Status}");
+                            }
+                        }));
+
+                    Console.WriteLine($">>> Image {tag} installed successfully.");
+                }
             }
         }
 

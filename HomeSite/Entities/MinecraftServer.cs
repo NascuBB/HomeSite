@@ -700,10 +700,11 @@ namespace HomeSite.Entities
                     }
                     await Task.Delay(5000, token);
                 }
-                catch (Exception ex) when (ex is not TaskCanceledException)
+                catch (Exception ex) //when (ex is not TaskCanceledException)
                 {
                     if (ex is not TaskCanceledException)
                         Console.WriteLine(ex.ToString());
+                    await Task.Delay(5000, token);
                     return;
                 }
             }
