@@ -30,3 +30,4 @@ README.md
 !.git/refs/heads/**
 **/grafana_data
 **/hs_data
+**/pg_data

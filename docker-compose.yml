@@ -45,7 +45,7 @@ services:
     networks:
       - hs_network
     volumes:
-      - hs_pg_data:/var/lib/postgresql/data
+      - ./pg_data:/var/lib/postgresql/data
     restart: always
     logging:
       driver: "json-file"
@@ -167,6 +167,5 @@ networks:
     driver: bridge
 
 volumes:
-  hs_pg_data:
   caddy_data:
   caddy_config:
