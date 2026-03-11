@@ -14,6 +14,7 @@ namespace HomeSite.Models
 		public string Version { get; set; }
 		public string Core { get; set; }
 		public string PublicAddress { get; set; }
+		public int BedrockPort { get; set; }
     }
 
 

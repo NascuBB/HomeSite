@@ -316,7 +316,20 @@ namespace HomeSite.Managers
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
-                    Memory = 3221225472
+                    Memory = 3221225472,
+                    PortBindings = specs.BedrockPort == 0 ? null :
+                        new Dictionary<string, IList<PortBinding>>
+                        {
+                            {
+                                "19132/udp",
+                                new List<PortBinding>
+                                {
+                                    new() { 
+                                        HostPort = specs.BedrockPort.ToString()
+                                    }
+                                }
+                            }
+                        }
                 }
             };
 
@@ -324,7 +337,15 @@ namespace HomeSite.Managers
             {
                 try
                 {
-                    await _dockerClient.Containers.RemoveContainerAsync($"mc-{id}", new ContainerRemoveParameters { Force = true });
+                    var containers = await _dockerClient.Containers.ListContainersAsync(new ContainersListParameters { All = true });
+                    var container = containers.FirstOrDefault(c => c.Names.Any(n => n.Equals($"/mc-{id}", StringComparison.OrdinalIgnoreCase)));
+
+                    if (container != null)
+                    {
+                        string dockerId = container.ID;
+
+                        await _dockerClient.Containers.RemoveContainerAsync(dockerId, new ContainerRemoveParameters { Force = true });
+                    }
                 }
                 catch (DockerContainerNotFoundException)
                 { } 

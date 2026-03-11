@@ -175,6 +175,7 @@ namespace HomeSite.Entities
         public string Id { get; }
         public string Version { get; }
         public string ServerCore { get; }
+        public int BedrockPort { get; }
         //public string ServerPath { get; }
         //public string LogPath { get; }
         //public string TempLogPath { get; }
@@ -191,6 +192,7 @@ namespace HomeSite.Entities
             Description = specs.Description;
             Version = specs.Version;
             ServerCore = specs.ServerCore;
+            BedrockPort = specs.BedrockPort;
 
             DomainName = specs.DomainName;
             //OwnerUsername = specs.OwnerName;

@@ -6,16 +6,42 @@ document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('portMappingsContainer');
     const addBtn = document.getElementById('addPortBtn');
     const saveBtn = document.getElementById('saveMappingsBtn');
+    const bdpSwitch = document.getElementById("BdpSwitch");
     const loader = document.getElementById('loadingMappings');
     const mapErrorBlock = document.getElementById('mappingError');
     const domainErrorBlock = document.getElementById('domainError');
     const namedescErrorBlock = document.getElementById('namedescError');
     const MAX_ITEMS = 3;
 
+    let loaderBdP = document.getElementById('loadingBdp');
     let loaderDesc = document.getElementById('loadingDesc');
     let loaderName = document.getElementById('loadingName');
     let loaderDomn = document.getElementById('loadingDomn');
     const serverId = window.location.pathname.split('/').pop();
+
+    bdpSwitch.addEventListener("change", async (event) => {
+        const oldIsChecked = !event.target.checked;
+        loaderBdP.className = 'showFZ form-check-label loader-sm';
+        try {
+            const response = await fetch(`/server/settings/${serverId}/bedrockport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(event.currentTarget.checked),
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+        } catch (err) {
+            event.target.checked = oldIsChecked;
+            console.error('Ошибка отправки команды:', err);
+        } finally {
+            sleep(100).then(() => { loaderBdP.className = 'hideFZ form-check-label loader-sm' });
+        }
+    });
 
     document.getElementById('descBtn').addEventListener('click', async () => {
         var input = document.getElementById('descInput');

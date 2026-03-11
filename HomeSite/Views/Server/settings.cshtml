@@ -67,6 +67,18 @@
 		{
 			<span class="text-warning">Сетевые найстройки вступят в силу только после перезапуска сервера</span>
 		}
+		<div class="d-flex flex-row w-100 justify-content-between text-end form-check form-switch form-switch-md my-auto mb-2">
+			@if (Model.Server.BedrockPort != 0)
+			{
+				<input class="form-check-input" type="checkbox" role="switch" id="BdpSwitch" checked>
+			}
+			else
+			{
+				<input class="form-check-input" type="checkbox" role="switch" id="BdpSwitch">
+			}
+			<label class="form-check-label me-1" for="BdpSwitch">Разрешить подключение для кроссплатформерных игроков</label>
+			<div id="loadingBdp" class="form-check-label loader-sm hideFZ"></div>
+		</div>
 		<div id="domainError" class="alert alert-danger d-none py-2 fs-6 mb-2 text-start"></div>
 		<div class="d-flex">
 			<div class="input-group">

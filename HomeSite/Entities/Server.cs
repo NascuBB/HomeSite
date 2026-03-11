@@ -18,6 +18,8 @@ namespace HomeSite.Entities
         public string? Description { get; set; }
         [Column("version")]
         public required string Version { get; set; }
+        [Column("bedrockport")]
+        public int BedrockPort { get; set; } = 0;
         [Column("core")]
         public required string ServerCore { get; set; }
         [Column("portmappings")]

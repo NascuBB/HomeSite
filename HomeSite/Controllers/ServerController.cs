@@ -298,7 +298,41 @@ namespace HomeSite.Controllers
                 return BadRequest("Только владелец может менять настройки");
             }
             if(string.IsNullOrEmpty(newDomainName)) return BadRequest("Домен не может быть пустым");
-            await _minecraftServerManager.SetServerDomain(Id, newDomainName.ToLower().Trim('/', '*', '\\'));
+            var reservedDomains = _serverContext.Servers.Select(s => s.DomainName).ToHashSet();
+            newDomainName = newDomainName.ToLower().Trim('/', '*', '\\');
+            if (reservedDomains.Contains(newDomainName)) return BadRequest("Невозможно создать этот домен");
+            await _minecraftServerManager.SetServerDomain(Id, newDomainName);
+            return Ok();
+        }
+
+        [HttpPost("/server/settings/{Id}/bedrockport")]
+        public async Task<IActionResult> SetBedrockPort(string Id, [FromBody] bool CreatePort)
+        {
+            if(CreatePort)
+            {
+                try
+                {
+                    var reservedPorts = _serverContext.Servers.Select(s => s.BedrockPort).ToHashSet();
+                    int port;
+                    do
+                    {
+                        var random = new Random();
+                        port = random.Next(19000, 20000);
+                    }
+                    while (reservedPorts.Contains(port));
+                    _serverContext.Servers.First(x => x.Id == Id).BedrockPort = port;
+                    await _serverContext.SaveChangesAsync();
+                }
+                catch(Exception e)
+                {
+                    return Problem(e.Message);
+                }
+            }
+            else
+            {
+                _serverContext.Servers.First(x => x.Id == Id).BedrockPort = 0;
+                await _serverContext.SaveChangesAsync();
+            }
             return Ok();
         }
 
@@ -354,7 +388,8 @@ namespace HomeSite.Controllers
                     ServerState = ServerState.stopped,
                     PublicAddress = specs.DomainName + "." + ConfigManager.Domain,
                     Version = specs.Version,
-                    Core = specs.ServerCore.ToString()!
+                    Core = specs.ServerCore.ToString()!,
+                    BedrockPort = specs.BedrockPort
                 });
             }
             else
@@ -367,7 +402,7 @@ namespace HomeSite.Controllers
                 {
                     SharedRights = rights,
                     AllowedUsers = allowedUsers,
-                    IsRunning = true, //TODO!
+                    IsRunning = true,
                     logs = logs,
                     ServerDesc = new MinecraftServerWrap
                     {
@@ -378,7 +413,8 @@ namespace HomeSite.Controllers
                     ServerState = thisServer.ServerState,
                     PublicAddress = thisServer.DomainName + "." + ConfigManager.Domain,
                     Version = thisServer.Version,
-                    Core = thisServer.ServerCore.ToString()!
+                    Core = thisServer.ServerCore.ToString()!,
+                    BedrockPort = thisServer.BedrockPort
                 });
             }
         }
