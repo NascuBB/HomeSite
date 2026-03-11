@@ -310,6 +310,10 @@ namespace HomeSite.Managers
                     "ENABLE_RCON=false",
                     "OVERRIDE_SERVER_PROPERTIES=false"
                 },
+                ExposedPorts = new Dictionary<string, EmptyStruct>
+                {
+                    { "19132/udp", new EmptyStruct() }
+                },
                 HostConfig = new HostConfig
                 {
                     AutoRemove = true,
@@ -318,18 +322,19 @@ namespace HomeSite.Managers
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
                     Memory = 3221225472,
                     PortBindings = specs.BedrockPort == 0 ? null :
-                        new Dictionary<string, IList<PortBinding>>
+                    new Dictionary<string, IList<PortBinding>>
+                    {
                         {
+                            "19132/udp",
+                            new List<PortBinding>
                             {
-                                "19132/udp",
-                                new List<PortBinding>
-                                {
-                                    new() { 
-                                        HostPort = specs.BedrockPort.ToString()
-                                    }
+                                new()
+                                { 
+                                    HostPort = specs.BedrockPort.ToString()
                                 }
                             }
                         }
+                    }
                 }
             };
 
