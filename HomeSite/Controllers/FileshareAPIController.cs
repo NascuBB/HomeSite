@@ -193,6 +193,7 @@ namespace HomeSite.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         [Route("downloadfile")]
         public async Task<IActionResult> DownloadFile(string id)
         {
