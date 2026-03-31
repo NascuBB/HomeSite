@@ -295,7 +295,7 @@ namespace HomeSite.Managers
                 }
             }
 
-        var createParams = new CreateContainerParameters
+            var createParams = new CreateContainerParameters
             {
                 Image = $"itzg/minecraft-server:{Helper.GetDockerImageTag(specs.Version)}",
                 Name = $"mc-{id}",
