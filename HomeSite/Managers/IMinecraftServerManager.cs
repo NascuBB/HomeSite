@@ -25,7 +25,13 @@ namespace HomeSite.Managers
         /// <param name="version">version of server</param>
         /// <param name="description">description to server</param>
         /// <returns></returns>
-        public Task<string> CreateServer(string name, string ownerName, string serverCore, string version, string? description = null);
+        public Task<string> CreateServer(
+            string name,
+            string ownerName,
+            string serverCore,
+            string? version,
+            string? curseforgeFileId,
+            string? description = null);
         /// <summary>
         /// Deletes minecraft server
         /// </summary>

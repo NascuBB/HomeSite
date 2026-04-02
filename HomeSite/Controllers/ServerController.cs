@@ -102,27 +102,42 @@ namespace HomeSite.Controllers
                 ViewBag.Message = "Теперь, чтобы воспользоваться функциями сервера нужно зайти в аккаунт";
                 return RedirectToAction("Login", "Account");
             }
+
             if (_usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId != null)
             {
                 return RedirectToAction("Index");
             }
+
             if (ModelState.IsValid)
             {
-                string id = _minecraftServerManager.CreateServer(model.Name, HttpContext.User.Identity.Name, model.ServerCore ,model.Version, model.Description ?? "A Minecraft server").Result;
+                string id = _minecraftServerManager.CreateServer(
+                    model.Name,
+                    HttpContext.User.Identity.Name,
+                    model.ServerCore,
+                    model.Version ?? "latest",
+                    model.CurseforgePackId,
+                    model.Description ?? "A Minecraft server").Result;
+
                 _usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId = id;
                 _usersContext.SaveChanges();
-                return RedirectToAction($"configure", new { Id = id});
+                return RedirectToAction("configure", new { Id = id });
             }
+
             return View(model);
         }
 
         [HttpGet("/create/versions")]
         public IActionResult GetVersions([FromQuery] string type)
         {
-            if (type != "PAPER" && type != "PURPUR" && type != "VANILLA" && type != "FABRIC" && type != "FORGE") return NotFound();
+            if (type != "PAPER" && type != "PURPUR" && type != "VANILLA" && type != "FABRIC" && type != "FORGE" && type != "CURSEFORGE")
+                return NotFound();
+
+            if (type == "CURSEFORGE")
+                return Ok(new List<string>());
+
             var versions = _versionProvider.GetVersions(type);
             if (!versions.Any()) return NotFound();
-            return Ok(versions);
+                return Ok(versions);
         }
 
         [HttpGet("/server/configure")]

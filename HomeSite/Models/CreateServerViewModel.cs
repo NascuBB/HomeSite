@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HomeSite.Models
 {
-    public class CreateServerViewModel
+    public class CreateServerViewModel : IValidatableObject
     {
         [Required(ErrorMessage = "Это обязательное поле")]
         [StringLength(20, MinimumLength = 3, ErrorMessage = "Название должно быть от 3 до 20 символов")]
@@ -12,6 +12,14 @@ namespace HomeSite.Models
 
         [MaxLength(50, ErrorMessage = "Описание не должно превышать 50 символов")]
         public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Выберите ядро")]
+        public string ServerCore { get; set; }
+
+        public string? Version { get; set; }
+
+        [Display(Name = "URL сборки CurseForge")]
+        public string? CurseforgePackId { get; set; }
 
         public IEnumerable<SelectListItem> CoreOptions { get; set; } =
             Enum.GetValues(typeof(ServerCore))
@@ -22,11 +30,22 @@ namespace HomeSite.Models
                     Value = e.ToString()
                 });
 
-        [Required(ErrorMessage = "Версия обязательна")]
-        public string Version { get; set; }
-        [Required(ErrorMessage = "Выберите ядро")]
-        public string ServerCore { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.Equals(ServerCore, "CURSEFORGE", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(CurseforgePackId))
+                {
+                    yield return new ValidationResult("Введите URL сборки CurseForge", new[] { nameof(CurseforgePackId) });
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(Version))
+                {
+                    yield return new ValidationResult("Версия обязательна", new[] { nameof(Version) });
+                }
+            }
+        }
     }
-
-
 }

@@ -1,6 +1,19 @@
 ﻿document.getElementById('serverCore').addEventListener('change', async function () {
     const type = this.value;
     const versionSelect = document.getElementById('serverVersion');
+    const versionGroup = document.getElementById('versionGroup');
+    const curseforgeGroup = document.getElementById('curseforgeGroup');
+
+    if (type === 'CURSEFORGE') {
+        versionGroup.classList.add('d-none');
+        curseforgeGroup.classList.remove('d-none');
+        versionSelect.innerHTML = '';
+        return;
+    }
+
+    versionGroup.classList.remove('d-none');
+    curseforgeGroup.classList.add('d-none');
+
     if (type === '') {
         versionSelect.innerHTML = '<option></option>';
         return;

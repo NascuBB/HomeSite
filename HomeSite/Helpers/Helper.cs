@@ -36,7 +36,7 @@ namespace HomeSite.Helpers
 
         public static string GetDockerImageTag(string version)
         {
-            if (version.Equals("LATEST", StringComparison.OrdinalIgnoreCase)) return "latest";
+            if (version.Equals("LATEST", StringComparison.OrdinalIgnoreCase)) return "java21";
 
             if (System.Version.TryParse((version), out var v))
             {

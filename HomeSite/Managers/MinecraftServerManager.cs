@@ -64,12 +64,20 @@ namespace HomeSite.Managers
         }
 
 
-        public async Task<string> CreateServer(string name, string ownerName, string serverCore, string version, string? description = null)
+        public async Task<string> CreateServer(
+            string name,
+            string ownerName,
+            string serverCore,
+            string version,
+            string? curseforgeFileId,
+            string? description = null)
         {
             string genId = Guid.NewGuid().ToString();
 
             InCreation[genId] = ServerCreation.AddingMods;
             await SaveServersInCreation();
+
+            var core = serverCore.ToUpperInvariant();
 
             var serverSpecs = new Server
             {
@@ -77,6 +85,7 @@ namespace HomeSite.Managers
                 Description = description,
                 Name = name,
                 Version = version,
+                CurseforgePack = string.IsNullOrWhiteSpace(curseforgeFileId) ? null : curseforgeFileId.Trim(),
                 PortMappings = new List<PortMapping>
                 {
                     new PortMapping
@@ -85,7 +94,7 @@ namespace HomeSite.Managers
                         Path = null
                     }
                 },
-                ServerCore = serverCore.ToUpper(),
+                ServerCore = core,
                 DomainName = ownerName.ToLower()
             };
 
@@ -97,7 +106,6 @@ namespace HomeSite.Managers
             if (!Directory.Exists(serverPath))
             {
                 Directory.CreateDirectory(serverPath);
-                //Directory.CreateDirectory(Path.Combine(serverPath, "mods"));
             }
 
             File.WriteAllText(
@@ -295,28 +303,50 @@ namespace HomeSite.Managers
                 }
             }
 
+            string imageTag = specs.ServerCore.Equals("CURSEFORGE", StringComparison.OrdinalIgnoreCase)
+                ? "java21"
+                : Helper.GetDockerImageTag(specs.Version);
+
+            var env = new List<string>
+            {
+                "EULA=TRUE",
+                "MEMORY=2G",
+                "ENABLE_RCON=false",
+                "OVERRIDE_SERVER_PROPERTIES=false"
+            };
+
+            if (specs.ServerCore.Equals("CURSEFORGE", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(specs.CurseforgePack))
+                    throw new InvalidOperationException("Не указан ID сборки CurseForge");
+
+                if (string.IsNullOrWhiteSpace(ConfigManager.CurseforgeApiKey))
+                    throw new InvalidOperationException("Не задан CurseforgeApiKey в config.json");
+
+                env.Add("TYPE=AUTO_CURSEFORGE");
+                env.Add($"CF_PAGE_URL={specs.CurseforgePack}");
+                env.Add($"CF_API_KEY={ConfigManager.CurseforgeApiKey}");
+            }
+            else
+            {
+                env.Add($"TYPE={specs.ServerCore.ToUpper()}");
+                env.Add($"VERSION={specs.Version ?? "latest"}");
+            }
+
             var createParams = new CreateContainerParameters
             {
-                Image = $"itzg/minecraft-server:{Helper.GetDockerImageTag(specs.Version)}",
+                Image = $"itzg/minecraft-server:{imageTag}",
                 Name = $"mc-{id}",
                 User = "root",
                 Labels = labels,
-                Env = new List<string>
-                {
-                    "EULA=TRUE",
-                    $"TYPE={specs.ServerCore.ToString().ToUpper()}",
-                    $"VERSION={specs.Version}",
-                    "MEMORY=2G",
-                    "ENABLE_RCON=false",
-                    "OVERRIDE_SERVER_PROPERTIES=false"
-                },
+                Env = env,
                 ExposedPorts = new Dictionary<string, EmptyStruct>
                 {
                     { "19132/udp", new EmptyStruct() }
                 },
                 HostConfig = new HostConfig
                 {
-                    AutoRemove = true,
+                    AutoRemove = false,
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
