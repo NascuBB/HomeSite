@@ -1,8 +1,5 @@
 ﻿using HomeSite.Entities;
-using HomeSite.Generated;
-using HomeSite.Helpers;
 using HomeSite.Models;
-using static NuGet.Packaging.PackagingConstants;
 
 namespace HomeSite.Managers
 {
@@ -30,7 +27,7 @@ namespace HomeSite.Managers
             string ownerName,
             string serverCore,
             string? version,
-            string? curseforgeFileId,
+            string? curseforgePackURL,
             string? description = null);
         /// <summary>
         /// Deletes minecraft server

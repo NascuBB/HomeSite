@@ -95,7 +95,7 @@ namespace HomeSite.Controllers
 
         [Route("create")]
         [HttpPost]
-        public IActionResult create(CreateServerViewModel model)
+        public async Task<IActionResult> create(CreateServerViewModel model)
         {
             if (HttpContext.User.Identity.Name == null)
             {
@@ -108,22 +108,53 @@ namespace HomeSite.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                string id = _minecraftServerManager.CreateServer(
+                return View(model);
+            }
+
+            try
+            {
+                string id = await _minecraftServerManager.CreateServer(
                     model.Name,
                     HttpContext.User.Identity.Name,
                     model.ServerCore,
-                    model.Version ?? "latest",
+                    model.Version,
                     model.CurseforgePackId,
-                    model.Description ?? "A Minecraft server").Result;
+                    model.Description ?? "A Minecraft server");
 
                 _usersContext.UserAccounts.FirstOrDefault(x => x.Username == HttpContext.User.Identity.Name)!.ServerId = id;
                 _usersContext.SaveChanges();
+
                 return RedirectToAction("configure", new { Id = id });
             }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, MapCreateServerError(ex));
+                return View(model);
+            }
+        }
 
-            return View(model);
+        private static string MapCreateServerError(Exception ex)
+        {
+            var text = ex.Message ?? string.Empty;
+
+            if (text.Contains("Invalid link format or ID CurseForge", StringComparison.OrdinalIgnoreCase))
+                return "Неверная ссылка на сборку CurseForge.";
+
+            if (text.Contains("Pack not found", StringComparison.OrdinalIgnoreCase) ||
+                text.Contains("File not found", StringComparison.OrdinalIgnoreCase))
+                return "Сборка не найдена. Проверьте ссылку.";
+
+            if (text.Contains("Pack does not have public files", StringComparison.OrdinalIgnoreCase))
+                return "У этой сборки нет публичных файлов.";
+
+            if (text.Contains("CF API Error", StringComparison.OrdinalIgnoreCase) ||
+                text.Contains("Error searching Slug", StringComparison.OrdinalIgnoreCase) || 
+                text.Contains("invalid CurseforgeApiKey", StringComparison.OrdinalIgnoreCase))
+                return "Ошибка запроса к CurseForge. Попробуйте позже.";
+
+            return "Не удалось создать сервер. Проверьте данные и попробуйте снова.";
         }
 
         [HttpGet("/create/versions")]

@@ -6,11 +6,15 @@ using HomeSite.Helpers;
 using HomeSite.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace HomeSite.Managers
 {
     public class MinecraftServerManager : IMinecraftServerManager
     {
+        private readonly IHttpClientFactory _httpClientFactory;
         public static readonly string folder = Path.Combine(Environment.CurrentDirectory, "servers");
         private static readonly string creatingsPath = Path.Combine(Environment.CurrentDirectory, "servers", "creatings.json");
 
@@ -26,7 +30,8 @@ namespace HomeSite.Managers
             LogConnectionManager logConnectionManager,
             IDbContextFactory<ServerDBContext> contextFactory,
             IDockerClient dockerClient,
-            ILogger<MinecraftServerManager> logger)
+            ILogger<MinecraftServerManager> logger,
+            IHttpClientFactory httpClientFactory)
         {
             ServersOnline = new List<MinecraftServer>();
             InCreation = new Dictionary<string, ServerCreation>();
@@ -34,6 +39,7 @@ namespace HomeSite.Managers
             _logConnectionManager = logConnectionManager;
             _contextFactory = contextFactory;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
 
             Initialize();
         }
@@ -68,31 +74,38 @@ namespace HomeSite.Managers
             string name,
             string ownerName,
             string serverCore,
-            string version,
-            string? curseforgeFileId,
+            string? version,
+            string? curseforgePackURL,
             string? description = null)
         {
             string genId = Guid.NewGuid().ToString();
-
             InCreation[genId] = ServerCreation.AddingMods;
             await SaveServersInCreation();
 
-            var core = serverCore.ToUpperInvariant();
+            string core = serverCore.ToUpperInvariant();
+            string resolvedVersion = version ?? "LATEST";
+            string? resolvedCurseforgePack = string.IsNullOrWhiteSpace(curseforgePackURL) ? null : curseforgePackURL.Trim();
+
+            if (core == "CURSEFORGE")
+            {
+                if (string.IsNullOrWhiteSpace(resolvedCurseforgePack))
+                    throw new InvalidOperationException("Не указан ID сборки CurseForge");
+
+                var packInfo = await GetInfoFromUrlOrId(resolvedCurseforgePack);
+                core = packInfo.Core;
+                resolvedVersion = packInfo.Version;
+            }
 
             var serverSpecs = new Server
             {
                 Id = genId,
                 Description = description,
                 Name = name,
-                Version = version,
-                CurseforgePack = string.IsNullOrWhiteSpace(curseforgeFileId) ? null : curseforgeFileId.Trim(),
+                Version = resolvedVersion,
+                CurseforgePack = resolvedCurseforgePack,
                 PortMappings = new List<PortMapping>
                 {
-                    new PortMapping
-                    {
-                        Port = 8080,
-                        Path = null
-                    }
+                    new PortMapping { Port = 8080, Path = null }
                 },
                 ServerCore = core,
                 DomainName = ownerName.ToLower()
@@ -303,25 +316,20 @@ namespace HomeSite.Managers
                 }
             }
 
-            string imageTag = specs.ServerCore.Equals("CURSEFORGE", StringComparison.OrdinalIgnoreCase)
-                ? "java21"
-                : Helper.GetDockerImageTag(specs.Version);
+            string imageTag = Helper.GetDockerImageTag(specs.Version);
 
             var env = new List<string>
             {
                 "EULA=TRUE",
-                "MEMORY=2G",
+                "MEMORY=3G",
                 "ENABLE_RCON=false",
                 "OVERRIDE_SERVER_PROPERTIES=false"
             };
 
-            if (specs.ServerCore.Equals("CURSEFORGE", StringComparison.OrdinalIgnoreCase))
+            if (specs.CurseforgePack != null)
             {
-                if (string.IsNullOrWhiteSpace(specs.CurseforgePack))
-                    throw new InvalidOperationException("Не указан ID сборки CurseForge");
-
                 if (string.IsNullOrWhiteSpace(ConfigManager.CurseforgeApiKey))
-                    throw new InvalidOperationException("Не задан CurseforgeApiKey в config.json");
+                    throw new InvalidOperationException("invalid CurseforgeApiKey");
 
                 env.Add("TYPE=AUTO_CURSEFORGE");
                 env.Add($"CF_PAGE_URL={specs.CurseforgePack}");
@@ -346,7 +354,7 @@ namespace HomeSite.Managers
                 },
                 HostConfig = new HostConfig
                 {
-                    AutoRemove = false,
+                    AutoRemove = true,
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
@@ -533,6 +541,101 @@ namespace HomeSite.Managers
                 case "spectrator": return GameMode.spectrator;
                 default: return GameMode.survival;
             }
+        }
+
+        private async Task<(string Core, string Version)> GetInfoFromUrlOrId(string input)
+        {
+            var fileIdMatch = Regex.Match(input, @"/files/(\d+)($|\?)");
+            if (fileIdMatch.Success)
+            {
+                return await GetCurseforgePackInfo(fileIdMatch.Groups[1].Value);
+            }
+
+            var slugMatch = Regex.Match(input, @"/modpacks/([^/\?]+)");
+            if (slugMatch.Success)
+            {
+                string slug = slugMatch.Groups[1].Value;
+                string latestFileId = await GetLatestFileIdBySlug(slug);
+                return await GetCurseforgePackInfo(latestFileId);
+            }
+
+            if (Regex.IsMatch(input, @"^\d+$"))
+            {
+                return await GetCurseforgePackInfo(input);
+            }
+
+            throw new ArgumentException("Invalid link format or ID CurseForge");
+        }
+
+        private async Task<string> GetLatestFileIdBySlug(string slug)
+        {
+            var client = _httpClientFactory.CreateClient();
+            string url = $"https://api.curseforge.com/v1/mods/search?gameId=432&slug={slug}&classId=4471";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("x-api-key", ConfigManager.CurseforgeApiKey);
+
+            using var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException("Error searching Slug");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var root = JObject.Parse(json);
+
+            var modData = root["data"]?[0];
+            if (modData == null)
+                throw new InvalidOperationException("Pack not found");
+
+            return modData["latestFiles"]?[0]?["id"]?.ToString()
+                   ?? throw new InvalidOperationException("Pack does not have public files");
+        }
+
+        private async Task<(string Core, string Version)> GetCurseforgePackInfo(string fileId)
+        {
+            if (string.IsNullOrWhiteSpace(ConfigManager.CurseforgeApiKey))
+                throw new InvalidOperationException("invalid CurseforgeApiKey");
+
+            var client = _httpClientFactory.CreateClient();
+
+            var url = "https://api.curseforge.com/v1/mods/files";
+
+            var requestBody = new { fileIds = new[] { int.Parse(fileId) } };
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("x-api-key", ConfigManager.CurseforgeApiKey);
+            request.Content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+
+            using var response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException($"CF API Error {response.StatusCode}: {errorBody}");
+            }
+
+            var rawJson = await response.Content.ReadAsStringAsync();
+            var root = JObject.Parse(rawJson);
+
+            var data = root["data"]?[0] as JObject
+                       ?? throw new InvalidOperationException("File not found");
+
+            var gameVersions = data["gameVersions"]?.Values<string>()
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList() ?? new List<string>();
+
+            string mcVersion = gameVersions.FirstOrDefault(v => Regex.IsMatch(v, @"^\d+\.\d+(\.\d+)?$")) ?? "LATEST";
+            string core = DetectCore(gameVersions);
+
+            return (core, mcVersion);
+        }
+
+        private static string DetectCore(IEnumerable<string> gameVersions)
+        {
+            if (gameVersions.Any(v => v.Contains("NeoForge", StringComparison.OrdinalIgnoreCase))) return "NEOFORGE";
+            if (gameVersions.Any(v => v.Contains("Forge", StringComparison.OrdinalIgnoreCase))) return "FORGE";
+            if (gameVersions.Any(v => v.Contains("Fabric", StringComparison.OrdinalIgnoreCase))) return "FABRIC";
+            if (gameVersions.Any(v => v.Contains("Quilt", StringComparison.OrdinalIgnoreCase))) return "QUILT";
+            return "VANILLA";
         }
     }
 

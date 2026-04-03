@@ -32,6 +32,9 @@ namespace HomeSite.Managers
             {
                 try
                 {
+#if DEBUG
+                    throw new Exception("Debug mode - skipping API call");
+#endif
                     List<string> versions = type switch
                     {
                         "VANILLA" => await GetVanillaVersions(),
