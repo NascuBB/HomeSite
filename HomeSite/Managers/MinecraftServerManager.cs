@@ -321,7 +321,7 @@ namespace HomeSite.Managers
             var env = new List<string>
             {
                 "EULA=TRUE",
-                "MEMORY=3G",
+                "MEMORY=4G",
                 "ENABLE_RCON=false",
                 "OVERRIDE_SERVER_PROPERTIES=false"
             };
@@ -358,7 +358,7 @@ namespace HomeSite.Managers
                     NetworkMode = "mc_network",
                     Binds = new List<string> { $"{realPathOnDisk}:/data" },
                     RestartPolicy = new RestartPolicy { Name = RestartPolicyKind.No },
-                    Memory = 3221225472,
+                    Memory = 4831838208,
                     PortBindings = specs.BedrockPort == 0 ? null :
                     new Dictionary<string, IList<PortBinding>>
                     {
